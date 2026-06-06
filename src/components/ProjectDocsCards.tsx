@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Investment } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
-import { formatMoney, groupByCountry, localizedArea, localizedDetail } from '@/lib/projectDocs'
+import { formatMoney, groupByCountry, localizedDetail } from '@/lib/projectDocs'
 
 type Props = {
   investments: Investment[]
@@ -20,75 +20,12 @@ const PinIcon = () => (
   </svg>
 )
 
-const Card = ({ inv, lang, onLocate }: { inv: Investment; lang: string; onLocate?: (inv: Investment) => void }) => {
-  const { t } = useTranslation()
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm">
-      <div className="flex items-center justify-between gap-1.5">
-        <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: sectorColor(inv.area_en) }} />
-          {localizedArea(inv, lang)}
-        </div>
-        {onLocate && (
-          <button
-            type="button"
-            onClick={() => onLocate(inv)}
-            title={t('list.locate')}
-            className="text-teal-600 hover:text-teal-800"
-          >
-            <PinIcon />
-          </button>
-        )}
-      </div>
-      <h4 className="mt-1 font-semibold leading-snug text-gray-900">{localizedDetail(inv, lang)}</h4>
-      <dl className="mt-1.5 space-y-0.5 text-xs text-gray-600">
-        <div className="flex gap-1">
-          <dt className="text-gray-400">{t('list.investor')}:</dt>
-          <dd>{inv.investor ?? '—'}</dd>
-        </div>
-        <div className="flex gap-1">
-          <dt className="text-gray-400">{t('list.year')}:</dt>
-          <dd>{inv.year ?? '—'}</dd>
-        </div>
-        <div className="flex gap-1">
-          <dt className="text-gray-400">{t('list.amount')}:</dt>
-          <dd>{formatMoney(inv.investment_musd)} {t('list.millions')}</dd>
-        </div>
-        {inv.location && (
-          <div className="flex gap-1">
-            <dt className="text-gray-400">{t('list.location')}:</dt>
-            <dd>{inv.location}</dd>
-          </div>
-        )}
-      </dl>
-      {inv.research_cases.length > 0 && (
-        <div className="mt-2 border-t border-gray-100 pt-2">
-          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-            {t('list.studies')} ({inv.research_cases.length})
-          </div>
-          <ul className="space-y-1 text-xs">
-            {inv.research_cases.map((rc, i) => (
-              <li key={i}>
-                {rc.link ? (
-                  <a
-                    href={rc.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-teal-700 underline decoration-1 hover:text-teal-900"
-                  >
-                    {rc.caso}
-                  </a>
-                ) : (
-                  <span className="text-gray-700">{rc.caso}</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  )
-}
+const DocIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" className="h-4 w-4 shrink-0" fill="currentColor">
+    <path d="M19 10h7v2h-7zm0 5h7v2h-7zm0 5h7v2h-7zM6 10h7v2H6zm0 5h7v2H6zm0 5h7v2H6z" />
+    <path d="M28 5H4a2.002 2.002 0 0 0-2 2v18a2.002 2.002 0 0 0 2 2h24a2.002 2.002 0 0 0 2-2V7a2.002 2.002 0 0 0-2-2M4 7h11v18H4Zm13 18V7h11v18Z" />
+  </svg>
+)
 
 const Chevron = ({ open }: { open: boolean }) => (
   <svg
@@ -103,6 +40,79 @@ const Chevron = ({ open }: { open: boolean }) => (
   </svg>
 )
 
+const Card = ({ inv, lang, onLocate }: { inv: Investment; lang: string; onLocate?: (inv: Investment) => void }) => {
+  const { t } = useTranslation()
+  const [showStudies, setShowStudies] = useState(false)
+  const meta = [inv.investor, inv.year].filter(Boolean).join(' · ')
+
+  return (
+    <div className="group rounded-md border border-gray-200 bg-white p-2.5 shadow-sm transition hover:-translate-y-px hover:border-gray-300 hover:shadow-md">
+      <div className="flex items-start gap-2">
+        <span
+          className="mt-1 inline-block h-2.5 w-2.5 shrink-0 rounded-sm"
+          style={{ background: sectorColor(inv.area_en) }}
+        />
+        <h4 className="min-w-0 flex-1 text-sm font-medium leading-snug text-gray-900">
+          {localizedDetail(inv, lang)}
+        </h4>
+        {onLocate && (
+          <button
+            type="button"
+            onClick={() => onLocate(inv)}
+            title={t('list.locate')}
+            className="shrink-0 text-teal-600 hover:text-teal-800"
+          >
+            <PinIcon />
+          </button>
+        )}
+      </div>
+
+      {meta && <div className="mt-1 pl-[18px] text-xs text-gray-500">{meta}</div>}
+
+      <div className="mt-0.5 pl-[18px] text-xs text-gray-600">
+        <span>
+          {formatMoney(inv.investment_musd)} {t('list.millions')}
+        </span>
+        {inv.location && <span className="text-gray-400"> · {inv.location}</span>}
+      </div>
+
+      {inv.research_cases.length > 0 && (
+        <div className="mt-2 pl-[18px]">
+          <button
+            type="button"
+            onClick={() => setShowStudies(s => !s)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-teal-700 hover:text-teal-900"
+          >
+            <DocIcon />
+            {t('list.studies')} ({inv.research_cases.length})
+            <Chevron open={showStudies} />
+          </button>
+          {showStudies && (
+            <ul className="mt-1 space-y-1 text-xs">
+              {inv.research_cases.map((rc, i) => (
+                <li key={i}>
+                  {rc.link ? (
+                    <a
+                      href={rc.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-teal-700 underline decoration-1 hover:text-teal-900"
+                    >
+                      {rc.caso}
+                    </a>
+                  ) : (
+                    <span className="text-gray-700">{rc.caso}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ProjectDocsCards({ investments, lang, onLocate }: Props) {
   const { t } = useTranslation()
   const groups = useMemo(() => groupByCountry(investments), [investments])
@@ -116,7 +126,7 @@ export default function ProjectDocsCards({ investments, lang, onLocate }: Props)
     })
 
   return (
-    <div className="space-y-3">
+    <div>
       {groups.map(group => {
         const isOpen = open.has(group.country)
         return (
@@ -124,13 +134,13 @@ export default function ProjectDocsCards({ investments, lang, onLocate }: Props)
             <button
               type="button"
               onClick={() => toggle(group.country)}
-              className="sticky top-0 z-10 flex w-full items-center gap-2 bg-white py-1 text-left text-sm font-semibold text-teal-800"
+              className="sticky top-0 z-10 flex w-full items-center gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-sm font-semibold text-teal-800 shadow-sm"
             >
               <Chevron open={isOpen} />
               {t('list.projects_in', { country: group.country, count: group.projects.length })}
             </button>
             {isOpen && (
-              <div className="mt-2 space-y-3">
+              <div className="space-y-2 px-3 py-3">
                 {group.projects.map(inv => (
                   <Card key={inv.id} inv={inv} lang={lang} onLocate={onLocate} />
                 ))}

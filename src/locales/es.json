@@ -42,7 +42,7 @@
     "map": "Mapa",
     "list": "Lista",
     "split": "Mapa + Lista",
-    "cards": "Tarjetas"
+    "cards": "Repositorio"
   },
   "list": {
     "projects_in": "Inversiones en {{country}} ({{count}})",

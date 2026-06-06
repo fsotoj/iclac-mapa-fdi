@@ -42,7 +42,7 @@
     "map": "地图",
     "list": "清单",
     "split": "地图 + 清单",
-    "cards": "卡片"
+    "cards": "数据库"
   },
   "list": {
     "projects_in": "{{country}}的投资 ({{count}})",

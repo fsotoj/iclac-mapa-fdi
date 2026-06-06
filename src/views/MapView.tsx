@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet.markercluster'
@@ -7,11 +7,10 @@ import type { Feature, Geometry } from 'geojson'
 import type { LatLngExpression, Layer, LeafletMouseEvent, Path, PathOptions } from 'leaflet'
 import type { CountryFeatureCollection, CountryProperties, Investment } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
-import { applyFilters, distinctCountries, distinctSectors, VIEW_MODES, yearBounds } from '@/lib/filter'
+import { applyFilters, distinctCountries, distinctSectors, yearBounds } from '@/lib/filter'
 import { useFilters } from '@/hooks/useFilters'
 import FilterPanel from '@/components/FilterPanel'
 import SectorLegend from '@/components/SectorLegend'
-import ProjectDocsTable from '@/components/ProjectDocsTable'
 import ProjectDocsCards from '@/components/ProjectDocsCards'
 import { buildDonutSvg, buildLegendHtml, tallyByArea, type SectorTally } from '@/lib/clusterDonut'
 import { buildInvestmentPopup, buildInvestmentTooltip } from '@/lib/popup'
@@ -48,12 +47,28 @@ const clusterIconCreate = (cluster: L.MarkerCluster): L.DivIcon => {
   })
 }
 
-function InvestmentMarkers({ investments, cluster, lang }: { investments: Investment[]; cluster: boolean; lang: string }) {
+type LocatableLayer = L.Layer & { openPopup: () => void }
+type RegistryEntry = { layer: LocatableLayer; latlng: [number, number]; isPoint: boolean }
+
+function InvestmentMarkers({
+  investments,
+  cluster,
+  lang,
+  target
+}: {
+  investments: Investment[]
+  cluster: boolean
+  lang: string
+  target: LocateTarget | null
+}) {
   const map = useMap()
+  const registryRef = useRef<Map<string, RegistryEntry>>(new Map())
+  const clusterRef = useRef<L.MarkerClusterGroup | null>(null)
 
   useEffect(() => {
     if (investments.length === 0) return
 
+    registryRef.current.clear()
     const lineLayer = L.layerGroup()
     const clusterGroup = cluster
       ? L.markerClusterGroup({
@@ -95,6 +110,7 @@ function InvestmentMarkers({ investments, cluster, lang }: { investments: Invest
         marker.bindTooltip(tooltipHtml, { sticky: true })
         marker.bindPopup(popupHtml, { maxWidth: 340, className: 'mapa-investment-popup' })
         pointLayer.addLayer(marker)
+        registryRef.current.set(inv.id, { layer: marker, latlng: [lat, lng], isPoint: true })
       } else {
         const polyline = L.polyline(inv.coordinates, {
           color,
@@ -106,8 +122,10 @@ function InvestmentMarkers({ investments, cluster, lang }: { investments: Invest
         polyline.bindTooltip(tooltipHtml, { sticky: true })
         polyline.bindPopup(popupHtml, { maxWidth: 340, className: 'mapa-investment-popup' })
         polyline.addTo(lineLayer)
+        registryRef.current.set(inv.id, { layer: polyline, latlng: investmentCenter(inv), isPoint: false })
       }
     }
+    clusterRef.current = clusterGroup
 
     if (clusterGroup) {
       clusterGroup.on('clustermouseover', (e: L.LeafletEvent) => {
@@ -143,27 +161,43 @@ function InvestmentMarkers({ investments, cluster, lang }: { investments: Invest
     return () => {
       map.removeLayer(pointLayer)
       map.removeLayer(lineLayer)
+      registryRef.current.clear()
+      clusterRef.current = null
     }
   }, [investments, map, cluster, lang])
 
+  // Locate: pan/zoom to the target investment and open its popup.
+  useEffect(() => {
+    if (!target) return
+    const entry = registryRef.current.get(target.id)
+    if (!entry) return
+    const open = () => entry.layer.openPopup()
+    if (entry.isPoint && clusterRef.current) {
+      clusterRef.current.zoomToShowLayer(entry.layer as unknown as L.Marker, open)
+    } else {
+      map.flyTo(entry.latlng, Math.max(map.getZoom(), LOCATE_ZOOM))
+      map.once('moveend', open)
+    }
+  }, [target, map])
+
   return null
 }
 
-type LocateTarget = { lat: number; lng: number; token: number }
+type LocateTarget = { id: string; token: number }
 
 const LOCATE_ZOOM = 9
 
-const investmentCenter = (inv: Investment): [number, number] =>
-  inv.geometry_type === 'point' ? inv.coordinates : inv.coordinates[Math.floor(inv.coordinates.length / 2)]
-
-function FlyTo({ target }: { target: LocateTarget | null }) {
+function InvalidateSize({ trigger }: { trigger: unknown }) {
   const map = useMap()
   useEffect(() => {
-    if (!target) return
-    map.flyTo([target.lat, target.lng], Math.max(map.getZoom(), LOCATE_ZOOM))
-  }, [target, map])
+    const id = requestAnimationFrame(() => map.invalidateSize())
+    return () => cancelAnimationFrame(id)
+  }, [trigger, map])
   return null
 }
+
+const investmentCenter = (inv: Investment): [number, number] =>
+  inv.geometry_type === 'point' ? inv.coordinates : inv.coordinates[Math.floor(inv.coordinates.length / 2)]
 
 export default function MapView() {
   const { t, i18n } = useTranslation()
@@ -175,14 +209,9 @@ export default function MapView() {
   const [target, setTarget] = useState<LocateTarget | null>(null)
   const { filters, setFilters } = useFilters()
 
-  const handleLocate = useCallback(
-    (inv: Investment) => {
-      const [lat, lng] = investmentCenter(inv)
-      setTarget({ lat, lng, token: Date.now() })
-      if (filters.view === 'list') setFilters({ view: 'map' })
-    },
-    [filters.view, setFilters]
-  )
+  const handleLocate = useCallback((inv: Investment) => {
+    setTarget({ id: inv.id, token: Date.now() })
+  }, [])
 
   useEffect(() => {
     Promise.all([
@@ -234,8 +263,7 @@ export default function MapView() {
 
   const pointsCount = filtered.filter(i => i.geometry_type === 'point').length
   const linesCount = filtered.filter(i => i.geometry_type === 'line').length
-  const view = filters.view
-  const showMap = view !== 'list'
+  const showCards = filters.view === 'cards'
 
   const mapEl = (
     <>
@@ -258,8 +286,10 @@ export default function MapView() {
             onEachFeature={onEachFeature}
           />
         )}
-        {filtered.length > 0 && <InvestmentMarkers investments={filtered} cluster={cluster} lang={i18n.language} />}
-        <FlyTo target={target} />
+        {filtered.length > 0 && (
+          <InvestmentMarkers investments={filtered} cluster={cluster} lang={i18n.language} target={target} />
+        )}
+        <InvalidateSize trigger={showCards} />
       </MapContainer>
       <SectorLegend sectors={sectors} />
     </>
@@ -280,25 +310,18 @@ export default function MapView() {
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex overflow-hidden rounded border border-gray-300">
-                {VIEW_MODES.map(v => (
-                  <button
-                    key={v}
-                    onClick={() => setFilters({ view: v })}
-                    className={`px-2.5 py-1 text-xs ${
-                      view === v ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    {t(`view.${v}`)}
-                  </button>
-                ))}
-              </div>
-              {showMap && (
-                <label className="flex cursor-pointer items-center gap-1.5">
-                  <input type="checkbox" checked={cluster} onChange={e => setCluster(e.target.checked)} />
-                  {t('filter.cluster')}
-                </label>
-              )}
+              <label className="flex cursor-pointer items-center gap-1.5">
+                <input
+                  type="checkbox"
+                  checked={showCards}
+                  onChange={e => setFilters({ view: e.target.checked ? 'cards' : 'map' })}
+                />
+                {t('view.cards')}
+              </label>
+              <label className="flex cursor-pointer items-center gap-1.5">
+                <input type="checkbox" checked={cluster} onChange={e => setCluster(e.target.checked)} />
+                {t('filter.cluster')}
+              </label>
             </div>
           </div>
         )}
@@ -307,26 +330,13 @@ export default function MapView() {
         {error && <div className="p-4 text-sm text-red-700">{error}</div>}
 
         {!loading && !error && (
-          <div className="flex-1 overflow-auto">
-            {view === 'list' && <ProjectDocsTable investments={filtered} lang={i18n.language} onLocate={handleLocate} />}
-
-            {view === 'split' && (
-              <div className="flex flex-col">
-                <div className="relative h-[60vh] shrink-0">{mapEl}</div>
-                <ProjectDocsTable investments={filtered} lang={i18n.language} onLocate={handleLocate} />
-              </div>
+          <div className="flex h-full flex-1">
+            <div className="relative flex-1">{mapEl}</div>
+            {showCards && (
+              <aside className="w-80 shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-50">
+                <ProjectDocsCards investments={filtered} lang={i18n.language} onLocate={handleLocate} />
+              </aside>
             )}
-
-            {view === 'cards' && (
-              <div className="flex h-full">
-                <div className="relative flex-1">{mapEl}</div>
-                <aside className="w-80 shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-50 p-3">
-                  <ProjectDocsCards investments={filtered} lang={i18n.language} onLocate={handleLocate} />
-                </aside>
-              </div>
-            )}
-
-            {view === 'map' && <div className="relative h-full">{mapEl}</div>}
           </div>
         )}
       </div>

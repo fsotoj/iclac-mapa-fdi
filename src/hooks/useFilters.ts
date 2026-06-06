@@ -23,7 +23,7 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
       includeConstruction: params.get('c') !== '0',
       research: ['all', 'yes', 'no'].includes(research) ? research : 'all',
       sectors: splitCsv(params.get('s')),
-      view: VIEW_MODES.includes(view) ? view : 'map'
+      view: VIEW_MODES.includes(view) ? view : DEFAULT_FILTERS.view
     }
   }, [params])
 
@@ -38,7 +38,7 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
       if (!merged.includeConstruction) sp.set('c', '0')
       if (merged.research !== 'all') sp.set('r', merged.research)
       if (merged.sectors.length) sp.set('s', joinCsv(merged.sectors))
-      if (merged.view !== 'map') sp.set('view', merged.view)
+      if (merged.view !== DEFAULT_FILTERS.view) sp.set('view', merged.view)
       setParams(sp, { replace: true })
     },
     [filters, setParams]
