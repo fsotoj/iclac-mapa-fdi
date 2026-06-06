@@ -68,7 +68,8 @@ function InvestmentMarkers({
   useEffect(() => {
     if (investments.length === 0) return
 
-    registryRef.current.clear()
+    const registry = registryRef.current
+    registry.clear()
     const lineLayer = L.layerGroup()
     const clusterGroup = cluster
       ? L.markerClusterGroup({
@@ -110,7 +111,7 @@ function InvestmentMarkers({
         marker.bindTooltip(tooltipHtml, { sticky: true })
         marker.bindPopup(popupHtml, { maxWidth: 340, className: 'mapa-investment-popup' })
         pointLayer.addLayer(marker)
-        registryRef.current.set(inv.id, { layer: marker, latlng: [lat, lng], isPoint: true })
+        registry.set(inv.id, { layer: marker, latlng: [lat, lng], isPoint: true })
       } else {
         const polyline = L.polyline(inv.coordinates, {
           color,
@@ -122,7 +123,7 @@ function InvestmentMarkers({
         polyline.bindTooltip(tooltipHtml, { sticky: true })
         polyline.bindPopup(popupHtml, { maxWidth: 340, className: 'mapa-investment-popup' })
         polyline.addTo(lineLayer)
-        registryRef.current.set(inv.id, { layer: polyline, latlng: investmentCenter(inv), isPoint: false })
+        registry.set(inv.id, { layer: polyline, latlng: investmentCenter(inv), isPoint: false })
       }
     }
     clusterRef.current = clusterGroup
@@ -161,7 +162,7 @@ function InvestmentMarkers({
     return () => {
       map.removeLayer(pointLayer)
       map.removeLayer(lineLayer)
-      registryRef.current.clear()
+      registry.clear()
       clusterRef.current = null
     }
   }, [investments, map, cluster, lang])

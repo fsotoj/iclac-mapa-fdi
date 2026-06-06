@@ -123,7 +123,7 @@ Finance:       rgba(173,77,14,1)
 **Regla establecida (S2):** las deficiencias estructurales del XLSX cliente se **documentan en auditoría, no se enmascaran en código**. Ejemplos: `Location` con URL embebida, URLs pegadas en `CasoN` en vez de `LinkN`, lat/lng intercambiados, coordenadas faltantes en México. El frontend renderiza la fuente cruda; el cliente debe corregir en origen.
 
 - **Por qué:** parchear silenciosamente oculta el problema y dificulta que el cliente lo vea. El handover S5 requiere que cliente entienda la calidad real de sus datos.
-- **Excepciones legítimas:** trim de whitespace, normalización de casing, typos canonizables (`Adquisión` → `Adquisición`), overlay legado para recuperar geometría (regresión documentada §8). Estas curaciones automáticas viven en `scripts/etl.mjs` y se listan en `docs/auditoria_datos.html` sección "Curación aplicada de nuestro lado".
+- **Excepciones legítimas:** trim de whitespace, normalización de casing, typos canonizables (`Adquisión` → `Adquisición`), overlay legado para recuperar geometría (regresión documentada §8), dedup de `research_cases` por título en vectores (artefacto de arrastre Excel que duplicaba citaciones con `Link` autoincremental). Estas curaciones automáticas viven en `scripts/etl.mjs` y se listan en `docs/auditoria_datos.html` sección "Curación aplicada de nuestro lado".
 
 ## Documentos vivos (leer al retomar)
 

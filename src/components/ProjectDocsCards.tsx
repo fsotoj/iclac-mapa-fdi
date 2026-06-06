@@ -121,7 +121,8 @@ export default function ProjectDocsCards({ investments, lang, onLocate }: Props)
   const toggle = (country: string) =>
     setOpen(s => {
       const next = new Set(s)
-      next.has(country) ? next.delete(country) : next.add(country)
+      if (next.has(country)) next.delete(country)
+      else next.add(country)
       return next
     })
 

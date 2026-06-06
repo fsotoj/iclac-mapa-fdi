@@ -54,14 +54,17 @@ src/
     FilterPanel.tsx    # sidebar (país, año, tipo, construcción, estudios)
     YearRangeSlider.tsx# bar dual-handle + play button
     SectorLegend.tsx   # legend flotante bottom-right que también filtra
+    ProjectDocsCards.tsx # panel "Repositorio": inversiones por país, estudios destacados, locate
   hooks/
-    useFilters.ts      # filtros URL-backed (?p=&yMin=&t=&c=&r=&s=)
+    useFilters.ts      # filtros + vista URL-backed (?p=&yMin=&t=&c=&r=&s=&view=)
   lib/
-    filter.ts          # applyFilters + distinctCountries/Sectors/yearBounds
+    filter.ts          # applyFilters + distinctCountries/Sectors/yearBounds + ViewMode
     sectors.ts         # paleta colores por sector (de legacy)
     clusterDonut.ts    # SVG donut + legenda para cluster bubbles
+    projectDocs.ts     # dedupeById + groupByCountry + helpers locale/monto del repositorio
+    popup.ts           # HTML de tooltip + popup por inversión (point/line)
   views/
-    MapView.tsx        # mapa Leaflet con GeoJSON + clustering + markers + lines
+    MapView.tsx        # mapa Leaflet (GeoJSON + clustering + markers/lines) + panel Repositorio + locate→popup
     SankeyView.tsx     # placeholder S5
     MethodologyView.tsx# placeholder
   locales/
@@ -80,6 +83,14 @@ legacy/                # código Vue original — solo referencia, no compilar
 docs/                  # cotización, planes de sprint, auditoría
 .github/workflows/ci.yml  # typecheck + lint + build
 ```
+
+## Mapa y panel Repositorio
+
+`MapView` combina el mapa Leaflet con un panel lateral **Repositorio** (`ProjectDocsCards`):
+
+- **Repositorio** (`?view=cards`, default): columna derecha con las inversiones agrupadas por país. Cada ficha muestra sector, inversor, año, monto y — destacado — sus **estudios** (`research_cases`), colapsables. Toggle "Repositorio" en la barra superior lo oculta (`?view=map`), ensanchando el mapa (`invalidateSize` recarga los tiles).
+- **Locate**: el pin de cada ficha centra el mapa en la inversión (`flyTo` / `zoomToShowLayer` si está en cluster) y **abre su popup**.
+- La vista (`view`) y los filtros viven en la URL → compartible/recargable.
 
 ## Datos
 
