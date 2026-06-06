@@ -38,6 +38,25 @@
     "points_lines": "{{points}} puntos · {{lines}} líneas",
     "cluster": "Agrupar puntos"
   },
+  "view": {
+    "map": "Mapa",
+    "list": "Lista",
+    "split": "Mapa + Lista",
+    "cards": "Tarjetas"
+  },
+  "list": {
+    "projects_in": "Inversiones en {{country}} ({{count}})",
+    "project_name": "Nombre del proyecto",
+    "investor": "Inversor",
+    "year": "Año",
+    "area": "Sector",
+    "amount": "Monto (US$)",
+    "location": "Localidad",
+    "millions": "millones",
+    "studies": "Estudios",
+    "studies_network": "Algunos recursos en chino solo son accesibles para los usuarios dentro de China.",
+    "locate": "Ver en el mapa"
+  },
   "sector": {
     "Energy": "Energía",
     "Manufacturing": "Manufacturas",

@@ -62,6 +62,7 @@ const stats = {
   areaCaseFixed: 0,
   researchCitationsRescued: 0,
   researchNullDefaultedNo: 0,
+  researchCasesDeduped: 0,
   groupsTotal: 0,
   groupsAsPoint: 0,
   groupsAsLine: 0,
@@ -289,8 +290,12 @@ for (const [, rows] of candidateGroups) {
   for (const r of rows) {
     if (r.has_research) mergedHasResearch = true
     for (const c of r.research_cases) {
-      const key = `${c.caso}::${c.link}`
+      // Dedup by study title only. Vector rows often repeat the same citation
+      // per waypoint with an Excel drag-filled auto-incrementing link
+      // (e.g. .../4211, .../4212, …). Same study → one entry, keep first link.
+      const key = c.caso
       if (!seen.has(key)) { seen.add(key); mergedCases.push(c) }
+      else stats.researchCasesDeduped++
     }
   }
 

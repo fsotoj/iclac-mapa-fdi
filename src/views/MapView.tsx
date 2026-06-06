@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet.markercluster'
@@ -7,10 +7,12 @@ import type { Feature, Geometry } from 'geojson'
 import type { LatLngExpression, Layer, LeafletMouseEvent, Path, PathOptions } from 'leaflet'
 import type { CountryFeatureCollection, CountryProperties, Investment } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
-import { applyFilters, distinctCountries, distinctSectors, yearBounds } from '@/lib/filter'
+import { applyFilters, distinctCountries, distinctSectors, VIEW_MODES, yearBounds } from '@/lib/filter'
 import { useFilters } from '@/hooks/useFilters'
 import FilterPanel from '@/components/FilterPanel'
 import SectorLegend from '@/components/SectorLegend'
+import ProjectDocsTable from '@/components/ProjectDocsTable'
+import ProjectDocsCards from '@/components/ProjectDocsCards'
 import { buildDonutSvg, buildLegendHtml, tallyByArea, type SectorTally } from '@/lib/clusterDonut'
 import { buildInvestmentPopup, buildInvestmentTooltip } from '@/lib/popup'
 
@@ -147,6 +149,22 @@ function InvestmentMarkers({ investments, cluster, lang }: { investments: Invest
   return null
 }
 
+type LocateTarget = { lat: number; lng: number; token: number }
+
+const LOCATE_ZOOM = 9
+
+const investmentCenter = (inv: Investment): [number, number] =>
+  inv.geometry_type === 'point' ? inv.coordinates : inv.coordinates[Math.floor(inv.coordinates.length / 2)]
+
+function FlyTo({ target }: { target: LocateTarget | null }) {
+  const map = useMap()
+  useEffect(() => {
+    if (!target) return
+    map.flyTo([target.lat, target.lng], Math.max(map.getZoom(), LOCATE_ZOOM))
+  }, [target, map])
+  return null
+}
+
 export default function MapView() {
   const { t, i18n } = useTranslation()
   const [geo, setGeo] = useState<CountryFeatureCollection | null>(null)
@@ -154,7 +172,17 @@ export default function MapView() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [cluster, setCluster] = useState(true)
-  const { filters } = useFilters()
+  const [target, setTarget] = useState<LocateTarget | null>(null)
+  const { filters, setFilters } = useFilters()
+
+  const handleLocate = useCallback(
+    (inv: Investment) => {
+      const [lat, lng] = investmentCenter(inv)
+      setTarget({ lat, lng, token: Date.now() })
+      if (filters.view === 'list') setFilters({ view: 'map' })
+    },
+    [filters.view, setFilters]
+  )
 
   useEffect(() => {
     Promise.all([
@@ -206,59 +234,101 @@ export default function MapView() {
 
   const pointsCount = filtered.filter(i => i.geometry_type === 'point').length
   const linesCount = filtered.filter(i => i.geometry_type === 'line').length
+  const view = filters.view
+  const showMap = view !== 'list'
+
+  const mapEl = (
+    <>
+      <MapContainer
+        center={LATAM_CENTER}
+        zoom={INITIAL_ZOOM}
+        scrollWheelZoom
+        preferCanvas
+        className="h-full w-full"
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        />
+        {filteredGeo && (
+          <GeoJSON
+            key={filters.countries.join(',') || 'all'}
+            data={filteredGeo}
+            style={baseCountryStyle}
+            onEachFeature={onEachFeature}
+          />
+        )}
+        {filtered.length > 0 && <InvestmentMarkers investments={filtered} cluster={cluster} lang={i18n.language} />}
+        <FlyTo target={target} />
+      </MapContainer>
+      <SectorLegend sectors={sectors} />
+    </>
+  )
 
   return (
     <div className="flex h-[calc(100vh-7rem)] w-full">
       {!loading && !error && (
         <FilterPanel countries={countries} yearMin={yearMin} yearMax={yearMax} />
       )}
-      <div className="relative flex-1">
-        {loading && (
-          <div className="absolute top-2 right-2 z-[1000] bg-white px-3 py-1 rounded shadow text-sm">
-            {t('common.loading')}
-          </div>
-        )}
-        {error && (
-          <div className="absolute top-2 right-2 z-[1000] bg-red-100 text-red-800 px-3 py-1 rounded shadow text-sm">
-            {error}
-          </div>
-        )}
+      <div className="relative flex flex-1 flex-col overflow-hidden">
         {!loading && !error && (
-          <div className="absolute top-2 right-2 z-[1000] flex flex-col items-end gap-2">
-            <div className="bg-white px-3 py-1 rounded shadow text-sm">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white px-3 py-2 text-sm">
+            <div>
               {t('filter.investments_count', { count: filtered.length })}
               <span className="text-gray-500 ml-2">
                 ({t('filter.points_lines', { points: pointsCount, lines: linesCount })})
               </span>
             </div>
-            <label className="bg-white px-3 py-1 rounded shadow text-sm flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={cluster} onChange={e => setCluster(e.target.checked)} />
-              {t('filter.cluster')}
-            </label>
+            <div className="flex items-center gap-3">
+              <div className="flex overflow-hidden rounded border border-gray-300">
+                {VIEW_MODES.map(v => (
+                  <button
+                    key={v}
+                    onClick={() => setFilters({ view: v })}
+                    className={`px-2.5 py-1 text-xs ${
+                      view === v ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {t(`view.${v}`)}
+                  </button>
+                ))}
+              </div>
+              {showMap && (
+                <label className="flex cursor-pointer items-center gap-1.5">
+                  <input type="checkbox" checked={cluster} onChange={e => setCluster(e.target.checked)} />
+                  {t('filter.cluster')}
+                </label>
+              )}
+            </div>
           </div>
         )}
-        <MapContainer
-          center={LATAM_CENTER}
-          zoom={INITIAL_ZOOM}
-          scrollWheelZoom
-          preferCanvas
-          className="h-full w-full"
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-          />
-          {filteredGeo && (
-            <GeoJSON
-              key={filters.countries.join(',') || 'all'}
-              data={filteredGeo}
-              style={baseCountryStyle}
-              onEachFeature={onEachFeature}
-            />
-          )}
-          {filtered.length > 0 && <InvestmentMarkers investments={filtered} cluster={cluster} lang={i18n.language} />}
-        </MapContainer>
-        {!loading && !error && <SectorLegend sectors={sectors} />}
+
+        {loading && <div className="p-4 text-sm">{t('common.loading')}</div>}
+        {error && <div className="p-4 text-sm text-red-700">{error}</div>}
+
+        {!loading && !error && (
+          <div className="flex-1 overflow-auto">
+            {view === 'list' && <ProjectDocsTable investments={filtered} lang={i18n.language} onLocate={handleLocate} />}
+
+            {view === 'split' && (
+              <div className="flex flex-col">
+                <div className="relative h-[60vh] shrink-0">{mapEl}</div>
+                <ProjectDocsTable investments={filtered} lang={i18n.language} onLocate={handleLocate} />
+              </div>
+            )}
+
+            {view === 'cards' && (
+              <div className="flex h-full">
+                <div className="relative flex-1">{mapEl}</div>
+                <aside className="w-80 shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-50 p-3">
+                  <ProjectDocsCards investments={filtered} lang={i18n.language} onLocate={handleLocate} />
+                </aside>
+              </div>
+            )}
+
+            {view === 'map' && <div className="relative h-full">{mapEl}</div>}
+          </div>
+        )}
       </div>
     </div>
   )

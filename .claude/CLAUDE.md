@@ -10,15 +10,15 @@ Reemplaza implementación anterior (Vue 3). El repositorio + Netlify quedan bajo
 
 ## Stack acordado
 
-- React 18 + Vite + TypeScript opcional (default JS por velocidad)
+- React 18 + Vite + **TypeScript strict** (decidido en S1)
 - react-router-dom 6
 - react-i18next (es / en / cn)
-- Leaflet 1.9 + react-leaflet
+- Leaflet 1.9 + react-leaflet + leaflet.markercluster
 - D3 v7 (módulos sueltos)
-- ECharts 5 + echarts-for-react
+- ECharts 5 + echarts-for-react (instalado, sin uso aún — Sankey S5)
 - Tailwind CSS 3
 - Hosting: Netlify (cuenta cliente al cierre)
-- CI: GitHub Actions con validación JS de esquema de datos
+- CI: GitHub Actions con validación JS de esquema de datos (S5)
 
 ## Alcance Fase 1 (10 semanas, 100 horas, 3.700.000 CLP)
 
@@ -117,3 +117,25 @@ Finance:       rgba(173,77,14,1)
 - Sprints de 2 semanas
 - Demo + UAT al cierre de cada sprint
 - Hitos de pago: ver cotización
+
+## Convención sobre deficiencias de datos
+
+**Regla establecida (S2):** las deficiencias estructurales del XLSX cliente se **documentan en auditoría, no se enmascaran en código**. Ejemplos: `Location` con URL embebida, URLs pegadas en `CasoN` en vez de `LinkN`, lat/lng intercambiados, coordenadas faltantes en México. El frontend renderiza la fuente cruda; el cliente debe corregir en origen.
+
+- **Por qué:** parchear silenciosamente oculta el problema y dificulta que el cliente lo vea. El handover S5 requiere que cliente entienda la calidad real de sus datos.
+- **Excepciones legítimas:** trim de whitespace, normalización de casing, typos canonizables (`Adquisión` → `Adquisición`), overlay legado para recuperar geometría (regresión documentada §8). Estas curaciones automáticas viven en `scripts/etl.mjs` y se listan en `docs/auditoria_datos.html` sección "Curación aplicada de nuestro lado".
+
+## Documentos vivos (leer al retomar)
+
+- `docs/next_steps.md` — lista de tareas pendientes (bloqueadas en cliente + accionables). Documento vivo.
+- `docs/auditoria_datos.html` — entregable consolidado para cliente (Entrega 1 + México), reemplaza `auditoria_xlsx_entrega1.md` + `auditoria_mexico.md` como vista canónica.
+- `docs/pipeline_datos.md` — flujo XLSX → ETL → JSON → mapa.
+- `docs/plan_s2.md` — estado del sprint.
+
+`docs/` está gitignored (local-only) → mover fuera o ajustar `.gitignore` antes del handover S5 si cliente debe verlos.
+
+## Scripts (no estándar de npm)
+
+- `npm run etl` (`scripts/etl.mjs`) — XLSX → `public/data/investments.json`. Corre en cada build Netlify.
+- `npm run conflicts` (`scripts/export_vector_conflicts.mjs`) — genera XLSX de conflictos Vector para revisión cliente.
+- `node scripts/merge_geo.mjs` — **one-off idempotente**, NO está en build chain. Mergea polígonos Panamá (de `legacy/data/america.geojson`) + México (de `public/data/mx.json`) en `south-america.geojson`. Re-correr es seguro: skip si ya están.

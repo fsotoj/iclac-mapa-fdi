@@ -2,6 +2,10 @@ import type { Investment } from '@/types/data'
 
 export type ResearchFilter = 'all' | 'yes' | 'no'
 
+export type ViewMode = 'map' | 'list' | 'split' | 'cards'
+
+export const VIEW_MODES: ViewMode[] = ['map', 'list', 'split', 'cards']
+
 export type Filters = {
   countries: string[]
   yearMin: number | null
@@ -10,6 +14,7 @@ export type Filters = {
   includeConstruction: boolean
   research: ResearchFilter
   sectors: string[]
+  view: ViewMode
 }
 
 export const DEFAULT_FILTERS: Filters = {
@@ -19,7 +24,8 @@ export const DEFAULT_FILTERS: Filters = {
   types: [],
   includeConstruction: true,
   research: 'all',
-  sectors: []
+  sectors: [],
+  view: 'map'
 }
 
 export const applyFilters = (data: Investment[], f: Filters): Investment[] => {

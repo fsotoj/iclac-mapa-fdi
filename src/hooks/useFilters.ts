@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { DEFAULT_FILTERS, type Filters, type ResearchFilter } from '@/lib/filter'
+import { DEFAULT_FILTERS, VIEW_MODES, type Filters, type ResearchFilter, type ViewMode } from '@/lib/filter'
 
 const splitCsv = (s: string | null): string[] =>
   s ? s.split(',').map(p => p.trim()).filter(Boolean) : []
@@ -14,6 +14,7 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
     const yMin = params.get('yMin')
     const yMax = params.get('yMax')
     const research = (params.get('r') as ResearchFilter | null) ?? DEFAULT_FILTERS.research
+    const view = (params.get('view') as ViewMode | null) ?? DEFAULT_FILTERS.view
     return {
       countries: splitCsv(params.get('p')),
       yearMin: yMin ? Number.parseInt(yMin, 10) : null,
@@ -21,7 +22,8 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
       types: splitCsv(params.get('t')),
       includeConstruction: params.get('c') !== '0',
       research: ['all', 'yes', 'no'].includes(research) ? research : 'all',
-      sectors: splitCsv(params.get('s'))
+      sectors: splitCsv(params.get('s')),
+      view: VIEW_MODES.includes(view) ? view : 'map'
     }
   }, [params])
 
@@ -36,6 +38,7 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
       if (!merged.includeConstruction) sp.set('c', '0')
       if (merged.research !== 'all') sp.set('r', merged.research)
       if (merged.sectors.length) sp.set('s', joinCsv(merged.sectors))
+      if (merged.view !== 'map') sp.set('view', merged.view)
       setParams(sp, { replace: true })
     },
     [filters, setParams]

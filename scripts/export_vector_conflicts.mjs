@@ -104,15 +104,19 @@ for (const r of rows) {
 
 mkdirSync(OUTPUT_DIR, { recursive: true })
 
+// Agrupar por (id × categoría) para que el desglose de Resumen reconcilie con
+// Detalle/META: una misma inversión puede tener filas en distintas categorías.
 const grouped = new Map()
 for (const c of conflicts) {
-  const k = String(parseInt(String(c.Id_Investment), 10))
+  const k = String(parseInt(String(c.Id_Investment), 10)) + '||' + c.Categoria
   if (!grouped.has(k)) grouped.set(k, [])
   grouped.get(k).push(c)
 }
 
+const distinctIds = new Set(conflicts.map(c => String(parseInt(String(c.Id_Investment), 10))))
+
 const summaryRows = []
-for (const [id, items] of grouped) {
+for (const [, items] of grouped) {
   const first = items[0]
   summaryRows.push({
     Id_Investment: first.Id_Investment,
@@ -139,13 +143,13 @@ const metaRows = [
   { Campo: 'Archivo XLSX origen', Valor: 'Copy of Entrega 1 (inversiones por país).xlsx' },
   { Campo: 'Total filas XLSX', Valor: rows.length },
   { Campo: 'Filas con conflicto Vector', Valor: conflicts.length },
-  { Campo: 'IDs únicos con conflicto', Valor: grouped.size },
+  { Campo: 'IDs únicos con conflicto', Valor: distinctIds.size },
   { Campo: '', Valor: '' },
   { Campo: 'Resumen por categoría', Valor: '' },
   ...Object.entries(categoryCounts).map(([k, v]) => ({ Campo: k, Valor: v })),
   { Campo: '', Valor: '' },
   { Campo: 'Cómo leer este archivo', Valor: '' },
-  { Campo: '— Hoja Resumen', Valor: '1 fila por inversión con conflicto. Vista rápida para revisión.' },
+  { Campo: '— Hoja Resumen', Valor: '1 fila por inversión y categoría de conflicto (una inversión con categorías mixtas aparece en varias filas). Vista rápida para revisión.' },
   { Campo: '— Hoja Detalle', Valor: 'Todas las filas afectadas con sus coordenadas. Útil para auditar caso por caso.' },
   { Campo: '— Hoja META', Valor: 'Esta hoja: contexto y estadísticas.' },
   { Campo: '', Valor: '' },
@@ -162,7 +166,7 @@ XLSX.utils.book_append_sheet(wbOut, XLSX.utils.json_to_sheet(conflicts), 'Detall
 
 XLSX.writeFile(wbOut, OUTPUT_XLSX)
 
-console.log(`\nConflicts found: ${conflicts.length} rows · ${grouped.size} distinct investments`)
+console.log(`\nConflicts found: ${conflicts.length} rows · ${distinctIds.size} distinct investments · ${grouped.size} id×category groups`)
 console.log('By category:')
 for (const [k, v] of Object.entries(categoryCounts)) console.log(`  ${k}: ${v}`)
 console.log(`\nOutput: ${OUTPUT_XLSX}`)

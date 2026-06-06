@@ -38,6 +38,25 @@
     "points_lines": "{{points}} 个点 · {{lines}} 条线",
     "cluster": "聚合点"
   },
+  "view": {
+    "map": "地图",
+    "list": "清单",
+    "split": "地图 + 清单",
+    "cards": "卡片"
+  },
+  "list": {
+    "projects_in": "{{country}}的投资 ({{count}})",
+    "project_name": "项目名称",
+    "investor": "投资方",
+    "year": "年份",
+    "area": "行业",
+    "amount": "投资额 (US$)",
+    "location": "项目地点",
+    "millions": "百万",
+    "studies": "案例研究",
+    "studies_network": "某些中文资源仅对中国境内用户开放。",
+    "locate": "在地图上显示"
+  },
   "sector": {
     "Energy": "能源",
     "Manufacturing": "制造业",
