@@ -1,6 +1,7 @@
+import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFilters } from '@/hooks/useFilters'
-import type { ResearchFilter } from '@/lib/filter'
+import type { PieMetric, ResearchFilter } from '@/lib/filter'
 import YearRangeSlider from './YearRangeSlider'
 
 type Props = {
@@ -9,22 +10,137 @@ type Props = {
   yearMax: number
 }
 
+// Shared 20×20 stroke icons. One viewBox, consistent weight across the rail.
+const icon = (path: ReactNode) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-5 w-5">
+    {path}
+  </svg>
+)
+const IconChevronLeft = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />)
+const IconChevronRight = icon(<path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />)
+const IconGlobe = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.5-2.3 3.75-5.3 3.75-9S14.5 5.3 12 3m0 18c-2.5-2.3-3.75-5.3-3.75-9S9.5 5.3 12 3M3.5 9h17M3.5 15h17" />)
+const IconCalendar = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 8.25h18M4.5 5.25h15A1.5 1.5 0 0 1 21 6.75v12a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.75v-12a1.5 1.5 0 0 1 1.5-1.5Z" />)
+const IconTag = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581a2.25 2.25 0 0 0 3.182 0l4.318-4.318a2.25 2.25 0 0 0 0-3.182L11.16 3.66A2.25 2.25 0 0 0 9.568 3ZM6 6h.008v.008H6V6Z" />)
+const IconBuilding = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h9v18h-9V3Zm9 6h6v12h-6M7.5 6.75h.008v.008H7.5V6.75Zm0 3h.008v.008H7.5V9.75Zm0 3h.008v.008H7.5v-.008Z" />)
+const IconDoc = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25M6.75 21h10.5a2.25 2.25 0 0 0 2.25-2.25V8.25L13.5 2.25H6.75A2.25 2.25 0 0 0 4.5 4.5v14.25A2.25 2.25 0 0 0 6.75 21Z" />)
+const IconChart = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />)
+const IconChevron = (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-4 w-4 shrink-0">
+    <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+  </svg>
+)
+
+// Rail entries mirror the panel sections top-to-bottom. label = i18n key for tooltip.
+const RAIL: { key: string; node: ReactNode }[] = [
+  { key: 'filter.country', node: IconGlobe },
+  { key: 'filter.year', node: IconCalendar },
+  { key: 'filter.project_type', node: IconTag },
+  { key: 'filter.construction', node: IconBuilding },
+  { key: 'filter.case_studies', node: IconDoc },
+  { key: 'filter.map_shows', node: IconChart }
+]
+
 const PROJECT_TYPES = ['Adquisición', 'Greenfield'] as const
+
+// Map display: individual points, or country pies aggregated by count / money.
+type MapMode = 'points' | PieMetric
+const MAP_MODES: MapMode[] = ['points', 'count', 'money']
+const MAP_MODE_LABELS: Record<MapMode, string> = {
+  points: 'filter.points',
+  count: 'filter.by_project',
+  money: 'filter.by_money'
+}
+
+// Data layer treats [] as "all". Sentinel marks the explicit "no country" state,
+// which matches no investment and no geo feature.
+const NONE = '__none__'
 
 const toggleInArray = (arr: string[], v: string): string[] =>
   arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]
 
+// Shared segmented control for type / case studies / map mode. Joined buttons,
+// active = dark fill. Multi-select (type) and single-select (others) both use it.
+type SegItem<T extends string> = { value: T; label: string }
+function Segmented<T extends string>({
+  items,
+  isActive,
+  onPick
+}: {
+  items: SegItem<T>[]
+  isActive: (v: T) => boolean
+  onPick: (v: T) => void
+}) {
+  return (
+    <div className="flex overflow-hidden rounded border border-gray-300 text-xs">
+      {items.map((it, i) => (
+        <button
+          key={it.value}
+          onClick={() => onPick(it.value)}
+          aria-pressed={isActive(it.value)}
+          className={`flex-1 px-2 py-1.5 ${i > 0 ? 'border-l border-gray-300' : ''} ${
+            isActive(it.value) ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          {it.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function FilterPanel({ countries, yearMin, yearMax }: Props) {
   const { t } = useTranslation()
   const { filters, setFilters, reset } = useFilters()
+  const [collapsed, setCollapsed] = useState(false)
+  const [countryOpen, setCountryOpen] = useState(true)
+
+  if (collapsed) {
+    return (
+      <aside className="flex w-12 shrink-0 flex-col items-center gap-1 border-r border-gray-200 bg-white py-3">
+        <button
+          onClick={() => setCollapsed(false)}
+          title={t('filter.expand')}
+          aria-label={t('filter.expand')}
+          className="flex h-9 w-9 items-center justify-center rounded text-gray-700 hover:bg-gray-100"
+        >
+          {IconChevronRight}
+        </button>
+        <div className="my-1 h-px w-6 bg-gray-200" />
+        {RAIL.map(r => (
+          <button
+            key={r.key}
+            onClick={() => setCollapsed(false)}
+            title={t(r.key)}
+            aria-label={t(r.key)}
+            className="flex h-9 w-9 items-center justify-center rounded text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+          >
+            {r.node}
+          </button>
+        ))}
+      </aside>
+    )
+  }
 
   const yMin = filters.yearMin ?? yearMin
   const yMax = filters.yearMax ?? yearMax
+  // Empty selection means "all" in the data layer; treat it as every box checked.
+  const allCountries = filters.countries.length === 0
+  const noneCountries = filters.countries.length === 1 && filters.countries[0] === NONE
 
   return (
     <aside className="w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-4 space-y-5 text-sm">
       <div className="flex justify-between items-center">
-        <h3 className="font-semibold text-base">{t('filter.country')}</h3>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setCollapsed(true)}
+            title={t('filter.collapse')}
+            aria-label={t('filter.collapse')}
+            className="-ml-1 flex h-7 w-7 items-center justify-center rounded text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+          >
+            {IconChevronLeft}
+          </button>
+          <h3 className="font-semibold text-base">{t('filter.title')}</h3>
+        </div>
         <button
           onClick={reset}
           className="text-xs text-gray-500 hover:text-gray-900 underline"
@@ -34,17 +150,44 @@ export default function FilterPanel({ countries, yearMin, yearMax }: Props) {
       </div>
 
       <section>
-        <label className="block text-xs font-medium text-gray-600 mb-1">{t('filter.country')}</label>
-        <select
-          multiple
-          value={filters.countries}
-          onChange={e => setFilters({ countries: [...e.target.selectedOptions].map(o => o.value) })}
-          className="w-full border rounded p-1 h-32"
+        <button
+          type="button"
+          onClick={() => setCountryOpen(o => !o)}
+          aria-expanded={countryOpen}
+          className="mb-1 flex w-full items-center justify-between text-xs font-medium text-gray-600 hover:text-gray-900"
         >
+          <span>{t('filter.country')}</span>
+          <span className={`transition-transform ${countryOpen ? 'rotate-180' : ''}`}>{IconChevron}</span>
+        </button>
+        {countryOpen && (
+        <div className="max-h-40 overflow-y-auto rounded border border-gray-300 p-2 space-y-1">
+          <label className="flex items-center gap-2 border-b border-gray-100 pb-1 font-medium text-gray-700">
+            <input
+              type="checkbox"
+              checked={allCountries}
+              onChange={() => setFilters({ countries: allCountries ? [NONE] : [] })}
+            />
+            {t('filter.select_all')}
+          </label>
           {countries.map(c => (
-            <option key={c} value={c}>{c}</option>
+            <label key={c} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={allCountries || filters.countries.includes(c)}
+                onChange={() => {
+                  const base = allCountries ? countries : noneCountries ? [] : filters.countries
+                  const next = toggleInArray(base, c)
+                  setFilters({
+                    countries:
+                      next.length === 0 ? [NONE] : next.length === countries.length ? [] : next
+                  })
+                }}
+              />
+              {c}
+            </label>
           ))}
-        </select>
+        </div>
+        )}
       </section>
 
       <section>
@@ -60,22 +203,15 @@ export default function FilterPanel({ countries, yearMin, yearMax }: Props) {
 
       <section>
         <label className="block text-xs font-medium text-gray-600 mb-1">{t('filter.project_type')}</label>
-        <div className="space-y-1">
-          {PROJECT_TYPES.map(pt => (
-            <label key={pt} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={filters.types.length === 0 || filters.types.includes(pt)}
-                onChange={() => {
-                  const current = filters.types.length === 0 ? [...PROJECT_TYPES] : filters.types
-                  const next = toggleInArray(current, pt)
-                  setFilters({ types: next.length === PROJECT_TYPES.length ? [] : next })
-                }}
-              />
-              {pt}
-            </label>
-          ))}
-        </div>
+        <Segmented
+          items={PROJECT_TYPES.map(pt => ({ value: pt, label: pt }))}
+          isActive={pt => filters.types.length === 0 || filters.types.includes(pt)}
+          onPick={pt => {
+            const current = filters.types.length === 0 ? [...PROJECT_TYPES] : filters.types
+            const next = toggleInArray(current, pt)
+            setFilters({ types: next.length === PROJECT_TYPES.length ? [] : next })
+          }}
+        />
       </section>
 
       <section>
@@ -91,19 +227,23 @@ export default function FilterPanel({ countries, yearMin, yearMax }: Props) {
 
       <section>
         <label className="block text-xs font-medium text-gray-600 mb-1">{t('filter.case_studies')}</label>
-        <div className="flex gap-2">
-          {(['all', 'yes', 'no'] as ResearchFilter[]).map(opt => (
-            <button
-              key={opt}
-              onClick={() => setFilters({ research: opt })}
-              className={`px-2 py-1 rounded text-xs border ${
-                filters.research === opt ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300'
-              }`}
-            >
-              {opt === 'all' ? t('common.all') : opt === 'yes' ? t('filter.with_studies') : t('filter.without_studies')}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          items={(['all', 'yes', 'no'] as ResearchFilter[]).map(opt => ({
+            value: opt,
+            label: opt === 'all' ? t('common.all') : opt === 'yes' ? t('filter.with_studies') : t('filter.without_studies')
+          }))}
+          isActive={opt => filters.research === opt}
+          onPick={opt => setFilters({ research: opt })}
+        />
+      </section>
+
+      <section>
+        <label className="mb-1 block text-xs font-medium text-gray-600">{t('filter.map_shows')}</label>
+        <Segmented
+          items={MAP_MODES.map(m => ({ value: m, label: t(MAP_MODE_LABELS[m]) }))}
+          isActive={m => (m === 'points' ? !filters.pieByCountry : filters.pieByCountry && filters.pieMetric === m)}
+          onPick={m => setFilters(m === 'points' ? { pieByCountry: false } : { pieByCountry: true, pieMetric: m })}
+        />
       </section>
 
     </aside>

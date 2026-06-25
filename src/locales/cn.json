@@ -1,6 +1,8 @@
 {
   "app": {
-    "title": "拉美中国FDI数据库"
+    "title": "拉美中国FDI数据库",
+    "subject": "中国在拉丁美洲的投资",
+    "kind": "区域数据库 · ICLAC"
   },
   "nav": {
     "map": "地图",
@@ -8,10 +10,19 @@
     "methodology": "方法论"
   },
   "footer": {
-    "tagline": "中国对拉丁美洲投资区域数据库"
+    "tagline": "中国对拉丁美洲投资区域数据库",
+    "partners": "合作伙伴"
   },
   "sankey": {
-    "title": "桑基图"
+    "title": "桑基图",
+    "others": "其他",
+    "investors": "投资方",
+    "unit_money": "金额（百万美元）",
+    "unit_count": "投资数量",
+    "sort_name": "A–Z",
+    "sort_value": "最大",
+    "loading": "正在生成图表…",
+    "empty": "当前筛选无数据"
   },
   "methodology": {
     "title": "方法论"
@@ -23,6 +34,8 @@
     "loading": "加载中…"
   },
   "filter": {
+    "title": "选项",
+    "select_all": "全选",
     "country": "国家",
     "year": "年份",
     "project_type": "类型",
@@ -35,14 +48,21 @@
     "greenfield": "绿地",
     "clear_all": "清除筛选",
     "investments_count": "{{count}} 个投资",
+    "total_value": "US$ {{value}} 百万",
+    "without_amount": "{{count}} 无金额",
     "points_lines": "{{points}} 个点 · {{lines}} 条线",
-    "cluster": "聚合点"
+    "map_shows": "地图显示",
+    "points": "点",
+    "by_project": "项目",
+    "by_money": "金额",
+    "collapse": "隐藏筛选",
+    "expand": "显示筛选"
   },
   "view": {
     "map": "地图",
     "list": "清单",
     "split": "地图 + 清单",
-    "cards": "数据库"
+    "cards": "卡片"
   },
   "list": {
     "projects_in": "{{country}}的投资 ({{count}})",

@@ -81,9 +81,23 @@ export default function YearRangeSlider({
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-between text-xs text-gray-600">
-        <span>{localMin}</span>
-        <span>{localMax}</span>
+      <div className="relative h-4 text-xs">
+        {/* Bounds at the edges; selected labels track their thumbs. On collision
+            (selected near a bound) the bound is hidden so the selected wins. */}
+        {leftPct > 14 && <span className="absolute left-0 text-gray-400">{min}</span>}
+        {rightPct < 86 && <span className="absolute right-0 text-gray-400">{max}</span>}
+        <span
+          className="absolute -translate-x-1/2 font-semibold text-gray-900"
+          style={{ left: `${leftPct}%` }}
+        >
+          {localMin}
+        </span>
+        <span
+          className="absolute -translate-x-1/2 font-semibold text-gray-900"
+          style={{ left: `${rightPct}%` }}
+        >
+          {localMax}
+        </span>
       </div>
 
       <div className="relative h-6">
@@ -118,11 +132,6 @@ export default function YearRangeSlider({
           onBlur={commit}
           className="year-thumb absolute inset-0 w-full appearance-none bg-transparent pointer-events-none"
         />
-      </div>
-
-      <div className="flex items-center justify-between text-xs text-gray-400">
-        <span>{min}</span>
-        <span>{max}</span>
       </div>
 
       <div className="flex gap-2">

@@ -6,6 +6,10 @@ export type ViewMode = 'cards' | 'map'
 
 export const VIEW_MODES: ViewMode[] = ['cards', 'map']
 
+export type PieMetric = 'count' | 'money'
+
+export const PIE_METRICS: PieMetric[] = ['count', 'money']
+
 export type Filters = {
   countries: string[]
   yearMin: number | null
@@ -15,7 +19,12 @@ export type Filters = {
   research: ResearchFilter
   sectors: string[]
   view: ViewMode
+  pieByCountry: boolean
+  pieMetric: PieMetric
   query: string
+  // Sankey-only: selected company_ids. Applied in SankeyView (needs the canonical
+  // map), NOT in applyFilters — the map view ignores it.
+  investors: string[]
 }
 
 export const DEFAULT_FILTERS: Filters = {
@@ -27,7 +36,10 @@ export const DEFAULT_FILTERS: Filters = {
   research: 'all',
   sectors: [],
   view: 'cards',
-  query: ''
+  pieByCountry: false,
+  pieMetric: 'count',
+  query: '',
+  investors: []
 }
 
 const norm = (s: string): string =>
@@ -76,6 +88,32 @@ export const applyFilters = (data: Investment[], f: Filters): Investment[] => {
 
     return true
   })
+}
+
+export type InvestmentAggregate = {
+  count: number // distinct investments (by Id_Investment)
+  totalMusd: number // Σ amount, one per investment (millones USD)
+  withoutAmount: number // distinct investments with null amount
+}
+
+// One Id_Investment can explode into many rows/markers (multi-location "Punto"
+// rows, line waypoints) that all repeat the same amount. Dedup by id for the
+// real count and the real money total. See memory: investment_amount_dedup.
+export const aggregateInvestments = (data: Investment[]): InvestmentAggregate => {
+  const amountById = new Map<string, number | null>()
+  for (const inv of data) {
+    if (!amountById.has(inv.id)) amountById.set(inv.id, inv.investment_musd)
+    else if (amountById.get(inv.id) == null && inv.investment_musd != null) {
+      amountById.set(inv.id, inv.investment_musd)
+    }
+  }
+  let totalMusd = 0
+  let withoutAmount = 0
+  for (const amt of amountById.values()) {
+    if (amt == null) withoutAmount++
+    else totalMusd += amt
+  }
+  return { count: amountById.size, totalMusd, withoutAmount }
 }
 
 export const distinctCountries = (data: Investment[]): string[] =>

@@ -28,9 +28,9 @@ const arcPath = (cx: number, cy: number, rOuter: number, rInner: number, startDe
 export const buildDonutSvg = (
   tallies: SectorTally[],
   totalCount: number,
-  opts: { size: number; innerRatio?: number; showLabel?: boolean; bg?: string }
+  opts: { size: number; innerRatio?: number; showLabel?: boolean; bg?: string; centerLabel?: string }
 ): string => {
-  const { size, innerRatio = 0.55, showLabel = true, bg = 'rgba(255,255,255,0.92)' } = opts
+  const { size, innerRatio = 0.55, showLabel = true, bg = '#ffffff', centerLabel } = opts
   const cx = size / 2
   const cy = size / 2
   const rOuter = size / 2 - 2
@@ -57,21 +57,28 @@ export const buildDonutSvg = (
     angle = end
   }
 
+  const labelText = centerLabel ?? String(totalCount)
   const label = showLabel
     ? `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central" font-size="${Math.max(
-        10,
-        size * 0.28
-      )}" font-family="system-ui, sans-serif" font-weight="600" fill="#222">${totalCount}</text>`
+        9,
+        size * (centerLabel ? 0.22 : 0.3)
+      )}" font-family="system-ui, sans-serif" font-weight="700" fill="#fff" stroke="#000" stroke-width="${(
+        size * 0.04
+      ).toFixed(2)}" paint-order="stroke" stroke-linejoin="round">${labelText}</text>`
     : ''
 
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" overflow="visible" style="overflow:visible" xmlns="http://www.w3.org/2000/svg">
     <circle cx="${cx}" cy="${cy}" r="${rOuter}" fill="${bg}" stroke="rgba(0,0,0,0.15)" stroke-width="1"/>
     ${arcs.join('')}
     ${label}
   </svg>`
 }
 
-export const buildLegendHtml = (tallies: SectorTally[], totalCount: number): string => {
+export const buildLegendHtml = (
+  tallies: SectorTally[],
+  totalCount: number,
+  fmtValue: (n: number) => string = n => String(n)
+): string => {
   const total = tallies.reduce((a, b) => a + b.count, 0) || 1
   const rows = tallies
     .slice()
@@ -81,7 +88,7 @@ export const buildLegendHtml = (tallies: SectorTally[], totalCount: number): str
       return `<div style="display:flex;align-items:center;gap:6px;font-size:11px;line-height:1.4">
         <span style="display:inline-block;width:10px;height:10px;background:${sectorColor(t.area)};border-radius:2px"></span>
         <span style="flex:1">${t.area}</span>
-        <span style="color:#666">${t.count} · ${pct}%</span>
+        <span style="color:#666">${fmtValue(t.count)} · ${pct}%</span>
       </div>`
     })
     .join('')
@@ -96,6 +103,18 @@ export const tallyByArea = (areas: (string | null | undefined)[]): SectorTally[]
   for (const a of areas) {
     const k = a ?? 'Otros'
     map.set(k, (map.get(k) ?? 0) + 1)
+  }
+  return [...map.entries()].map(([area, count]) => ({ area, count }))
+}
+
+/** Tally sector money: sum of investment_musd per sector (null amounts → 0). */
+export const tallyMoneyByArea = (
+  invs: { area_en: string | null; investment_musd: number | null }[]
+): SectorTally[] => {
+  const map = new Map<string, number>()
+  for (const i of invs) {
+    const k = i.area_en ?? 'Otros'
+    map.set(k, (map.get(k) ?? 0) + (i.investment_musd ?? 0))
   }
   return [...map.entries()].map(([area, count]) => ({ area, count }))
 }

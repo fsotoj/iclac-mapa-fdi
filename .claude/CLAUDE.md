@@ -142,3 +142,4 @@ Finance:       rgba(173,77,14,1)
 - `npm run etl` (`scripts/etl.mjs`) — XLSX → `public/data/investments.json`. Corre en cada build Netlify.
 - `npm run conflicts` (`scripts/export_vector_conflicts.mjs`) — genera XLSX de conflictos Vector para revisión cliente.
 - `node scripts/merge_geo.mjs` — **one-off idempotente**, NO está en build chain. Mergea polígonos Panamá (de `legacy/data/america.geojson`) + México (de `public/data/mx.json`) en `south-america.geojson`. Re-correr es seguro: skip si ya están.
+- `node scripts/build_investors_map.mjs` — **one-off**, genera `public/data/investors_map.json` desde `data/schema/investors_map.csv` (mapeo investor_raw→canónico/ownership para el Sankey). NO está en build chain aún; foldear en `etl.mjs` antes del handover.

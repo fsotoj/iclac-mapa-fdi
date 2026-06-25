@@ -1,6 +1,8 @@
 {
   "app": {
-    "title": "Repositorio FDI Chinas en LATAM"
+    "title": "Repositorio FDI Chinas en LATAM",
+    "subject": "Inversiones Chinas en América Latina",
+    "kind": "Repositorio Regional · ICLAC"
   },
   "nav": {
     "map": "Mapa",
@@ -8,10 +10,19 @@
     "methodology": "Metodología"
   },
   "footer": {
-    "tagline": "Repositorio Regional de Inversiones Chinas en América Latina"
+    "tagline": "Repositorio Regional de Inversiones Chinas en América Latina",
+    "partners": "Socios"
   },
   "sankey": {
-    "title": "Diagrama Sankey"
+    "title": "Diagrama Sankey",
+    "others": "Otros",
+    "investors": "Inversores",
+    "unit_money": "Montos en US$ millones",
+    "unit_count": "N.º de inversiones",
+    "sort_name": "A–Z",
+    "sort_value": "Mayor",
+    "loading": "Construyendo diagrama…",
+    "empty": "Sin datos para los filtros actuales"
   },
   "methodology": {
     "title": "Metodología"
@@ -23,6 +34,8 @@
     "loading": "Cargando datos…"
   },
   "filter": {
+    "title": "Opciones",
+    "select_all": "Seleccionar todos",
     "country": "País",
     "year": "Año",
     "project_type": "Tipo",
@@ -35,14 +48,21 @@
     "greenfield": "Greenfield",
     "clear_all": "Limpiar filtros",
     "investments_count": "{{count}} inversiones",
+    "total_value": "US$ {{value}} MM",
+    "without_amount": "{{count}} sin monto",
     "points_lines": "{{points}} puntos · {{lines}} líneas",
-    "cluster": "Agrupar puntos"
+    "map_shows": "Mostrar en el mapa",
+    "points": "Puntos",
+    "by_project": "Proyectos",
+    "by_money": "Monto",
+    "collapse": "Ocultar filtros",
+    "expand": "Mostrar filtros"
   },
   "view": {
     "map": "Mapa",
     "list": "Lista",
     "split": "Mapa + Lista",
-    "cards": "Repositorio"
+    "cards": "Fichas"
   },
   "list": {
     "projects_in": "Inversiones en {{country}} ({{count}})",

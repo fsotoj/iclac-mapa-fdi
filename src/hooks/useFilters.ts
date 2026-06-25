@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { DEFAULT_FILTERS, VIEW_MODES, type Filters, type ResearchFilter, type ViewMode } from '@/lib/filter'
+import { DEFAULT_FILTERS, PIE_METRICS, VIEW_MODES, type Filters, type PieMetric, type ResearchFilter, type ViewMode } from '@/lib/filter'
 
 const splitCsv = (s: string | null): string[] =>
   s ? s.split(',').map(p => p.trim()).filter(Boolean) : []
@@ -15,6 +15,7 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
     const yMax = params.get('yMax')
     const research = (params.get('r') as ResearchFilter | null) ?? DEFAULT_FILTERS.research
     const view = (params.get('view') as ViewMode | null) ?? DEFAULT_FILTERS.view
+    const pieMetric = (params.get('pm') as PieMetric | null) ?? DEFAULT_FILTERS.pieMetric
     return {
       countries: splitCsv(params.get('p')),
       yearMin: yMin ? Number.parseInt(yMin, 10) : null,
@@ -24,7 +25,10 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
       research: ['all', 'yes', 'no'].includes(research) ? research : 'all',
       sectors: splitCsv(params.get('s')),
       view: VIEW_MODES.includes(view) ? view : DEFAULT_FILTERS.view,
-      query: params.get('q') ?? ''
+      pieByCountry: params.get('pie') === '1',
+      pieMetric: PIE_METRICS.includes(pieMetric) ? pieMetric : DEFAULT_FILTERS.pieMetric,
+      query: params.get('q') ?? '',
+      investors: splitCsv(params.get('inv'))
     }
   }, [params])
 
@@ -40,7 +44,10 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
       if (merged.research !== 'all') sp.set('r', merged.research)
       if (merged.sectors.length) sp.set('s', joinCsv(merged.sectors))
       if (merged.view !== DEFAULT_FILTERS.view) sp.set('view', merged.view)
+      if (merged.pieByCountry) sp.set('pie', '1')
+      if (merged.pieMetric !== DEFAULT_FILTERS.pieMetric) sp.set('pm', merged.pieMetric)
       if (merged.query) sp.set('q', merged.query)
+      if (merged.investors.length) sp.set('inv', joinCsv(merged.investors))
       setParams(sp, { replace: true })
     },
     [filters, setParams]
