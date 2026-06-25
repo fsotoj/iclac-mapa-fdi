@@ -55,7 +55,9 @@
     "millions": "million",
     "studies": "Case studies",
     "studies_network": "Some resources in Chinese are only available to users located inside China.",
-    "locate": "Show on map"
+    "locate": "Show on map",
+    "search": "Search…",
+    "no_results": "No results"
   },
   "sector": {
     "Energy": "Energy",

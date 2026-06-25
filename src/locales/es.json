@@ -55,7 +55,9 @@
     "millions": "millones",
     "studies": "Estudios",
     "studies_network": "Algunos recursos en chino solo son accesibles para los usuarios dentro de China.",
-    "locate": "Ver en el mapa"
+    "locate": "Ver en el mapa",
+    "search": "Buscar…",
+    "no_results": "Sin resultados"
   },
   "sector": {
     "Energy": "Energía",

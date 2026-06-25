@@ -15,6 +15,7 @@ export type Filters = {
   research: ResearchFilter
   sectors: string[]
   view: ViewMode
+  query: string
 }
 
 export const DEFAULT_FILTERS: Filters = {
@@ -25,7 +26,33 @@ export const DEFAULT_FILTERS: Filters = {
   includeConstruction: true,
   research: 'all',
   sectors: [],
-  view: 'cards'
+  view: 'cards',
+  query: ''
+}
+
+const norm = (s: string): string =>
+  s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
+
+const matchesQuery = (inv: Investment, q: string): boolean => {
+  if (!q) return true
+  const haystack = norm(
+    [
+      inv.detail_es,
+      inv.detail_en,
+      inv.investor,
+      inv.area_es,
+      inv.area_en,
+      inv.location,
+      inv.project_type,
+      inv.origin_of_seller,
+      inv.year,
+      inv.investment_musd,
+      ...inv.research_cases.map(c => c.caso)
+    ]
+      .filter(v => v !== null && v !== undefined)
+      .join(' ')
+  )
+  return haystack.includes(norm(q))
 }
 
 export const applyFilters = (data: Investment[], f: Filters): Investment[] => {
@@ -44,6 +71,8 @@ export const applyFilters = (data: Investment[], f: Filters): Investment[] => {
     if (f.research === 'no' && inv.has_research) return false
 
     if (f.sectors.length > 0 && (!inv.area_en || !f.sectors.includes(inv.area_en))) return false
+
+    if (f.query && !matchesQuery(inv, f.query)) return false
 
     return true
   })

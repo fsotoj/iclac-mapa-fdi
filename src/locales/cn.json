@@ -55,7 +55,9 @@
     "millions": "百万",
     "studies": "案例研究",
     "studies_network": "某些中文资源仅对中国境内用户开放。",
-    "locate": "在地图上显示"
+    "locate": "在地图上显示",
+    "search": "搜索…",
+    "no_results": "无结果"
   },
   "sector": {
     "Energy": "能源",

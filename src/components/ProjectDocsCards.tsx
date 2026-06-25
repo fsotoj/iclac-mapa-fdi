@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Investment } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
 import { formatMoney, groupByCountry, localizedDetail } from '@/lib/projectDocs'
+import { useFilters } from '@/hooks/useFilters'
 
 type Props = {
   investments: Investment[]
@@ -113,10 +114,43 @@ const Card = ({ inv, lang, onLocate }: { inv: Investment; lang: string; onLocate
   )
 }
 
+const SearchIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4 shrink-0">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
+  </svg>
+)
+
 export default function ProjectDocsCards({ investments, lang, onLocate }: Props) {
   const { t } = useTranslation()
+  const { filters, setFilters } = useFilters()
+  const query = filters.query
   const groups = useMemo(() => groupByCountry(investments), [investments])
   const [open, setOpen] = useState<Set<string>>(() => new Set())
+
+  // Debounced search: type into a local draft, commit to the URL filter after a pause.
+  const [draft, setDraft] = useState(query)
+  useEffect(() => setDraft(query), [query])
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (draft !== query) setFilters({ query: draft })
+    }, 250)
+    return () => clearTimeout(id)
+  }, [draft, query, setFilters])
+
+  // Auto-expand matches when entering search, collapse all when clearing —
+  // but leave countries collapsible while a query is active.
+  const hadQuery = useRef(false)
+  useEffect(() => {
+    const has = query.length > 0
+    if (has && !hadQuery.current) setOpen(new Set(groups.map(g => g.country)))
+    else if (!has && hadQuery.current) setOpen(new Set())
+    hadQuery.current = has
+  }, [query, groups])
+
+  const clear = () => {
+    setDraft('')
+    setFilters({ query: '' })
+  }
 
   const toggle = (country: string) =>
     setOpen(s => {
@@ -128,6 +162,33 @@ export default function ProjectDocsCards({ investments, lang, onLocate }: Props)
 
   return (
     <div>
+      <div className="sticky top-0 z-20 border-b border-gray-200 bg-white px-3 py-2">
+        <div className="flex items-center gap-2 rounded border border-gray-300 px-2 py-1 text-gray-500 focus-within:border-teal-500">
+          <SearchIcon />
+          <input
+            type="text"
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            placeholder={t('list.search')}
+            className="min-w-0 flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
+          />
+          {draft && (
+            <button
+              type="button"
+              onClick={clear}
+              className="shrink-0 text-gray-400 hover:text-gray-700"
+              aria-label={t('common.clear')}
+            >
+              ×
+            </button>
+          )}
+        </div>
+      </div>
+
+      {groups.length === 0 && (
+        <p className="px-3 py-4 text-sm text-gray-400">{t('list.no_results')}</p>
+      )}
+
       {groups.map(group => {
         const isOpen = open.has(group.country)
         return (
@@ -135,7 +196,7 @@ export default function ProjectDocsCards({ investments, lang, onLocate }: Props)
             <button
               type="button"
               onClick={() => toggle(group.country)}
-              className="sticky top-0 z-10 flex w-full items-center gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-sm font-semibold text-teal-800 shadow-sm"
+              className="sticky top-[45px] z-10 flex w-full items-center gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-sm font-semibold text-teal-800 shadow-sm"
             >
               <Chevron open={isOpen} />
               {t('list.projects_in', { country: group.country, count: group.projects.length })}
