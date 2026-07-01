@@ -35,6 +35,12 @@ export default function Layout() {
             <NavLink to="/methodology" className={({ isActive }) => (isActive ? 'font-semibold text-gray-900' : 'text-gray-500 hover:text-gray-900')}>
               {t('nav.methodology')}
             </NavLink>
+            <NavLink to="/downloads" className={({ isActive }) => (isActive ? 'font-semibold text-gray-900' : 'text-gray-500 hover:text-gray-900')}>
+              {t('nav.downloads')}
+            </NavLink>
+            <NavLink to="/contact" className={({ isActive }) => (isActive ? 'font-semibold text-gray-900' : 'text-gray-500 hover:text-gray-900')}>
+              {t('nav.contact')}
+            </NavLink>
           </nav>
           <span className="h-5 w-px bg-gray-300" aria-hidden />
           <div className="flex gap-1 text-sm">

@@ -7,7 +7,20 @@
   "nav": {
     "map": "Map",
     "sankey": "Sankey",
-    "methodology": "Methodology"
+    "methodology": "Methodology",
+    "downloads": "Data",
+    "contact": "Contact"
+  },
+  "downloads": {
+    "title": "Our data",
+    "description": "<p>Chile's Millennium Nucleus on the Impacts of China in Latin America and the Caribbean (ICLAC), the Inter-American Dialogue, and our partners are pleased to make our Chinese foreign direct investment data available to researchers and other users of the Repository.</p><p>The full dataset —every investment across all countries in a single file— is available for download below. As we add new countries, they will be incorporated into the same dataset.</p><p>We welcome you to submit contributions or corrections through the Contact page. We are grateful for your help keeping our data as accurate and up to date as possible.</p>",
+    "link": "Download full dataset",
+    "format": "JSON format · every investment, all countries"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "description": "We welcome your reactions and contributions to the Repository. Email the ICLAC and Inter-American Dialogue representatives directly.",
+    "button": "Email us"
   },
   "footer": {
     "tagline": "Regional Repository of Chinese Investments in Latin America",
