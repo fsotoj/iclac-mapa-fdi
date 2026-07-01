@@ -36,7 +36,8 @@
     "sort_value": "Mayor",
     "click_hint": "Clic en un nodo para filtrar",
     "loading": "Construyendo diagrama…",
-    "empty": "Sin datos para los filtros actuales"
+    "empty": "Sin datos para los filtros actuales",
+    "empty_money": "Sin montos en el rango seleccionado. Prueba la métrica «Proyectos»."
   },
   "methodology": {
     "title": "Metodología",

@@ -10,10 +10,11 @@ import type { Investment } from '@/types/data'
 import type { InvestorMap, SankeyMetric } from '@/lib/sankey'
 import { buildSankeyData, distinctCompanies, resolveCompanyId } from '@/lib/sankey'
 import { sectorColor } from '@/lib/sectors'
-import { applyFilters, distinctSectors, distinctCountries } from '@/lib/filter'
+import { applyFilters, distinctSectors, distinctCountries, yearBounds } from '@/lib/filter'
 import { useFilters } from '@/hooks/useFilters'
 import InvestorFilter from '@/components/InvestorFilter'
 import FilterDropdown from '@/components/FilterDropdown'
+import YearRangeSlider from '@/components/YearRangeSlider'
 
 // Register only what the Sankey needs — the bundler drops the rest of echarts.
 echarts.use([SankeyChart, TooltipComponent, CanvasRenderer])
@@ -91,6 +92,10 @@ export default function SankeyView() {
   const companies = useMemo(() => distinctCompanies(investments, map), [investments, map])
   const sectors = useMemo(() => distinctSectors(investments), [investments])
   const countries = useMemo(() => distinctCountries(investments), [investments])
+  const [yearMin, yearMax] = useMemo(() => yearBounds(investments), [investments])
+  const yMin = filters.yearMin ?? yearMin
+  const yMax = filters.yearMax ?? yearMax
+  const yearActive = yMin > yearMin || yMax < yearMax
   const nameToId = useMemo(() => new Map(companies.map(c => [c.name, c.id])), [companies])
 
   // Shares the map's URL filters (country/year/sector/type/construction), then
@@ -190,6 +195,9 @@ export default function SankeyView() {
   if (loading) return <div className="p-8 text-sm text-gray-600">{t('sankey.loading')}</div>
 
   const empty = data.links.length === 0
+  // Money metric with only amount-less rows in range (e.g. the lone 1997 project)
+  // yields all-zero links -> ECharts sankey collapses. Show a hint instead.
+  const moneyEmpty = !empty && metric === 'money' && data.links.every(l => l.value === 0)
 
   return (
     <div className="flex h-full w-full flex-col p-6">
@@ -215,6 +223,17 @@ export default function SankeyView() {
             label={s => t(`sector.${s}`, s)}
           />
         </FilterDropdown>
+        <FilterDropdown label={t('filter.year')} badge={yearActive ? `${yMin}–${yMax}` : undefined}>
+          <div className="p-3">
+            <YearRangeSlider
+              min={yearMin}
+              max={yearMax}
+              valueMin={yMin}
+              valueMax={yMax}
+              onChange={(vMin, vMax) => setFilters({ yearMin: vMin, yearMax: vMax })}
+            />
+          </div>
+        </FilterDropdown>
 
         <div className="ml-auto flex overflow-hidden rounded border border-gray-300 text-xs">
           {(['count', 'money'] as SankeyMetric[]).map((m, i) => (
@@ -237,6 +256,8 @@ export default function SankeyView() {
       <div className="min-h-0 flex-1">
         {empty ? (
           <p className="text-sm text-gray-400">{t('sankey.empty')}</p>
+        ) : moneyEmpty ? (
+          <p className="text-sm text-gray-400">{t('sankey.empty_money')}</p>
         ) : (
           <ReactECharts
             echarts={echarts}

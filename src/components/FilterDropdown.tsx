@@ -3,11 +3,12 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 type Props = {
   label: string
   count?: number
+  badge?: string
   children: ReactNode
 }
 
 // Popover multiselect trigger. Closes on outside click / Escape.
-export default function FilterDropdown({ label, count = 0, children }: Props) {
+export default function FilterDropdown({ label, count = 0, badge, children }: Props) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -25,7 +26,7 @@ export default function FilterDropdown({ label, count = 0, children }: Props) {
     }
   }, [open])
 
-  const active = count > 0
+  const active = count > 0 || badge != null
   return (
     <div ref={ref} className="relative">
       <button
@@ -35,7 +36,11 @@ export default function FilterDropdown({ label, count = 0, children }: Props) {
         }`}
       >
         {label}
-        {active && <span className="rounded-full bg-white/25 px-1.5 leading-tight">{count}</span>}
+        {badge != null ? (
+          <span className="rounded-full bg-white/25 px-1.5 leading-tight">{badge}</span>
+        ) : (
+          active && <span className="rounded-full bg-white/25 px-1.5 leading-tight">{count}</span>
+        )}
         <span className="text-[9px] opacity-70">▼</span>
       </button>
       {open && (

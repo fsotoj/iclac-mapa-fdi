@@ -36,7 +36,8 @@
     "sort_value": "Largest",
     "click_hint": "Click a node to filter",
     "loading": "Building diagram…",
-    "empty": "No data for the current filters"
+    "empty": "No data for the current filters",
+    "empty_money": "No amounts in the selected range. Try the \"Projects\" metric."
   },
   "methodology": {
     "title": "Methodology",
