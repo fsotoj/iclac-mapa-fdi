@@ -1,6 +1,6 @@
 // Converts data/schema/investors_map.csv -> public/data/investors_map.json
-// (keyed by investor_raw). One-off for the Sankey prototype; fold into etl.mjs
-// before handover so the map regenerates on each Netlify build.
+// (keyed by investor_raw). NOTE: `scripts/etl.mjs` now does this too on every
+// build; this standalone remains for regenerating the JSON without a full ETL run.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'

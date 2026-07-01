@@ -77,7 +77,7 @@ export function buildSankeyData(
     metric,
     topN,
     othersInvestor = 'Otros',
-    noCountry = 'Sin pais',
+    noCountry = 'Sin país',
     noSector = 'Sin sector'
   } = opts
 

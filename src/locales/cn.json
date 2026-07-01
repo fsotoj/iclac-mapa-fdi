@@ -21,6 +21,7 @@
     "unit_count": "投资数量",
     "sort_name": "A–Z",
     "sort_value": "最大",
+    "click_hint": "点击节点进行筛选",
     "loading": "正在生成图表…",
     "empty": "当前筛选无数据"
   },

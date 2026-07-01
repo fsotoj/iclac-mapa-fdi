@@ -21,6 +21,7 @@
     "unit_count": "N.º de inversiones",
     "sort_name": "A–Z",
     "sort_value": "Mayor",
+    "click_hint": "Clic en un nodo para filtrar",
     "loading": "Construyendo diagrama…",
     "empty": "Sin datos para los filtros actuales"
   },

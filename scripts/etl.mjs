@@ -334,3 +334,41 @@ for (const [k, v] of [...sectorMap.entries()].sort((a, b) => b[1] - a[1])) {
 }
 console.log(`\nOutput: ${outputPath}`)
 console.log(`File size: ${(JSON.stringify(output).length / 1024).toFixed(1)} KB`)
+
+// --- Investor canonical map: data/schema/investors_map.csv -> investors_map.json ---
+// Keyed by investor_raw (the join key). Consumed by the Sankey. Regenerated here
+// so it never drifts from the CSV the client maintains.
+const investorsCsvPath = resolve(REPO_ROOT, 'data/schema/investors_map.csv')
+const investorsJsonPath = resolve(dirname(outputPath), 'investors_map.json')
+if (existsSync(investorsCsvPath)) {
+  const parseCsvLine = line => {
+    const cells = []
+    let cur = ''
+    let quoted = false
+    for (const ch of line) {
+      if (ch === '"') quoted = !quoted
+      else if (ch === ',' && !quoted) { cells.push(cur); cur = '' }
+      else cur += ch
+    }
+    cells.push(cur)
+    return cells
+  }
+  const csvRows = readFileSync(investorsCsvPath, 'utf8').trim().split(/\r?\n/)
+  const header = parseCsvLine(csvRows[0])
+  const col = name => header.indexOf(name)
+  const [iRaw, iId, iCanon, iCons, iOwn] = ['investor_raw', 'company_id', 'company_canonical', 'is_consortium', 'ownership'].map(col)
+  const investorMap = {}
+  for (const line of csvRows.slice(1)) {
+    const c = parseCsvLine(line)
+    investorMap[c[iRaw]] = {
+      company_id: c[iId],
+      company_canonical: c[iCanon],
+      ownership: c[iOwn],
+      is_consortium: c[iCons] === 'true'
+    }
+  }
+  writeFileSync(investorsJsonPath, JSON.stringify(investorMap), 'utf8')
+  console.log(`Investor map: ${Object.keys(investorMap).length} entries -> ${investorsJsonPath}`)
+} else {
+  console.warn(`WARN: ${investorsCsvPath} missing — skipped investors_map.json`)
+}

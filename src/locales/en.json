@@ -21,6 +21,7 @@
     "unit_count": "Number of investments",
     "sort_name": "A–Z",
     "sort_value": "Largest",
+    "click_hint": "Click a node to filter",
     "loading": "Building diagram…",
     "empty": "No data for the current filters"
   },
