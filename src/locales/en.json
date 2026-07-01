@@ -26,6 +26,17 @@
     "tagline": "Regional Repository of Chinese Investments in Latin America",
     "partners": "Partners"
   },
+  "about": {
+    "label": "About",
+    "map": {
+      "title": "About the map",
+      "body": "The Regional Repository maps Chinese foreign direct investment (FDI) and construction projects across Latin America, classified by type, sector, and company.\nOn the map, points are single-site investments (mines, plants, offices) and vectors mark projects spanning several cities (roads, railways, cables). The toggle groups by country into pie charts and switches between number of projects and amount. The book icon means the investment has an academic case study."
+    },
+    "sankey": {
+      "title": "About the diagram",
+      "body": "The diagram shows the Investor → Country → Sector flow of Chinese FDI, over the same data as the map.\nEach flow's width reflects the chosen metric: number of investments or amount (US$ MM). Investors are grouped by canonical company (top 20; the rest roll up into \"Others\"). Click any node to filter by it. Country, sector, and year filters are shared with the map."
+    }
+  },
   "sankey": {
     "title": "Sankey diagram",
     "others": "Others",

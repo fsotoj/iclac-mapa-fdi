@@ -2,6 +2,7 @@ import { Outlet, NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { LocaleCode } from '@/types/data'
 import Footer from './Footer'
+import AboutPanel from './AboutPanel'
 
 const LANGS: { code: LocaleCode; label: string }[] = [
   { code: 'es', label: 'ES' },
@@ -14,7 +15,7 @@ export default function Layout() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      <header className="border-b border-gray-200 px-6 py-3 flex items-center justify-between gap-4">
+      <header className="relative z-[1000] border-b border-gray-200 px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0">
           <a href="https://iclac.cl/" target="_blank" rel="noopener noreferrer" className="shrink-0">
             <img src="/icons/iclac.webp" alt="ICLAC" className="h-10 w-auto object-contain" />
@@ -42,6 +43,7 @@ export default function Layout() {
               {t('nav.contact')}
             </NavLink>
           </nav>
+          <AboutPanel />
           <span className="h-5 w-px bg-gray-300" aria-hidden />
           <div className="flex gap-1 text-sm">
             {LANGS.map(l => (

@@ -26,6 +26,17 @@
     "tagline": "Repositorio Regional de Inversiones Chinas en América Latina",
     "partners": "Socios"
   },
+  "about": {
+    "label": "Acerca de",
+    "map": {
+      "title": "Sobre el mapa",
+      "body": "El Repositorio Regional mapea la inversión extranjera directa (IED) china y los proyectos de construcción en América Latina, clasificados por tipo, sector y empresa.\nEn el mapa, los puntos son inversiones en un solo sitio (minas, plantas, oficinas) y los vectores marcan proyectos que cruzan varias ciudades (rutas, ferrocarriles, cables). El selector agrupa por país en gráficos de torta y alterna entre número de proyectos y monto. El ícono de libro indica que la inversión tiene un estudio de caso académico."
+    },
+    "sankey": {
+      "title": "Sobre el diagrama",
+      "body": "El diagrama muestra el flujo Inversor → País → Sector de la IED china, sobre los mismos datos del mapa.\nEl grosor de cada flujo refleja la métrica elegida: número de inversiones o monto (US$ MM). Los inversores se agrupan por empresa canónica (top 20; el resto se junta en «Otros»). Un clic en cualquier nodo filtra por él. Los filtros de país, sector y año se comparten con el mapa."
+    }
+  },
   "sankey": {
     "title": "Diagrama Sankey",
     "others": "Otros",
