@@ -37,14 +37,14 @@ function LogoImg({ logo, className }: { logo: Logo; className: string }) {
 export default function Footer() {
   const { t } = useTranslation()
   return (
-    <footer className="border-t border-gray-200 px-6 py-3">
-      <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+    <footer className="border-t border-gray-200 px-4 py-2 sm:px-6 sm:py-3">
+      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 sm:gap-x-8 sm:gap-y-2">
+        <span className="hidden text-xs font-semibold uppercase tracking-wide text-gray-500 sm:inline">
           {t('footer.partners')}
         </span>
-        <div className="flex flex-wrap items-center justify-center gap-6">
+        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
           {PARTNERS.map(l => (
-            <LogoImg key={l.src} logo={l} className="h-7" />
+            <LogoImg key={l.src} logo={l} className="h-5 sm:h-7" />
           ))}
         </div>
       </div>

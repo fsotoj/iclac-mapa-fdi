@@ -9,7 +9,8 @@
     "sankey": "Sankey",
     "methodology": "Methodology",
     "downloads": "Data",
-    "contact": "Contact"
+    "contact": "Contact",
+    "menu": "Menu"
   },
   "downloads": {
     "title": "Our data",
@@ -61,6 +62,7 @@
     "coming_soon": "Coming soon",
     "all": "All",
     "clear": "Clear",
+    "close": "Close",
     "loading": "Loading data…"
   },
   "filter": {

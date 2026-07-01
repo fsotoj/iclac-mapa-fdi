@@ -35,7 +35,9 @@ export const DEFAULT_FILTERS: Filters = {
   includeConstruction: true,
   research: 'all',
   sectors: [],
-  view: 'cards',
+  // Map first; the cards ("fichas") panel opens on demand. Default 'cards' made
+  // the panel cover the map (and, on mobile, the total box) on load.
+  view: 'map',
   pieByCountry: false,
   pieMetric: 'count',
   query: '',

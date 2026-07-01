@@ -336,7 +336,7 @@ export default function MapView() {
   )
 
   return (
-    <div className="flex h-full w-full">
+    <div className="relative flex h-full w-full">
       {!loading && !error && (
         <FilterPanel countries={countries} yearMin={yearMin} yearMax={yearMax} />
       )}
@@ -345,10 +345,12 @@ export default function MapView() {
         {error && <div className="p-4 text-sm text-red-700">{error}</div>}
 
         {!loading && !error && (
-          <div className="flex h-full flex-1">
-            <div className="relative flex-1">
+          <div className="relative flex h-full flex-1">
+            {/* isolate traps Leaflet's control z-indexes (z~1000) inside the map
+                box so the fichas overlay (sibling) can sit above them on mobile. */}
+            <div className="relative isolate flex-1">
               {mapEl}
-              <div className="absolute left-4 top-4 z-[800] rounded-lg border border-white/50 bg-white/95 px-3 py-1.5 text-sm shadow-md backdrop-blur-md">
+              <div className="absolute left-2 top-2 z-[800] max-w-[calc(100%-7.5rem)] rounded-lg border border-white/50 bg-white/95 px-2.5 py-1.5 text-xs shadow-md backdrop-blur-md sm:left-4 sm:top-4 sm:max-w-[calc(100%-9rem)] sm:px-3 sm:text-sm">
                 <span className="font-medium">{t('filter.investments_count', { count: agg.count })}</span>
                 <span className="mx-2">·</span>
                 <span className="font-medium">{t('filter.total_value', { value: totalValue })}</span>
@@ -363,7 +365,7 @@ export default function MapView() {
                 onClick={() => setFilters({ view: showCards ? 'map' : 'cards' })}
                 aria-pressed={showCards}
                 title={t('view.cards')}
-                className={`absolute right-4 top-4 z-[800] flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm shadow-md transition ${
+                className={`absolute right-2 top-2 z-[800] flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm shadow-md transition sm:right-4 sm:top-4 ${
                   showCards
                     ? 'border-gray-900 bg-gray-900 text-white'
                     : 'border-white/50 bg-white/95 text-gray-700 backdrop-blur-md hover:bg-white'
@@ -376,7 +378,20 @@ export default function MapView() {
               </button>
             </div>
             {showCards && (
-              <aside className="w-80 shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-50">
+              <aside className="absolute inset-0 z-[840] w-full shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-50 md:static md:z-auto md:w-80">
+                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-2 md:hidden">
+                  <span className="text-sm font-semibold text-gray-800">{t('view.cards')}</span>
+                  <button
+                    type="button"
+                    onClick={() => setFilters({ view: 'map' })}
+                    aria-label={t('common.close')}
+                    className="flex h-8 w-8 items-center justify-center rounded text-gray-600 hover:bg-gray-200"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
+                    </svg>
+                  </button>
+                </div>
                 <ProjectDocsCards investments={filtered} lang={i18n.language} onLocate={handleLocate} />
               </aside>
             )}

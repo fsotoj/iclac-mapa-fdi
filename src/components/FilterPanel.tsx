@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFilters } from '@/hooks/useFilters'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import type { PieMetric, ResearchFilter } from '@/lib/filter'
 import YearRangeSlider from './YearRangeSlider'
 
@@ -91,7 +92,10 @@ function Segmented<T extends string>({
 export default function FilterPanel({ countries, yearMin, yearMax }: Props) {
   const { t } = useTranslation()
   const { filters, setFilters, reset } = useFilters()
-  const [collapsed, setCollapsed] = useState(false)
+  const isMobile = useIsMobile()
+  // Collapsed by default on phones so the map gets the full width; the thin rail
+  // stays as the affordance to reopen. Desktop keeps the panel open.
+  const [collapsed, setCollapsed] = useState(isMobile)
   const [countryOpen, setCountryOpen] = useState(true)
 
   if (collapsed) {
@@ -128,7 +132,14 @@ export default function FilterPanel({ countries, yearMin, yearMax }: Props) {
   const noneCountries = filters.countries.length === 1 && filters.countries[0] === NONE
 
   return (
-    <aside className="w-72 shrink-0 border-r border-gray-200 bg-white overflow-y-auto p-4 space-y-5 text-sm">
+    <>
+      {/* Mobile: dim the map behind the drawer; tap to close. */}
+      <div
+        className="fixed inset-0 z-[855] bg-black/30 md:hidden"
+        onClick={() => setCollapsed(true)}
+        aria-hidden
+      />
+      <aside className="absolute inset-y-0 left-0 z-[860] w-[85vw] max-w-xs shadow-2xl shrink-0 overflow-y-auto border-r border-gray-200 bg-white p-4 space-y-5 text-sm md:static md:z-auto md:w-72 md:max-w-none md:shadow-none">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-1.5">
           <button
@@ -246,6 +257,7 @@ export default function FilterPanel({ countries, yearMin, yearMax }: Props) {
         />
       </section>
 
-    </aside>
+      </aside>
+    </>
   )
 }

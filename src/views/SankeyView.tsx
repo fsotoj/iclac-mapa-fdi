@@ -215,7 +215,7 @@ export default function SankeyView() {
   const moneyEmpty = !empty && metric === 'money' && data.links.every(l => l.value === 0)
 
   return (
-    <div className="flex h-full w-full flex-col p-6">
+    <div className="flex h-full w-full flex-col p-3 sm:p-6">
       {/* Filter bar: investor / country / sector as dropdowns, metric on the right. */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <FilterDropdown label={t('sankey.investors')} count={filters.investors.length}>
