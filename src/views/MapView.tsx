@@ -4,7 +4,7 @@ import L from 'leaflet'
 import { useTranslation } from 'react-i18next'
 import type { Feature, Geometry } from 'geojson'
 import type { LatLngExpression, Layer, LeafletMouseEvent, Path, PathOptions } from 'leaflet'
-import type { CountryFeatureCollection, CountryProperties, Investment } from '@/types/data'
+import type { CountryFeatureCollection, CountryProperties, Investment, ResearchCase } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
 import { aggregateInvestments, applyFilters, distinctCountries, distinctSectors, yearBounds } from '@/lib/filter'
 import { useFilters } from '@/hooks/useFilters'
@@ -224,9 +224,13 @@ export default function MapView() {
       fetch('/data/investments.json').then(r => {
         if (!r.ok) throw new Error(`investments.json fetch failed: ${r.status}`)
         return r.json()
-      })
+      }),
+      // research_cases lives in its own (tiny) file; join it back by id. Popups,
+      // cards, table and search read inv.research_cases from the hydrated rows.
+      fetch('/data/research.json').then(r => (r.ok ? r.json() : {}))
     ])
-      .then(([g, inv]: [CountryFeatureCollection, Investment[]]) => {
+      .then(([g, inv, research]: [CountryFeatureCollection, Investment[], Record<string, ResearchCase[]>]) => {
+        for (const row of inv) row.research_cases = research[row.id] ?? []
         setGeo(g)
         setInvestments(inv)
         setLoading(false)

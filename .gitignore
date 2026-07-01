@@ -23,3 +23,4 @@ transformation_loading/
 
 # ETL output — regenerated from data/source/ via npm run etl
 public/data/investments.json
+public/data/research.json

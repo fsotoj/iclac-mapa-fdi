@@ -323,8 +323,23 @@ for (const [, rows] of candidateGroups) {
   })
 }
 
+// Split payload: research_cases is heavy (~13 MB, 71% of the file) and repeats
+// across the multi-site rows of each investment. Strip it from investments.json
+// (map/sankey never render it) and emit it deduped-by-id in research.json, which
+// the Fichas panel / popups load and join on id. See docs/generales/pipeline_datos.md.
+const researchById = {}
+for (const row of output) {
+  if (row.has_research && Array.isArray(row.research_cases) && row.research_cases.length && !researchById[row.id]) {
+    researchById[row.id] = row.research_cases
+  }
+}
+const leanOutput = output.map(({ research_cases, ...rest }) => rest)
+const researchPath = resolve(dirname(outputPath), 'research.json')
+
 mkdirSync(dirname(outputPath), { recursive: true })
-writeFileSync(outputPath, JSON.stringify(output), 'utf8')
+writeFileSync(outputPath, JSON.stringify(leanOutput), 'utf8')
+writeFileSync(researchPath, JSON.stringify(researchById), 'utf8')
+console.log(`Research: ${researchPath} (${Object.keys(researchById).length} investments, ${(JSON.stringify(researchById).length / 1024).toFixed(1)} KB)`)
 
 console.log('=== ETL stats ===')
 for (const [k, v] of Object.entries(stats)) console.log(`  ${k}: ${v}`)
@@ -333,7 +348,7 @@ for (const [k, v] of [...sectorMap.entries()].sort((a, b) => b[1] - a[1])) {
   console.log(`  ${k}: ${v}`)
 }
 console.log(`\nOutput: ${outputPath}`)
-console.log(`File size: ${(JSON.stringify(output).length / 1024).toFixed(1)} KB`)
+console.log(`File size: ${(JSON.stringify(leanOutput).length / 1024).toFixed(1)} KB`)
 
 // --- Investor canonical map: data/schema/investors_map.csv -> investors_map.json ---
 // Keyed by investor_raw (the join key). Consumed by the Sankey. Regenerated here

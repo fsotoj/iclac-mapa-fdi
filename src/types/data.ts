@@ -35,7 +35,9 @@ type InvestmentBase = {
   origin_of_seller: string | null
   stake: number | null
   has_research: boolean
-  research_cases: ResearchCase[]
+  // Split out to research.json (keyed by id) to keep investments.json lean; the map
+  // hydrates it after load, so it's absent on freshly-parsed rows (e.g. in the Sankey).
+  research_cases?: ResearchCase[]
   vector_raw: string | number | null
 }
 

@@ -45,6 +45,7 @@ const Card = ({ inv, lang, onLocate }: { inv: Investment; lang: string; onLocate
   const { t } = useTranslation()
   const [showStudies, setShowStudies] = useState(false)
   const meta = [inv.investor, inv.year].filter(Boolean).join(' · ')
+  const cases = inv.research_cases ?? []
 
   return (
     <div className="group rounded-md border border-gray-200 bg-white p-2.5 shadow-sm transition hover:-translate-y-px hover:border-gray-300 hover:shadow-md">
@@ -77,7 +78,7 @@ const Card = ({ inv, lang, onLocate }: { inv: Investment; lang: string; onLocate
         {inv.location && <span className="text-gray-400"> · {inv.location}</span>}
       </div>
 
-      {inv.research_cases.length > 0 && (
+      {cases.length > 0 && (
         <div className="mt-2 pl-[18px]">
           <button
             type="button"
@@ -85,12 +86,12 @@ const Card = ({ inv, lang, onLocate }: { inv: Investment; lang: string; onLocate
             className="flex items-center gap-1.5 text-xs font-semibold text-teal-700 hover:text-teal-900"
           >
             <DocIcon />
-            {t('list.studies')} ({inv.research_cases.length})
+            {t('list.studies')} ({cases.length})
             <Chevron open={showStudies} />
           </button>
           {showStudies && (
             <ul className="mt-1 space-y-1 text-xs">
-              {inv.research_cases.map((rc, i) => (
+              {cases.map((rc, i) => (
                 <li key={i}>
                   {rc.link ? (
                     <a

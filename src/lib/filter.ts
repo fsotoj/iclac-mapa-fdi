@@ -59,7 +59,7 @@ const matchesQuery = (inv: Investment, q: string): boolean => {
       inv.origin_of_seller,
       inv.year,
       inv.investment_musd,
-      ...inv.research_cases.map(c => c.caso)
+      ...(inv.research_cases ?? []).map(c => c.caso)
     ]
       .filter(v => v !== null && v !== undefined)
       .join(' ')

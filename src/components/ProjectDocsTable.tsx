@@ -100,7 +100,8 @@ export default function ProjectDocsTable({ investments, lang, onLocate }: Props)
                 </thead>
                 <tbody>
                   {group.projects.map((inv, idx) => {
-                    const hasStudies = inv.research_cases.length > 0
+                    const cases = inv.research_cases ?? []
+                    const hasStudies = cases.length > 0
                     const rowOpen = openRows.has(inv.id)
                     const zebra = idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
                     return (
@@ -152,7 +153,7 @@ export default function ProjectDocsTable({ investments, lang, onLocate }: Props)
                         {hasStudies && rowOpen && (
                           <tr className={zebra}>
                             <td colSpan={7} className="p-0">
-                              <StudyLinks cases={inv.research_cases} note={t('list.studies_network')} />
+                              <StudyLinks cases={cases} note={t('list.studies_network')} />
                             </td>
                           </tr>
                         )}

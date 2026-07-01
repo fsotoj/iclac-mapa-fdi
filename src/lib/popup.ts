@@ -89,12 +89,13 @@ export const buildInvestmentPopup = (inv: Investment, lang: Lang): string => {
 
   const bookIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="14" height="14" style="flex-shrink:0"><path fill="currentColor" d="M19 10h7v2h-7zm0 5h7v2h-7zm0 5h7v2h-7zM6 10h7v2H6zm0 5h7v2H6zm0 5h7v2H6z"/><path fill="currentColor" d="M28 5H4a2.002 2.002 0 0 0-2 2v18a2.002 2.002 0 0 0 2 2h24a2.002 2.002 0 0 0 2-2V7a2.002 2.002 0 0 0-2-2M4 7h11v18H4Zm13 18V7h11v18Z"/></svg>`
 
+  const cases = inv.research_cases ?? []
   const research =
-    inv.research_cases.length > 0
+    cases.length > 0
       ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
-          <div style="font-size:10px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">${L.research} (${inv.research_cases.length})</div>
+          <div style="font-size:10px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">${L.research} (${cases.length})</div>
           <div style="display:flex;flex-wrap:wrap;gap:6px">
-            ${inv.research_cases
+            ${cases
               .map((rc, i) => {
                 const title = escape(rc.caso)
                 const inner = `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;background:#f3f4f6;color:#374151;font-size:11px;font-weight:500">${bookIcon}<span>${i + 1}</span></span>`
