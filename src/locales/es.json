@@ -15,7 +15,9 @@
     "title": "Nuestros datos",
     "description": "<p>El Núcleo Milenio sobre los Impactos de China en América Latina y el Caribe (ICLAC), el Diálogo Interamericano y nuestros socios ponen a disposición de investigadores y usuarios del Repositorio los datos de inversión extranjera directa china.</p><p>El dataset completo —todas las inversiones de todos los países en un solo archivo— está disponible para descarga abajo. A medida que agreguemos nuevos países, se incorporarán al mismo conjunto de datos.</p><p>Le invitamos a enviar contribuciones o correcciones a través de la página Contacto. Agradecemos su ayuda para mantener los datos lo más precisos y actualizados posible.</p>",
     "link": "Descargar dataset completo",
-    "format": "Formato JSON · todas las inversiones, todos los países"
+    "preparing": "Preparando descarga…",
+    "error": "No se pudo generar la descarga. Reintenta.",
+    "format": "Formato JSON · todas las inversiones (con estudios de caso), todos los países"
   },
   "contact": {
     "title": "Contáctenos",
