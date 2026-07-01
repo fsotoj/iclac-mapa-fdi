@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactECharts from 'echarts-for-react/lib/core'
 import * as echarts from 'echarts/core'
@@ -121,7 +121,10 @@ export default function SankeyView() {
     () => new Intl.NumberFormat(i18n.language === 'cn' ? 'zh' : i18n.language, { maximumFractionDigits: 0 }),
     [i18n.language]
   )
-  const fmtVal = (v: number): string => (metric === 'money' ? `US$ ${fmt.format(v)} MM` : fmt.format(v))
+  const fmtVal = useCallback(
+    (v: number): string => (metric === 'money' ? `US$ ${fmt.format(v)} MM` : fmt.format(v)),
+    [metric, fmt]
+  )
 
   const option = useMemo<EChartsOption>(
     () => ({
@@ -158,7 +161,7 @@ export default function SankeyView() {
         }
       ]
     }),
-    [data, labelOf, metric, fmt]
+    [data, labelOf, fmtVal]
   )
 
   // Click a node to toggle its filter: investor (by company_id), country, sector.

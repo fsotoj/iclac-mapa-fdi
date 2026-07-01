@@ -244,18 +244,21 @@ export default function MapView() {
   // Key only on fields applyFilters reads. view/pie* live in the same filters
   // object but don't change the result set; without this, every cards toggle
   // produces a new `filtered` ref and rebuilds every map marker (visible lag).
+  const countriesKey = filters.countries.join(',')
+  const typesKey = filters.types.join(',')
+  const sectorsKey = filters.sectors.join(',')
   const filtered = useMemo(
     () => applyFilters(investments, filters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       investments,
-      filters.countries.join(','),
+      countriesKey,
       filters.yearMin,
       filters.yearMax,
-      filters.types.join(','),
+      typesKey,
       filters.includeConstruction,
       filters.research,
-      filters.sectors.join(','),
+      sectorsKey,
       filters.query
     ]
   )

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { CompanyOption, SankeyMetric } from '@/lib/sankey'
 
@@ -24,8 +24,11 @@ export default function InvestorFilter({ options, selected, onChange, metric }: 
     () => new Intl.NumberFormat(i18n.language === 'cn' ? 'zh' : i18n.language, { maximumFractionDigits: 0 }),
     [i18n.language]
   )
-  const valueOf = (o: CompanyOption): number => (metric === 'money' ? o.total : o.count)
-  const logMax = useMemo(() => Math.log1p(Math.max(0, ...options.map(valueOf))), [options, metric])
+  const valueOf = useCallback(
+    (o: CompanyOption): number => (metric === 'money' ? o.total : o.count),
+    [metric]
+  )
+  const logMax = useMemo(() => Math.log1p(Math.max(0, ...options.map(valueOf))), [options, valueOf])
   const barPct = (o: CompanyOption): number => {
     const v = valueOf(o)
     return v <= 0 || logMax === 0 ? 0 : (Math.log1p(v) / logMax) * 100
@@ -37,7 +40,7 @@ export default function InvestorFilter({ options, selected, onChange, metric }: 
     if (sortBy === 'value') sorted.sort((a, b) => valueOf(b) - valueOf(a) || a.name.localeCompare(b.name))
     else sorted.sort((a, b) => a.name.localeCompare(b.name))
     return sorted
-  }, [options, query, sortBy, metric])
+  }, [options, query, sortBy, valueOf])
 
   const toggle = (id: string) =>
     onChange(selectedSet.has(id) ? selected.filter(x => x !== id) : [...selected, id])
