@@ -148,10 +148,20 @@ export default function SankeyView() {
         {
           type: 'sankey',
           draggable: false,
+          // nodeGap 0 so every column ends at the same height: gaps don't stack.
+          // Columns carry the same total (216.819 MM) but have different node counts
+          // (21 investors vs 8 sectors); any positive gap makes the investor column
+          // look "taller". A white node border separates touching nodes instead —
+          // borders don't consume layout height, so column heights stay equal.
+          nodeGap: 0,
           data: data.nodes.map(n => ({
             name: n.name,
             depth: n.depth,
-            itemStyle: { color: n.depth === 2 ? sectorColor(n.name) : LEVEL_COLOR[n.depth] }
+            itemStyle: {
+              color: n.depth === 2 ? sectorColor(n.name) : LEVEL_COLOR[n.depth],
+              borderColor: '#fff',
+              borderWidth: 1
+            }
           })),
           links: data.links,
           lineStyle: { color: 'gradient', opacity: 0.25, curveness: 0.5 },
@@ -162,7 +172,12 @@ export default function SankeyView() {
               const name = (p as { name?: string }).name
               return name ? labelOf.get(name) ?? name : ''
             }
-          }
+          },
+          // (A) With nodeGap 0 the tail investor labels collide; hideOverlap keeps
+          // every label that fits and drops only the overlapping ones (better than a
+          // fixed size threshold). (C) Hovering a node re-shows its label on demand.
+          labelLayout: { hideOverlap: true },
+          emphasis: { label: { show: true } }
         }
       ]
     }),
