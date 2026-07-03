@@ -99,7 +99,14 @@
     "by_project": "项目",
     "by_money": "金额",
     "collapse": "隐藏筛选",
-    "expand": "显示筛选"
+    "expand": "显示筛选",
+    "group_investments": "投资",
+    "group_investors": "投资方",
+    "group_display": "显示",
+    "company": "企业",
+    "none_selected": "无",
+    "n_selected_one": "已选 {{count}} 项",
+    "n_selected_other": "已选 {{count}} 项"
   },
   "view": {
     "map": "地图",

@@ -99,7 +99,14 @@
     "by_project": "Proyectos",
     "by_money": "Monto",
     "collapse": "Ocultar filtros",
-    "expand": "Mostrar filtros"
+    "expand": "Mostrar filtros",
+    "group_investments": "Inversiones",
+    "group_investors": "Inversores",
+    "group_display": "Visualización",
+    "company": "Empresa",
+    "none_selected": "Ninguno",
+    "n_selected_one": "{{count}} seleccionado",
+    "n_selected_other": "{{count}} seleccionados"
   },
   "view": {
     "map": "Mapa",

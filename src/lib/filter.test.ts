@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { aggregateInvestments, applyFilters, DEFAULT_FILTERS, type Filters } from './filter'
+import type { InvestorMap } from './sankey'
 import { makeInv } from './testFactory'
 
 const withFilters = (over: Partial<Filters>): Filters => ({ ...DEFAULT_FILTERS, ...over })
@@ -64,5 +65,43 @@ describe('applyFilters', () => {
   it('filters by query (accent-insensitive, matches investor)', () => {
     const q = [makeInv({ id: 'x', investor: 'Sinopec' }), makeInv({ id: 'y', investor: 'Huawei' })]
     expect(applyFilters(q, withFilters({ query: 'sino' })).map(r => r.id)).toEqual(['x'])
+  })
+
+  describe('with the investor map (third argument)', () => {
+    const MAP: InvestorMap = {
+      COFCO: { company_id: 'cofco', company_canonical: 'COFCO', ownership: 'SASAC' },
+      'COFCO and Hopu Investments': {
+        company_id: 'cofco-and-hopu-investments',
+        company_canonical: 'COFCO and Hopu Investments',
+        ownership: 'MIXED',
+        is_consortium: true,
+        members: ['cofco', 'hopu-investments']
+      },
+      Didi: { company_id: 'didi', company_canonical: 'Didi', ownership: 'POE' }
+    }
+    const rows = [
+      makeInv({ id: 'a', investor: 'COFCO' }),
+      makeInv({ id: 'b', investor: 'COFCO and Hopu Investments' }),
+      makeInv({ id: 'c', investor: 'Didi' }),
+      makeInv({ id: 'd', investor: 'Sin Mapear' })
+    ]
+
+    it('without the map, investor dimensions are ignored (legacy behavior)', () => {
+      expect(applyFilters(rows, withFilters({ investors: ['cofco'], ownership: ['POE'] }))).toHaveLength(4)
+    })
+
+    it('selecting a company keeps its rows and consortiums it participates in', () => {
+      const out = applyFilters(rows, withFilters({ investors: ['cofco'] }), MAP)
+      expect(out.map(r => r.id)).toEqual(['a', 'b'])
+    })
+
+    it('ownership filter treats unmapped investors as UNKNOWN', () => {
+      expect(applyFilters(rows, withFilters({ ownership: ['UNKNOWN'] }), MAP).map(r => r.id)).toEqual(['d'])
+    })
+
+    it('consortium mode none drops consortium rows, composing with other filters', () => {
+      const out = applyFilters(rows, withFilters({ consortium: 'none', ownership: ['SASAC'] }), MAP)
+      expect(out.map(r => r.id)).toEqual(['a'])
+    })
   })
 })

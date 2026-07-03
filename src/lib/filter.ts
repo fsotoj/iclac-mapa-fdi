@@ -1,5 +1,5 @@
 import type { Investment } from '@/types/data'
-import type { ConsortiumMode } from './sankey'
+import { scopeInvestments, type ConsortiumMode, type InvestorMap } from './sankey'
 
 export type ResearchFilter = 'all' | 'yes' | 'no'
 
@@ -23,11 +23,10 @@ export type Filters = {
   pieByCountry: boolean
   pieMetric: PieMetric
   query: string
-  // Sankey-only: selected company_ids. Applied in SankeyView (needs the canonical
-  // map), NOT in applyFilters — the map view ignores it.
+  // Investor-map dimensions (selected company_ids, ownership values, consortium
+  // mode). Applied only when applyFilters receives the canonical map — callers
+  // without it (tests, legacy paths) keep the investment-only behavior.
   investors: string[]
-  // Sankey-only, same reason: ownership values (SASAC/SOE/POE/MIXED/UNKNOWN)
-  // and consortium mode come from the investor map.
   ownership: string[]
   consortium: ConsortiumMode
 }
@@ -76,8 +75,8 @@ const matchesQuery = (inv: Investment, q: string): boolean => {
   return haystack.includes(norm(q))
 }
 
-export const applyFilters = (data: Investment[], f: Filters): Investment[] => {
-  return data.filter(inv => {
+export const applyFilters = (data: Investment[], f: Filters, map?: InvestorMap): Investment[] => {
+  const base = data.filter(inv => {
     if (f.countries.length > 0 && (!inv.country || !f.countries.includes(inv.country))) return false
     if (f.yearMin !== null && (inv.year === null || inv.year < f.yearMin)) return false
     if (f.yearMax !== null && (inv.year === null || inv.year > f.yearMax)) return false
@@ -96,6 +95,13 @@ export const applyFilters = (data: Investment[], f: Filters): Investment[] => {
     if (f.query && !matchesQuery(inv, f.query)) return false
 
     return true
+  })
+  // Investor-map dimensions need the canonical map to resolve raw names.
+  if (!map) return base
+  return scopeInvestments(base, map, {
+    investors: f.investors,
+    ownership: f.ownership,
+    consortium: f.consortium
   })
 }
 

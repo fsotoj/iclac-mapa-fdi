@@ -82,19 +82,23 @@ export default function YearRangeSlider({
   return (
     <div className="space-y-2">
       <div className="relative h-4 text-xs">
-        {/* Bounds at the edges; selected labels track their thumbs. On collision
-            (selected near a bound) the bound is hidden so the selected wins. */}
-        {leftPct > 14 && <span className="absolute left-0 text-gray-400">{min}</span>}
-        {rightPct < 86 && <span className="absolute right-0 text-gray-400">{max}</span>}
+        {/* Bounds at the edges; selected labels anchor OUTWARD from their thumb
+            (min ends at its thumb, max starts at its thumb) so they diverge
+            instead of drifting/colliding as the thumbs move. Position clamps at
+            the container edges; a bound hides when the selected label reaches it. */}
+        {leftPct > 25 && <span className="absolute left-0 text-gray-400">{min}</span>}
+        {rightPct < 75 && <span className="absolute right-0 text-gray-400">{max}</span>}
+        {/* Outer min/max keep the pair from overlapping when both thumbs clamp
+            against the same container edge (labels stack side by side instead). */}
         <span
-          className="absolute -translate-x-1/2 font-semibold text-gray-900"
-          style={{ left: `${leftPct}%` }}
+          className="absolute w-9 pr-1 text-right font-semibold text-gray-900"
+          style={{ left: `min(max(0%, calc(${leftPct}% - 2.25rem)), calc(100% - 4.5rem))` }}
         >
           {localMin}
         </span>
         <span
-          className="absolute -translate-x-1/2 font-semibold text-gray-900"
-          style={{ left: `${rightPct}%` }}
+          className="absolute w-9 pl-1 text-left font-semibold text-gray-900"
+          style={{ left: `max(min(calc(100% - 2.25rem), ${rightPct}%), 2.25rem)` }}
         >
           {localMax}
         </span>
@@ -134,18 +138,18 @@ export default function YearRangeSlider({
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-1.5">
         <button
           onClick={togglePlay}
-          className="flex-1 px-2 py-1 rounded text-xs bg-gray-900 text-white hover:bg-gray-700"
+          className="flex-1 rounded px-2 py-0.5 text-[11px] bg-gray-900 text-white hover:bg-gray-700"
         >
           {playing ? '⏸ Pausa' : '▶ Play'}
         </button>
         <button
           onClick={reset}
-          className="px-2 py-1 rounded text-xs border border-gray-300 hover:bg-gray-100"
+          className="rounded px-2 py-0.5 text-[11px] border border-gray-300 hover:bg-gray-100"
         >
-          Reset
+          ↺ Reset
         </button>
       </div>
     </div>

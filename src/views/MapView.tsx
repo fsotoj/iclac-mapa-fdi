@@ -7,6 +7,7 @@ import type { LatLngExpression, Layer, LeafletMouseEvent, Path, PathOptions } fr
 import type { CountryFeatureCollection, CountryProperties, Investment, ResearchCase } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
 import { aggregateInvestments, applyFilters, distinctCountries, distinctSectors, yearBounds } from '@/lib/filter'
+import { distinctCompanies, type InvestorMap } from '@/lib/sankey'
 import { useFilters } from '@/hooks/useFilters'
 import FilterPanel from '@/components/FilterPanel'
 import SectorLegend from '@/components/SectorLegend'
@@ -209,6 +210,7 @@ export default function MapView() {
   const { t, i18n } = useTranslation()
   const [geo, setGeo] = useState<CountryFeatureCollection | null>(null)
   const [investments, setInvestments] = useState<Investment[]>([])
+  const [investorMap, setInvestorMap] = useState<InvestorMap>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [target, setTarget] = useState<LocateTarget | null>(null)
@@ -227,12 +229,15 @@ export default function MapView() {
       }),
       // research_cases lives in its own (tiny) file; join it back by id. Popups,
       // cards, table and search read inv.research_cases from the hydrated rows.
-      fetch('/data/research.json').then(r => (r.ok ? r.json() : {}))
+      fetch('/data/research.json').then(r => (r.ok ? r.json() : {})),
+      // Canonical investor map: optional, unmapped names just fall back to raw.
+      fetch('/data/investors_map.json').then(r => (r.ok ? r.json() : {}))
     ])
-      .then(([g, inv, research]: [CountryFeatureCollection, Investment[], Record<string, ResearchCase[]>]) => {
+      .then(([g, inv, research, m]: [CountryFeatureCollection, Investment[], Record<string, ResearchCase[]>, InvestorMap]) => {
         for (const row of inv) row.research_cases = research[row.id] ?? []
         setGeo(g)
         setInvestments(inv)
+        setInvestorMap(m)
         setLoading(false)
       })
       .catch(err => {
@@ -244,6 +249,7 @@ export default function MapView() {
 
   const countries = useMemo(() => distinctCountries(investments), [investments])
   const sectors = useMemo(() => distinctSectors(investments), [investments])
+  const companies = useMemo(() => distinctCompanies(investments, investorMap), [investments, investorMap])
   const [yearMin, yearMax] = useMemo(() => yearBounds(investments), [investments])
   // Key only on fields applyFilters reads. view/pie* live in the same filters
   // object but don't change the result set; without this, every cards toggle
@@ -251,11 +257,14 @@ export default function MapView() {
   const countriesKey = filters.countries.join(',')
   const typesKey = filters.types.join(',')
   const sectorsKey = filters.sectors.join(',')
+  const investorsKey = filters.investors.join(',')
+  const ownershipKey = filters.ownership.join(',')
   const filtered = useMemo(
-    () => applyFilters(investments, filters),
+    () => applyFilters(investments, filters, investorMap),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       investments,
+      investorMap,
       countriesKey,
       filters.yearMin,
       filters.yearMax,
@@ -263,7 +272,10 @@ export default function MapView() {
       filters.includeConstruction,
       filters.research,
       sectorsKey,
-      filters.query
+      filters.query,
+      investorsKey,
+      ownershipKey,
+      filters.consortium
     ]
   )
 
@@ -338,7 +350,7 @@ export default function MapView() {
   return (
     <div className="relative flex h-full w-full">
       {!loading && !error && (
-        <FilterPanel countries={countries} yearMin={yearMin} yearMax={yearMax} />
+        <FilterPanel countries={countries} yearMin={yearMin} yearMax={yearMax} companies={companies} />
       )}
       <div className="relative flex flex-1 flex-col overflow-hidden">
         {loading && <div className="p-4 text-sm">{t('common.loading')}</div>}

@@ -3,12 +3,15 @@ import { useTranslation } from 'react-i18next'
 import { useFilters } from '@/hooks/useFilters'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import type { PieMetric, ResearchFilter } from '@/lib/filter'
+import { matchesCompany, type CompanyOption, type ConsortiumMode } from '@/lib/sankey'
+import CollapsibleSection from './CollapsibleSection'
 import YearRangeSlider from './YearRangeSlider'
 
 type Props = {
   countries: string[]
   yearMin: number
   yearMax: number
+  companies: CompanyOption[]
 }
 
 // Shared 20×20 stroke icons. One viewBox, consistent weight across the rail.
@@ -25,21 +28,37 @@ const IconTag = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M9.56
 const IconBuilding = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h9v18h-9V3Zm9 6h6v12h-6M7.5 6.75h.008v.008H7.5V6.75Zm0 3h.008v.008H7.5V9.75Zm0 3h.008v.008H7.5v-.008Z" />)
 const IconDoc = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25M6.75 21h10.5a2.25 2.25 0 0 0 2.25-2.25V8.25L13.5 2.25H6.75A2.25 2.25 0 0 0 4.5 4.5v14.25A2.25 2.25 0 0 0 6.75 21Z" />)
 const IconChart = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />)
-const IconChevron = (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-4 w-4 shrink-0">
-    <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
-  </svg>
-)
+const IconBriefcase = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.1a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25v-4.1M12 12.75h.008v.008H12v-.008ZM3.75 9.75A2.25 2.25 0 0 1 6 7.5h12a2.25 2.25 0 0 1 2.25 2.25v2.25a17.9 17.9 0 0 1-8.25 2 17.9 17.9 0 0 1-8.25-2V9.75ZM15 7.5V6a2.25 2.25 0 0 0-2.25-2.25h-1.5A2.25 2.25 0 0 0 9 6v1.5" />)
+const IconBank = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M12 3 2.25 8.25h19.5L12 3Zm-7.5 7.5V18m5-7.5V18m5-7.5V18m5-7.5V18M2.25 21h19.5" />)
+const IconGroup = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />)
 
-// Rail entries mirror the panel sections top-to-bottom. label = i18n key for tooltip.
-const RAIL: { key: string; node: ReactNode }[] = [
+// Rail entries mirror the panel sections top-to-bottom; null = group divider.
+const RAIL: ({ key: string; node: ReactNode } | null)[] = [
   { key: 'filter.country', node: IconGlobe },
   { key: 'filter.year', node: IconCalendar },
   { key: 'filter.project_type', node: IconTag },
   { key: 'filter.construction', node: IconBuilding },
   { key: 'filter.case_studies', node: IconDoc },
+  null,
+  { key: 'filter.company', node: IconBriefcase },
+  { key: 'sankey.ownership', node: IconBank },
+  { key: 'sankey.consortiums', node: IconGroup },
+  null,
   { key: 'filter.map_shows', node: IconChart }
 ]
+
+const OWNERSHIP_VALUES = ['SASAC', 'SOE', 'POE', 'MIXED', 'UNKNOWN'] as const
+const CONSORTIUM_MODES: ConsortiumMode[] = ['all', 'only', 'none']
+
+// Thin uppercase group separator ("Inversiones" / "Inversores" / "Visualización").
+function GroupHeader({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2 pt-1">
+      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</span>
+      <div className="h-px flex-1 bg-gray-200" />
+    </div>
+  )
+}
 
 const PROJECT_TYPES = ['Adquisición', 'Greenfield'] as const
 
@@ -89,14 +108,14 @@ function Segmented<T extends string>({
   )
 }
 
-export default function FilterPanel({ countries, yearMin, yearMax }: Props) {
+export default function FilterPanel({ countries, yearMin, yearMax, companies }: Props) {
   const { t } = useTranslation()
   const { filters, setFilters, reset } = useFilters()
   const isMobile = useIsMobile()
   // Collapsed by default on phones so the map gets the full width; the thin rail
   // stays as the affordance to reopen. Desktop keeps the panel open.
   const [collapsed, setCollapsed] = useState(isMobile)
-  const [countryOpen, setCountryOpen] = useState(true)
+  const [companyQuery, setCompanyQuery] = useState('')
 
   if (collapsed) {
     return (
@@ -110,17 +129,21 @@ export default function FilterPanel({ countries, yearMin, yearMax }: Props) {
           {IconChevronRight}
         </button>
         <div className="my-1 h-px w-6 bg-gray-200" />
-        {RAIL.map(r => (
-          <button
-            key={r.key}
-            onClick={() => setCollapsed(false)}
-            title={t(r.key)}
-            aria-label={t(r.key)}
-            className="flex h-9 w-9 items-center justify-center rounded text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-          >
-            {r.node}
-          </button>
-        ))}
+        {RAIL.map((r, i) =>
+          r === null ? (
+            <div key={`div-${i}`} className="my-1 h-px w-6 bg-gray-200" />
+          ) : (
+            <button
+              key={r.key}
+              onClick={() => setCollapsed(false)}
+              title={t(r.key)}
+              aria-label={t(r.key)}
+              className="flex h-9 w-9 items-center justify-center rounded text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+            >
+              {r.node}
+            </button>
+          )
+        )}
       </aside>
     )
   }
@@ -160,17 +183,18 @@ export default function FilterPanel({ countries, yearMin, yearMax }: Props) {
         </button>
       </div>
 
-      <section>
-        <button
-          type="button"
-          onClick={() => setCountryOpen(o => !o)}
-          aria-expanded={countryOpen}
-          className="mb-1 flex w-full items-center justify-between text-xs font-medium text-gray-600 hover:text-gray-900"
-        >
-          <span>{t('filter.country')}</span>
-          <span className={`transition-transform ${countryOpen ? 'rotate-180' : ''}`}>{IconChevron}</span>
-        </button>
-        {countryOpen && (
+      <GroupHeader label={t('filter.group_investments')} />
+
+      <CollapsibleSection
+        label={t('filter.country')}
+        summary={
+          allCountries
+            ? t('common.all')
+            : noneCountries
+              ? t('filter.none_selected')
+              : t('filter.n_selected', { count: filters.countries.length })
+        }
+      >
         <div className="max-h-40 overflow-y-auto rounded border border-gray-300 p-2 space-y-1">
           <label className="flex items-center gap-2 border-b border-gray-100 pb-1 font-medium text-gray-700">
             <input
@@ -198,8 +222,7 @@ export default function FilterPanel({ countries, yearMin, yearMax }: Props) {
             </label>
           ))}
         </div>
-        )}
-      </section>
+      </CollapsibleSection>
 
       <section>
         <label className="block text-xs font-medium text-gray-600 mb-2">{t('filter.year')}</label>
@@ -247,6 +270,84 @@ export default function FilterPanel({ countries, yearMin, yearMax }: Props) {
           onPick={opt => setFilters({ research: opt })}
         />
       </section>
+
+      <GroupHeader label={t('filter.group_investors')} />
+
+      <CollapsibleSection
+        label={t('filter.company')}
+        summary={
+          filters.investors.length === 0 ? t('common.all') : t('filter.n_selected', { count: filters.investors.length })
+        }
+      >
+        <input
+          type="text"
+          value={companyQuery}
+          onChange={e => setCompanyQuery(e.target.value)}
+          placeholder={t('list.search')}
+          className="mb-1 w-full rounded border border-gray-300 px-2 py-1 text-xs focus:border-teal-500 focus:outline-none"
+        />
+        <div className="max-h-40 overflow-y-auto rounded border border-gray-300 p-2 space-y-1">
+          {filters.investors.length > 0 && (
+            <button
+              onClick={() => setFilters({ investors: [] })}
+              className="mb-1 text-[11px] text-gray-500 underline hover:text-gray-900"
+            >
+              {t('common.clear')}
+            </button>
+          )}
+          {companies
+            .filter(c => matchesCompany(c, companyQuery))
+            .map(c => (
+              <label
+                key={c.id}
+                className="flex items-center gap-2"
+                title={c.memberNames ? `${c.name} — ${t('sankey.consortium_members')}: ${c.memberNames.join(', ')}` : c.name}
+              >
+                <input
+                  type="checkbox"
+                  checked={filters.investors.includes(c.id)}
+                  onChange={() => setFilters({ investors: toggleInArray(filters.investors, c.id) })}
+                />
+                <span className="min-w-0 flex-1 truncate">{c.name}</span>
+              </label>
+            ))}
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        label={t('sankey.ownership')}
+        summary={
+          filters.ownership.length === 0 ? t('common.all') : t('filter.n_selected', { count: filters.ownership.length })
+        }
+      >
+        <div className="rounded border border-gray-300 p-2 space-y-1">
+          {OWNERSHIP_VALUES.map(o => (
+            <label key={o} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={filters.ownership.length === 0 || filters.ownership.includes(o)}
+                onChange={() => {
+                  const base = filters.ownership.length === 0 ? [...OWNERSHIP_VALUES] : filters.ownership
+                  const next = toggleInArray(base, o)
+                  setFilters({ ownership: next.length === OWNERSHIP_VALUES.length ? [] : next })
+                }}
+              />
+              <span className="min-w-0 flex-1 truncate">{t(`sankey.own_${o.toLowerCase()}`, o)}</span>
+            </label>
+          ))}
+        </div>
+      </CollapsibleSection>
+
+      <section>
+        <label className="mb-1 block text-xs font-medium text-gray-600">{t('sankey.consortiums')}</label>
+        <Segmented
+          items={CONSORTIUM_MODES.map(m => ({ value: m, label: t(`sankey.cons_${m}`) }))}
+          isActive={m => filters.consortium === m}
+          onPick={m => setFilters({ consortium: m })}
+        />
+      </section>
+
+      <GroupHeader label={t('filter.group_display')} />
 
       <section>
         <label className="mb-1 block text-xs font-medium text-gray-600">{t('filter.map_shows')}</label>

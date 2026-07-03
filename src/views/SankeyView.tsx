@@ -8,7 +8,7 @@ import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsOption } from 'echarts'
 import type { Investment } from '@/types/data'
 import type { ConsortiumMode, InvestorMap, SankeyMetric } from '@/lib/sankey'
-import { buildSankeyData, distinctCompanies, scopeInvestments } from '@/lib/sankey'
+import { buildSankeyData, distinctCompanies } from '@/lib/sankey'
 import { sectorColor } from '@/lib/sectors'
 import { applyFilters, distinctSectors, distinctCountries, yearBounds } from '@/lib/filter'
 import { useFilters } from '@/hooks/useFilters'
@@ -103,18 +103,9 @@ export default function SankeyView() {
   const yearActive = yMin > yearMin || yMax < yearMax
   const nameToId = useMemo(() => new Map(companies.map(c => [c.name, c.id])), [companies])
 
-  // Shares the map's URL filters (country/year/sector/type/construction), then
-  // applies the Sankey-only dimensions (investor selection, ownership, consortium
-  // mode) on top — these need the canonical map, so the map view ignores them.
-  const scoped = useMemo(
-    () =>
-      scopeInvestments(applyFilters(investments, filters), map, {
-        investors: filters.investors,
-        ownership: filters.ownership,
-        consortium: filters.consortium
-      }),
-    [investments, filters, map]
-  )
+  // Shared URL filters plus the investor-map dimensions, all inside applyFilters
+  // (it scopes by investor/ownership/consortium when given the canonical map).
+  const scoped = useMemo(() => applyFilters(investments, filters, map), [investments, filters, map])
 
   // With a selection, show everything it matches (selected companies plus the
   // consortiums they participate in) — never bucket a selection into "others".
