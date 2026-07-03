@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MapContainer, TileLayer, GeoJSON, ZoomControl, useMap } from 'react-leaflet'
+import { Link, useLocation } from 'react-router-dom'
 import L from 'leaflet'
 import { useTranslation } from 'react-i18next'
 import type { Feature, Geometry } from 'geojson'
 import type { LatLngExpression, Layer, LeafletMouseEvent, Path, PathOptions } from 'leaflet'
 import type { CountryFeatureCollection, CountryProperties, Investment, ResearchCase } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
-import { aggregateInvestments, applyFilters, distinctCountries, distinctSectors, yearBounds } from '@/lib/filter'
+import { activeFilterCount, aggregateInvestments, applyFilters, distinctCountries, distinctSectors, yearBounds } from '@/lib/filter'
 import { distinctCompanies, type InvestorMap } from '@/lib/sankey'
 import { useFilters } from '@/hooks/useFilters'
 import FilterPanel from '@/components/FilterPanel'
@@ -215,6 +216,7 @@ export default function MapView() {
   const [error, setError] = useState<string | null>(null)
   const [target, setTarget] = useState<LocateTarget | null>(null)
   const { filters, setFilters } = useFilters()
+  const location = useLocation()
 
   const handleLocate = useCallback((inv: Investment) => {
     setTarget({ id: inv.id, token: Date.now() })
@@ -370,6 +372,14 @@ export default function MapView() {
                   <span className="ml-2 text-gray-500">
                     ({t('filter.without_amount', { count: agg.withoutAmount })})
                   </span>
+                )}
+                {activeFilterCount(filters) > 0 && (
+                  <Link
+                    to={{ pathname: '/sankey', search: location.search }}
+                    className="ml-2 whitespace-nowrap font-medium text-teal-700 hover:underline"
+                  >
+                    {t('nav.view_in_sankey')}
+                  </Link>
                 )}
               </div>
               <button

@@ -10,7 +10,9 @@
     "methodology": "方法论",
     "downloads": "数据",
     "contact": "联系",
-    "menu": "菜单"
+    "menu": "菜单",
+    "view_in_sankey": "在桑基图中查看 →",
+    "view_in_map": "在地图中查看 →"
   },
   "downloads": {
     "title": "下载数据",

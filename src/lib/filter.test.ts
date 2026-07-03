@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { aggregateInvestments, applyFilters, DEFAULT_FILTERS, type Filters } from './filter'
+import { activeFilterCount, aggregateInvestments, applyFilters, DEFAULT_FILTERS, type Filters } from './filter'
 import type { InvestorMap } from './sankey'
 import { makeInv } from './testFactory'
 
@@ -103,5 +103,26 @@ describe('applyFilters', () => {
       const out = applyFilters(rows, withFilters({ consortium: 'none', ownership: ['SASAC'] }), MAP)
       expect(out.map(r => r.id)).toEqual(['a'])
     })
+  })
+})
+
+describe('activeFilterCount', () => {
+  it('is zero for the default filters', () => {
+    expect(activeFilterCount(DEFAULT_FILTERS)).toBe(0)
+  })
+
+  it('counts each non-default dimension once, ignoring view/pie*', () => {
+    const f = withFilters({
+      countries: ['Brasil'],
+      sectors: ['Energy'],
+      view: 'cards',
+      pieByCountry: true,
+      pieMetric: 'money'
+    })
+    expect(activeFilterCount(f)).toBe(2)
+  })
+
+  it('counts investor-map dimensions', () => {
+    expect(activeFilterCount(withFilters({ investors: ['cofco'], ownership: ['POE'], consortium: 'only' }))).toBe(3)
   })
 })

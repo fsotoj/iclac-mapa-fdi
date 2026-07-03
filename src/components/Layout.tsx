@@ -11,9 +11,11 @@ const LANGS: { code: LocaleCode; label: string }[] = [
   { code: 'cn', label: '中文' }
 ]
 
-const NAV: { to: string; end?: boolean; key: string }[] = [
-  { to: '/', end: true, key: 'nav.map' },
-  { to: '/sankey', key: 'nav.sankey' },
+// dataView routes share filter state via the URL query string (useFilters) —
+// switching between them must preserve it, or filters silently reset to default.
+const NAV: { to: string; end?: boolean; key: string; dataView?: boolean }[] = [
+  { to: '/', end: true, key: 'nav.map', dataView: true },
+  { to: '/sankey', key: 'nav.sankey', dataView: true },
   { to: '/methodology', key: 'nav.methodology' },
   { to: '/downloads', key: 'nav.downloads' },
   { to: '/contact', key: 'nav.contact' }
@@ -25,7 +27,7 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 export default function Layout() {
   const { t, i18n } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
 
   // Close the mobile menu on navigation so it never lingers over the new view.
   useEffect(() => setMenuOpen(false), [pathname])
@@ -62,7 +64,12 @@ export default function Layout() {
           <div className="hidden md:flex items-center gap-4 shrink-0">
             <nav className="flex gap-4 text-sm">
               {NAV.map(n => (
-                <NavLink key={n.to} to={n.to} end={n.end} className={navLinkClass}>
+                <NavLink
+                  key={n.to}
+                  to={n.dataView ? { pathname: n.to, search } : n.to}
+                  end={n.end}
+                  className={navLinkClass}
+                >
                   {t(n.key)}
                 </NavLink>
               ))}
@@ -96,7 +103,7 @@ export default function Layout() {
               {NAV.map(n => (
                 <NavLink
                   key={n.to}
-                  to={n.to}
+                  to={n.dataView ? { pathname: n.to, search } : n.to}
                   end={n.end}
                   className={({ isActive }) =>
                     `rounded px-2 py-2 ${isActive ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-600 hover:bg-gray-50'}`

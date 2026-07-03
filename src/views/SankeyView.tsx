@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import ReactECharts from 'echarts-for-react/lib/core'
 import * as echarts from 'echarts/core'
@@ -10,7 +11,7 @@ import type { Investment } from '@/types/data'
 import type { ConsortiumMode, InvestorMap, SankeyMetric } from '@/lib/sankey'
 import { buildSankeyData, distinctCompanies } from '@/lib/sankey'
 import { sectorColor } from '@/lib/sectors'
-import { applyFilters, distinctSectors, distinctCountries, yearBounds } from '@/lib/filter'
+import { activeFilterCount, aggregateInvestments, applyFilters, distinctSectors, distinctCountries, yearBounds } from '@/lib/filter'
 import { useFilters } from '@/hooks/useFilters'
 import InvestorFilter from '@/components/InvestorFilter'
 import FilterDropdown from '@/components/FilterDropdown'
@@ -67,6 +68,7 @@ function CheckList({
 export default function SankeyView() {
   const { t, i18n } = useTranslation()
   const { filters, setFilters } = useFilters()
+  const location = useLocation()
   const [investments, setInvestments] = useState<Investment[]>([])
   const [map, setMap] = useState<InvestorMap>({})
   const [loading, setLoading] = useState(true)
@@ -123,10 +125,15 @@ export default function SankeyView() {
     return m
   }, [data, t])
 
+  // Same aggregate the map's chip shows (dedup by id — see investment_amount_dedup),
+  // computed on the same `scoped` set that feeds the diagram, so both stay in sync.
+  const agg = useMemo(() => aggregateInvestments(scoped), [scoped])
+
   const fmt = useMemo(
     () => new Intl.NumberFormat(i18n.language === 'cn' ? 'zh' : i18n.language, { maximumFractionDigits: 0 }),
     [i18n.language]
   )
+  const totalValue = useMemo(() => fmt.format(agg.totalMusd), [agg.totalMusd, fmt])
   const fmtVal = useCallback(
     (v: number): string => (metric === 'money' ? `US$ ${fmt.format(v)} MM` : fmt.format(v)),
     [metric, fmt]
@@ -293,7 +300,25 @@ export default function SankeyView() {
         </div>
       </div>
 
-      <p className="mb-2 text-[11px] text-gray-400">{t('sankey.click_hint')}</p>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs sm:text-sm">
+          <span className="font-medium">{t('filter.investments_count', { count: agg.count })}</span>
+          <span className="mx-2">·</span>
+          <span className="font-medium">{t('filter.total_value', { value: totalValue })}</span>
+          {agg.withoutAmount > 0 && (
+            <span className="ml-2 text-gray-500">({t('filter.without_amount', { count: agg.withoutAmount })})</span>
+          )}
+          {activeFilterCount(filters) > 0 && (
+            <Link
+              to={{ pathname: '/', search: location.search }}
+              className="ml-2 whitespace-nowrap font-medium text-teal-700 hover:underline"
+            >
+              {t('nav.view_in_map')}
+            </Link>
+          )}
+        </div>
+        <p className="text-[11px] text-gray-400">{t('sankey.click_hint')}</p>
+      </div>
 
       {/* Chart fills the remaining box height (flex-1 + min-h-0); no page scroll. */}
       <div className="min-h-0 flex-1">

@@ -50,6 +50,23 @@ export const DEFAULT_FILTERS: Filters = {
   consortium: 'all'
 }
 
+// Counts data-filtering dimensions that differ from default — ignores view/pie*,
+// which are presentation choices, not filters. Used to decide when it's worth
+// offering a "see this in the other view" link (nothing to carry if unfiltered).
+export const activeFilterCount = (f: Filters): number =>
+  [
+    f.countries.length > 0,
+    f.yearMin !== null || f.yearMax !== null,
+    f.types.length > 0,
+    !f.includeConstruction,
+    f.research !== 'all',
+    f.sectors.length > 0,
+    f.query !== '',
+    f.investors.length > 0,
+    f.ownership.length > 0,
+    f.consortium !== 'all'
+  ].filter(Boolean).length
+
 const norm = (s: string): string =>
   s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
 

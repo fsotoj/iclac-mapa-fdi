@@ -10,7 +10,9 @@
     "methodology": "Metodología",
     "downloads": "Datos",
     "contact": "Contacto",
-    "menu": "Menú"
+    "menu": "Menú",
+    "view_in_sankey": "Ver en Sankey →",
+    "view_in_map": "Ver en el mapa →"
   },
   "downloads": {
     "title": "Nuestros datos",
