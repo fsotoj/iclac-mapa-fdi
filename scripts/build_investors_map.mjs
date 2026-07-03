@@ -30,16 +30,20 @@ const iId = idx('company_id')
 const iCanon = idx('company_canonical')
 const iCons = idx('is_consortium')
 const iOwn = idx('ownership')
+const iMembers = idx('members')
 
 const map = {}
 for (const line of rows.slice(1)) {
   const c = parseLine(line)
-  map[c[iRaw]] = {
+  const entry = {
     company_id: c[iId],
     company_canonical: c[iCanon],
     ownership: c[iOwn],
     is_consortium: c[iCons] === 'true'
   }
+  const members = (c[iMembers] ?? '').split('|').map(s => s.trim()).filter(Boolean)
+  if (members.length) entry.members = members
+  map[c[iRaw]] = entry
 }
 
 writeFileSync(OUT, JSON.stringify(map), 'utf8')

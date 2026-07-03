@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { matchesCompany } from '@/lib/sankey'
 import type { CompanyOption, SankeyMetric } from '@/lib/sankey'
 
 type Props = {
@@ -8,9 +9,6 @@ type Props = {
   onChange: (ids: string[]) => void
   metric: SankeyMetric
 }
-
-const norm = (s: string): string =>
-  s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
 
 // Content of the "Inversores" dropdown: search + sort + scrollable list with a
 // magnitude bar and value per row.
@@ -35,7 +33,7 @@ export default function InvestorFilter({ options, selected, onChange, metric }: 
   }
 
   const filtered = useMemo(() => {
-    const base = query ? options.filter(o => norm(o.name).includes(norm(query))) : options
+    const base = query ? options.filter(o => matchesCompany(o, query)) : options
     const sorted = [...base]
     if (sortBy === 'value') sorted.sort((a, b) => valueOf(b) - valueOf(a) || a.name.localeCompare(b.name))
     else sorted.sort((a, b) => a.name.localeCompare(b.name))
@@ -97,6 +95,11 @@ export default function InvestorFilter({ options, selected, onChange, metric }: 
                   {v > 0 ? fmt.format(v) : '—'}
                 </span>
               </div>
+              {o.memberNames && (
+                <p className="ml-6 truncate text-[11px] text-gray-400" title={o.memberNames.join(', ')}>
+                  {t('sankey.consortium_members')}: {o.memberNames.join(', ')}
+                </p>
+              )}
               <div className="ml-6 h-1 rounded bg-gray-100">
                 <div className="h-1 rounded bg-teal-500/60" style={{ width: `${barPct(o)}%` }} />
               </div>

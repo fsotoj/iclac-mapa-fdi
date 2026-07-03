@@ -371,16 +371,19 @@ if (existsSync(investorsCsvPath)) {
   const csvRows = readFileSync(investorsCsvPath, 'utf8').trim().split(/\r?\n/)
   const header = parseCsvLine(csvRows[0])
   const col = name => header.indexOf(name)
-  const [iRaw, iId, iCanon, iCons, iOwn] = ['investor_raw', 'company_id', 'company_canonical', 'is_consortium', 'ownership'].map(col)
+  const [iRaw, iId, iCanon, iCons, iOwn, iMembers] = ['investor_raw', 'company_id', 'company_canonical', 'is_consortium', 'ownership', 'members'].map(col)
   const investorMap = {}
   for (const line of csvRows.slice(1)) {
     const c = parseCsvLine(line)
-    investorMap[c[iRaw]] = {
+    const entry = {
       company_id: c[iId],
       company_canonical: c[iCanon],
       ownership: c[iOwn],
       is_consortium: c[iCons] === 'true'
     }
+    const members = (c[iMembers] ?? '').split('|').map(s => s.trim()).filter(Boolean)
+    if (members.length) entry.members = members
+    investorMap[c[iRaw]] = entry
   }
   writeFileSync(investorsJsonPath, JSON.stringify(investorMap), 'utf8')
   console.log(`Investor map: ${Object.keys(investorMap).length} entries -> ${investorsJsonPath}`)

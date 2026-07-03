@@ -51,7 +51,18 @@
     "click_hint": "Clic en un nodo para filtrar",
     "loading": "Construyendo diagrama…",
     "empty": "Sin datos para los filtros actuales",
-    "empty_money": "Sin montos en el rango seleccionado. Prueba la métrica «Proyectos»."
+    "empty_money": "Sin montos en el rango seleccionado. Prueba la métrica «Proyectos».",
+    "ownership": "Propiedad",
+    "own_sasac": "SASAC (estatal central)",
+    "own_soe": "SOE (otra estatal)",
+    "own_poe": "POE (privada)",
+    "own_mixed": "MIXED (mixta / consorcio)",
+    "own_unknown": "Sin determinar",
+    "consortiums": "Consorcios",
+    "cons_all": "Todos",
+    "cons_only": "Solo consorcios",
+    "cons_none": "Sin consorcios",
+    "consortium_members": "incluye"
   },
   "methodology": {
     "title": "Metodología",

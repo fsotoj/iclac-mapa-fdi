@@ -1,4 +1,5 @@
 import type { Investment } from '@/types/data'
+import type { ConsortiumMode } from './sankey'
 
 export type ResearchFilter = 'all' | 'yes' | 'no'
 
@@ -25,6 +26,10 @@ export type Filters = {
   // Sankey-only: selected company_ids. Applied in SankeyView (needs the canonical
   // map), NOT in applyFilters — the map view ignores it.
   investors: string[]
+  // Sankey-only, same reason: ownership values (SASAC/SOE/POE/MIXED/UNKNOWN)
+  // and consortium mode come from the investor map.
+  ownership: string[]
+  consortium: ConsortiumMode
 }
 
 export const DEFAULT_FILTERS: Filters = {
@@ -41,7 +46,9 @@ export const DEFAULT_FILTERS: Filters = {
   pieByCountry: false,
   pieMetric: 'count',
   query: '',
-  investors: []
+  investors: [],
+  ownership: [],
+  consortium: 'all'
 }
 
 const norm = (s: string): string =>

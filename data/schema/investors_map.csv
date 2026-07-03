@@ -1,211 +1,211 @@
 investor_raw,company_id,company_canonical,is_consortium,members,ownership,review_note,_count,_musd
-State Grid,state-grid,State Grid Corporation of China,false,,SASAC,SASAC central SOE (SASAC central list / Asia Society BRI toolkit),27,19023
-China Three Gorges,china-three-gorges,China Three Gorges Corporation,false,,SASAC,SASAC central SOE,18,13585
+State Grid,state-grid,State Grid,false,,SASAC,SASAC central SOE (SASAC central list / Asia Society BRI toolkit),27,19023
+China Three Gorges,china-three-gorges,China Three Gorges,false,,SASAC,SASAC central SOE,18,13585
 Sinopec,sinopec,Sinopec,false,,SASAC,SASAC central SOE (China Petroleum & Chemical Corp / Sinopec Group),7,13062
-China National Petroleum Corporation,china-national-petroleum-corporation,China National Petroleum Corporation,false,,SASAC,SASAC central SOE (CNPC),13,9700
-Gezhouba,gezhouba,China Gezhouba Group,false,,SASAC,"Filial de China Energy Engineering Group (CEEC); SASAC central SOE",7,8353
-China National Offshore Oil Corporation,china-national-offshore-oil-corporation,China National Offshore Oil Corporation,false,,SASAC,SASAC central SOE (CNOOC),7,7476
-"MMG, Guoxin, and CITIC Metal Company",mmg-guoxin-and-citic-metal-company,"MMG, Guoxin, and CITIC Metal Company",true,mmg|guoxin|citic,MIXED,"CONSORCIO Las Bambas (MMG 62.5% / Guoxin 22.5% / CITIC Metal 15%); todos estatales aunque enum=MIXED. Fuente: MMG/Minmetals press, minmetals.com. Definir atribucion de monto",1,7000
+China National Petroleum Corporation,china-national-petroleum-corporation,China National Petroleum,false,,SASAC,SASAC central SOE (CNPC),13,9700
+Gezhouba,gezhouba,China Gezhouba,false,,SASAC,Filial de China Energy Engineering Group (CEEC); SASAC central SOE,7,8353
+China National Offshore Oil Corporation,china-national-offshore-oil-corporation,China National Offshore Oil,false,,SASAC,SASAC central SOE (CNOOC),7,7476
+"MMG, Guoxin, and CITIC Metal Company",mmg-guoxin-and-citic-metal-company,"MMG, Guoxin, and CITIC Metal",true,mmg|guoxin|citic,MIXED,"CONSORCIO Las Bambas (MMG 62.5% / Guoxin 22.5% / CITIC Metal 15%); todos estatales aunque enum=MIXED. Fuente: MMG/Minmetals press, minmetals.com. Definir atribucion de monto",1,7000
 PowerChina,powerchina,Power Construction Corporation of China,false,,SASAC,SASAC central SOE (PowerChina),10,6735
-Zijin,zijin,Zijin Mining Group,false,,SOE,"Controlador ultimo: Minxi Xinghang State-owned Assets (gobierno condado Shanghang) ~23%; SOE local/provincial, no SASAC central. Fuente: Wikipedia/Zijin",5,6025
-China Railway Construction Corporation,china-railway-construction-corporation,China Railway Construction Corporation,false,,SASAC,"SASAC central SOE (CRCC). Controla buros numerados 11-25. Fuente: Wikipedia CRCC",9,5511
+Zijin,zijin,Zijin Mining,false,,SOE,"Controlador ultimo: Minxi Xinghang State-owned Assets (gobierno condado Shanghang) ~23%; SOE local/provincial, no SASAC central. Fuente: Wikipedia/Zijin",5,6025
+China Railway Construction Corporation,china-railway-construction-corporation,China Railway Construction,false,,SASAC,SASAC central SOE (CRCC). Controla buros numerados 11-25. Fuente: Wikipedia CRCC,9,5511
 Aluminum Corporation of China,aluminum-corporation-of-china,Aluminum Corporation of China,false,,SASAC,SASAC central SOE (Chinalco / Chalco parent),2,5320
-State Power Investment Corporation,state-power-investment-corporation,State Power Investment Corporation,false,,SASAC,SASAC central SOE (SPIC),6,4556
-China Harbour Engineering Company and Xi'an Rail Transportation Group,china-harbour-engineering-company-and-xi,China Harbour Engineering Company and Xi'an Rail Transportation Group,true,china-harbour-engineering-company|xian-rail-transportation-group,MIXED,"CONSORCIO. CHEC = filial de CCCC (SASAC). Xi'an Rail Transp. Group = SOE municipal Xi'an. Definir atribucion de monto",1,4500
-Chengdu Tianqi,chengdu-tianqi,Tianqi Lithium,false,,POE,"Privada: filial de Chengdu Tianqi Industry Group (controlador Jiang Weiping). Fuente: Wikipedia Tianqi Lithium",2,4279
-Sinohydro,sinohydro,Sinohydro,false,,SASAC,"Filial de PowerChina (SASAC central SOE). Recomendacion cliente: fusionar a powerchina? Dejo separado",8,4213
+State Power Investment Corporation,state-power-investment-corporation,State Power Investment,false,,SASAC,SASAC central SOE (SPIC),6,4556
+China Harbour Engineering Company and Xi'an Rail Transportation Group,china-harbour-engineering-company-and-xi,China Harbour Engineering Company and Xi'an Rail Transportation,true,china-communications-construction-company|xian-rail-transportation-group,MIXED,CONSORCIO. CHEC = filial de CCCC (SASAC). Xi'an Rail Transp. Group = SOE municipal Xi'an. Definir atribucion de monto,1,4500
+Chengdu Tianqi,chengdu-tianqi,Tianqi Lithium,false,,POE,Privada: filial de Chengdu Tianqi Industry Group (controlador Jiang Weiping). Fuente: Wikipedia Tianqi Lithium,2,4279
+Sinohydro,powerchina,Power Construction Corporation of China,false,,SASAC,"Filial de PowerChina (SASAC central SOE). Recomendacion cliente: fusionar a powerchina? Dejo separado -> FUSIONADO a id powerchina (decision 2 aprobada, 2026-07-01).",8,4213
 China Southern Power Grid,china-southern-power-grid,China Southern Power Grid,false,,SASAC,SASAC central SOE,2,4200
 Sinochem,sinochem,Sinochem,false,,SASAC,"SASAC central SOE. Desde 2021 bajo Sinochem Holdings (fusion con ChemChina), 100% SASAC. Fuente: Caixin/SASAC 2021. Decision cliente: fusionar con chemchina?",3,4050
-COFCO,cofco,COFCO,false,,SASAC,SASAC central SOE (China Oil & Foodstuffs Corp). Fuente: Wikipedia/SASAC,7,3723
+COFCO,cofco,COFCO,false,,POE,"SASAC central SOE (China Oil & Foodstuffs Corp). Fuente: Wikipedia/SASAC -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""COFCO""), reemplaza estimacion web previa (era SASAC).",7,3723
 Ganfeng Lithium,ganfeng-lithium,Ganfeng Lithium,false,,POE,"Privada: fundada por Li Liangbin 2000, cotiza SZSE/HKEX. Fuente: Wikipedia Ganfeng",7,3053
-North Lima Power Grid Holding,north-lima-power-grid-holding,North Lima Power Grid Holding,false,,UNKNOWN,Vehiculo de adquisicion en Peru; controlador ultimo no confirmado (probable State Grid/CSG). Verificar con cliente,1,2900
-China Railway First Group,china-railway-first-group,China Railway First Group,false,,SASAC,"Buro 1 -> filial de China Railway Group (CREC), SASAC central SOE. Recomendacion: agrupar bajo china-railway-group. Fuente: Wikipedia CREC",2,2859
-CRRC,crrc,CRRC,false,,SASAC,"SASAC central SOE (CRRC Corporation; fusion CNR+CSR 2015)",1,2600
+North Lima Power Grid Holding,north-lima-power-grid-holding,North Lima Power Grid,false,,UNKNOWN,Vehiculo de adquisicion en Peru; controlador ultimo no confirmado (probable State Grid/CSG). Verificar con cliente,1,2900
+China Railway First Group,china-railway-group,China Railway Group,false,,SASAC,"Buro 1 -> filial de China Railway Group (CREC), SASAC central SOE. Recomendacion: agrupar bajo china-railway-group. Fuente: Wikipedia CREC -> FUSIONADO a id china-railway-group (decision 2 aprobada, 2026-07-01).",2,2859
+CRRC,crrc,CRRC,false,,SASAC,SASAC central SOE (CRRC Corporation; fusion CNR+CSR 2015),1,2600
 "Zijin, Tongling, and Xiamen C&D",zijin-tongling-and-xiamen-c-d,"Zijin, Tongling, and Xiamen C&D",true,zijin|tongling-nonferrous|xiamen-cd,MIXED,"CONSORCIO. Zijin (SOE), Tongling Nonferrous (SOE Anhui), Xiamen C&D (SOE Xiamen). Definir atribucion de monto",1,2500
-China Railway 16th Bureau Group,china-railway-16th-bureau-group,China Railway 16th Bureau Group,false,,SASAC,"Buro 16 -> filial de CRCC (buros 11-25), SASAC central SOE. Recomendacion: agrupar bajo china-railway-construction-corporation. Fuente: Wikipedia CRCC",1,2500
-China Construction America,china-construction-america,China Construction America,false,,SASAC,"Filial USA de China State Construction Engineering Corp (CSCEC), SASAC central SOE. Recomendacion: agrupar bajo CSCEC",4,2498
-Sinomach (China Machinery Engineering Corporation),sinomach,Sinomach (China National Machinery Industry Corporation),false,,SASAC,"SASAC central SOE. Nota: el raw mezcla matriz Sinomach con filial CMEC; clasificado como matriz. Fuente: SASAC/Wikipedia Sinomach",1,2470
-Xinjiang TBEA Group,xinjiang-tbea-group,TBEA,false,,POE,"TBEA Co. - empresa privada de equipos electricos, Xinjiang. Verificar nivel de participacion estatal local",1,2390
-China General Nuclear Power Group,china-general-nuclear-power-group,China General Nuclear Power Group,false,,SASAC,SASAC central SOE (CGN),6,2280
-China Harbour Engineering Company,china-harbour-engineering-company,China Harbour Engineering Company,false,,SASAC,"Filial de CCCC (China Communications Construction Co), SASAC central SOE. Recomendacion: agrupar bajo CCCC",6,2222
-China National Machinery Industry Corporation,sinomach,Sinomach (China National Machinery Industry Corporation),false,,SASAC,"China National Machinery Industry Corporation ES Sinomach (misma matriz). Fusionado a id sinomach. Fuente: Wikipedia/SASAC",7,1959
+China Railway 16th Bureau Group,china-railway-construction-corporation,China Railway Construction,false,,SASAC,"Buro 16 -> filial de CRCC (buros 11-25), SASAC central SOE. Recomendacion: agrupar bajo china-railway-construction-corporation. Fuente: Wikipedia CRCC -> FUSIONADO a id china-railway-construction-corporation (decision 2 aprobada, 2026-07-01).",1,2500
+China Construction America,china-state-construction-engineering-corporation,China State Construction Engineering,false,,SASAC,"Filial USA de China State Construction Engineering Corp (CSCEC), SASAC central SOE. Recomendacion: agrupar bajo CSCEC -> FUSIONADO a id china-state-construction-engineering-corporation (decision 2 aprobada, 2026-07-01).",4,2498
+Sinomach (China Machinery Engineering Corporation),sinomach,Sinomach,false,,SASAC,SASAC central SOE. Nota: el raw mezcla matriz Sinomach con filial CMEC; clasificado como matriz. Fuente: SASAC/Wikipedia Sinomach,1,2470
+Xinjiang TBEA Group,xinjiang-tbea-group,TBEA,false,,SOE,"TBEA Co. - empresa privada de equipos electricos, Xinjiang. Verificar nivel de participacion estatal local -> OWNERSHIP CORREGIDO a SOE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Xinjiang TBEA Group""), reemplaza estimacion web previa (era POE).",1,2390
+China General Nuclear Power Group,china-general-nuclear-power-group,China General Nuclear Power,false,,SASAC,SASAC central SOE (CGN),6,2280
+China Harbour Engineering Company,china-communications-construction-company,China Communications Construction,false,,SASAC,"Filial de CCCC (China Communications Construction Co), SASAC central SOE. Recomendacion: agrupar bajo CCCC -> FUSIONADO a id china-communications-construction-company (decision 2 aprobada, 2026-07-01).",6,2222
+China National Machinery Industry Corporation,sinomach,Sinomach,false,,SASAC,China National Machinery Industry Corporation ES Sinomach (misma matriz). Fusionado a id sinomach. Fuente: Wikipedia/SASAC,7,1959
 "Taiyuan Iron, CITIC, and Baosteel",taiyuan-iron-citic-and-baosteel,"Taiyuan Iron, CITIC, and Baosteel",true,taiyuan-iron|citic|baosteel,MIXED,"CONSORCIO. TISCO (SOE Shanxi), CITIC (SOE central), Baosteel/Baowu (SASAC central). Definir atribucion de monto",1,1950
-China Molybdenum,china-molybdenum,CMOC Group,false,,POE,"Privada: controlador Cathay Fortune Corp (Yu Yong) ~25%. Fuente: Wikipedia/Grokipedia CMOC",2,1915
-China Communications Construction Company and China Railway Construction Corporation,china-communications-construction-compan,China Communications Construction Company and China Railway Construction Corporation,true,china-communications-construction-company|china-railway-construction-corporation,MIXED,"CONSORCIO. CCCC y CRCC, ambas SASAC central. Definir atribucion de monto",1,1800
+China Molybdenum,china-molybdenum,CMOC,false,,SOE,"Privada: controlador Cathay Fortune Corp (Yu Yong) ~25%. Fuente: Wikipedia/Grokipedia CMOC -> OWNERSHIP CORREGIDO a SOE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""China Molybdenum""), reemplaza estimacion web previa (era POE).",2,1915
+China Communications Construction Company and China Railway Construction Corporation,china-communications-construction-compan,China Communications Construction Company and China Railway Construction,true,china-communications-construction-company|china-railway-construction-corporation,MIXED,"CONSORCIO. CCCC y CRCC, ambas SASAC central. Definir atribucion de monto",1,1800
 COFCO and Hopu Investments,cofco-and-hopu-investments,COFCO and Hopu Investments,true,cofco|hopu-investments,MIXED,"CONSORCIO. COFCO (SASAC) + Hopu Investments (fondo PE privado, Fang Fenglei). Definir atribucion de monto",1,1500
-China Communications Construction Company and China Harbour Engineering Company,china-communications-construction-compan,China Communications Construction Company and China Harbour Engineering Company,true,china-communications-construction-company|china-harbour-engineering-company,MIXED,"CONSORCIO. CHEC es filial de CCCC -> en realidad mismo grupo (SASAC). Revisar si es consorcio real o doble conteo matriz-filial. Definir atribucion",1,1420
+China Communications Construction Company and China Harbour Engineering Company,china-communications-construction-compan,China Communications Construction Company and China Harbour Engineering,true,china-communications-construction-company|china-communications-construction-company,MIXED,CONSORCIO. CHEC es filial de CCCC -> en realidad mismo grupo (SASAC). Revisar si es consorcio real o doble conteo matriz-filial. Definir atribucion,1,1420
 Shandong Kerui,shandong-kerui,Shandong Kerui Petroleum Equipment,false,,POE,Empresa privada de equipos petroleros (Shandong Kerui Group). Verificar,2,1408
-China National Petroleum Corporation and China National Offshore Oil Corporation,china-national-petroleum-corporation-and,China National Petroleum Corporation and China National Offshore Oil Corporation,true,china-national-petroleum-corporation|china-national-offshore-oil-corporation,MIXED,"CONSORCIO. CNPC y CNOOC, SASAC distintas. Definir atribucion de monto",1,1400
-Dongfang Electric,dongfang-electric,Dongfang Electric Corporation,false,,SASAC,SASAC central SOE (DEC),2,1400
-China Railway Construction Corporation and Tongling Nonferrous Metal Group,china-railway-construction-corporation-a,China Railway Construction Corporation and Tongling Nonferrous Metal Group,true,china-railway-construction-corporation|tongling-nonferrous,MIXED,"CONSORCIO. CRCC (SASAC) + Tongling Nonferrous (SOE Anhui). Definir atribucion de monto",1,1400
+China National Petroleum Corporation and China National Offshore Oil Corporation,china-national-petroleum-corporation-and,China National Petroleum Corporation and China National Offshore Oil,true,china-national-petroleum-corporation|china-national-offshore-oil-corporation,MIXED,"CONSORCIO. CNPC y CNOOC, SASAC distintas. Definir atribucion de monto",1,1400
+Dongfang Electric,dongfang-electric,Dongfang Electric,false,,SOE,"SASAC central SOE (DEC) -> OWNERSHIP CORREGIDO a SOE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Dongfang Electric Corporation""), reemplaza estimacion web previa (era SASAC).",2,1400
+China Railway Construction Corporation and Tongling Nonferrous Metal Group,china-railway-construction-corporation-a,China Railway Construction Corporation and Tongling Nonferrous Metal,true,china-railway-construction-corporation|tongling-nonferrous,MIXED,CONSORCIO. CRCC (SASAC) + Tongling Nonferrous (SOE Anhui). Definir atribucion de monto,1,1400
 COSCO,cosco,COSCO Shipping,false,,SASAC,SASAC central SOE (China COSCO Shipping Corp),2,1213
 Beijing Limawei,beijing-limawei,Beijing Limawei,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar con cliente,1,1200
-CITIC,citic,CITIC Group,false,,SOE,"CITIC Group Corp = SOE central (controla 58% de CITIC Ltd). Financiera/conglomerado, no SASAC no-financiera. Fuente: Wikipedia CITIC",1,1190
-China Civil Engineering Construction Corporation,china-civil-engineering-construction-corporation,China Civil Engineering Construction Corporation,false,,SASAC,"CCECC = filial de China Railway Construction Corp (CRCC), SASAC central. Recomendacion: agrupar bajo CRCC",3,1139
-CITIC Agri Fund,citic-agri-fund,CITIC Agri Fund,false,,SOE,"Fondo JV creado 2016 por CITIC Agriculture + Longping + otras. Vinculado a CITIC (estatal) pero estructura JV. Decision cliente: fusionar con citic? Fuente: Wikipedia CITIC",1,1100
-China Communications Construction Company,china-communications-construction-company,China Communications Construction Company,false,,SASAC,SASAC central SOE (CCCC),5,1044
-Chery,chery,Chery Automobile,false,,SOE,"SOE municipal: controlada por gobierno de Wuhu (Anhui). Fuente: Wikipedia Chery",3,1030
+CITIC,citic,CITIC,false,,SOE,"CITIC Group Corp = SOE central (controla 58% de CITIC Ltd). Financiera/conglomerado, no SASAC no-financiera. Fuente: Wikipedia CITIC",1,1190
+China Civil Engineering Construction Corporation,china-railway-construction-corporation,China Railway Construction,false,,SASAC,"CCECC = filial de China Railway Construction Corp (CRCC), SASAC central. Recomendacion: agrupar bajo CRCC -> FUSIONADO a id china-railway-construction-corporation (decision 2 aprobada, 2026-07-01).",3,1139
+CITIC Agri Fund,citic-agri-fund,CITIC Agri Fund,false,,SOE,Fondo JV creado 2016 por CITIC Agriculture + Longping + otras. Vinculado a CITIC (estatal) pero estructura JV. Decision cliente: fusionar con citic? Fuente: Wikipedia CITIC,1,1100
+China Communications Construction Company,china-communications-construction-company,China Communications Construction,false,,SASAC,SASAC central SOE (CCCC),5,1044
+Chery,chery,Chery Automobile,false,,SOE,SOE municipal: controlada por gobierno de Wuhu (Anhui). Fuente: Wikipedia Chery,3,1030
 Meituan,meituan,Meituan,false,,POE,Privada: plataforma tech cotizada HKEX (Wang Xing). Fuente: Wikipedia Meituan,1,1000
-CEIEC,ceiec,China National Electronics Import & Export Corporation,false,,SASAC,"CEIEC = filial de China Electronics Technology Group (CETC), SASAC central SOE",1,1000
+CEIEC,ceiec,China National Electronics Import & Export,false,,SOE,"CEIEC = filial de China Electronics Technology Group (CETC), SASAC central SOE -> OWNERSHIP CORREGIDO a SOE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""CEIEC""), reemplaza estimacion web previa (era SASAC).",1,1000
 Lanzhou Haimo Technologies,lanzhou-haimo-technologies,Lanzhou Haimo Technologies,false,,UNKNOWN,Empresa tecnologia petrolera; control ultimo no confirmado. Verificar,1,970
-Shandong Gold,shandong-gold,Shandong Gold Group,false,,SOE,SOE provincial: controlada por gobierno de Shandong. Fuente: Wikipedia Shandong Gold,1,960
-Joyvio,joyvio,Joyvio Group,false,,POE,"Privada: filial de Legend Holdings (privada). Fuente: Legend Holdings/Fruitnet",2,936
-China Merchants Group,china-merchants-group,China Merchants Group,false,,SASAC,SASAC central SOE,1,925
-Citic Guoan,citic-guoan,CITIC Guoan Group,false,,MIXED,"Recapitalizada 2014: CITIC Group solo 20.95%, resto capital privado. NO claramente estatal ni filial controlada. Dejo separado de citic. Fuente: Wikipedia CITIC Guoan",1,860
-Great Wall,great-wall-motors,Great Wall Motor,false,,POE,"Automotriz privada (Wei Jianjun). HOMONIMO: NO fusionar con China Great Wall Industry (aeroespacial/CASC). Fuente: Wikipedia Great Wall Motor",2,850
-BYD,byd,BYD,false,,POE,"Privada: cotizada; fundador Wang Chuanfu controlador. Fuente: Wikipedia BYD",5,822
-CSR Corporation,crrc,CRRC,false,,SASAC,"CSR Corp = predecesora fusionada en CRRC (2015). Fusionado a id crrc. Fuente: Wikipedia CRRC/CSR",1,808
-Pacific Hydro,pacific-hydro,Pacific Hydro,false,,SASAC,"Adquirida por State Power Investment Corp (SPIC) en 2016, SASAC central. Recomendacion: clasificar por matriz SPIC",3,787
+Shandong Gold,shandong-gold,Shandong Gold,false,,SOE,SOE provincial: controlada por gobierno de Shandong. Fuente: Wikipedia Shandong Gold,1,960
+Joyvio,joyvio,Joyvio,false,,POE,Privada: filial de Legend Holdings (privada). Fuente: Legend Holdings/Fruitnet,2,936
+China Merchants Group,china-merchants-group,China Merchants,false,,SASAC,SASAC central SOE,1,925
+Citic Guoan,citic-guoan,CITIC Guoan,false,,MIXED,"Recapitalizada 2014: CITIC Group solo 20.95%, resto capital privado. NO claramente estatal ni filial controlada. Dejo separado de citic. Fuente: Wikipedia CITIC Guoan",1,860
+Great Wall,great-wall-motors,Great Wall Motor,false,,POE,Automotriz privada (Wei Jianjun). HOMONIMO: NO fusionar con China Great Wall Industry (aeroespacial/CASC). Fuente: Wikipedia Great Wall Motor,2,850
+BYD,byd,BYD,false,,POE,Privada: cotizada; fundador Wang Chuanfu controlador. Fuente: Wikipedia BYD,5,822
+CSR Corporation,crrc,CRRC,false,,SASAC,CSR Corp = predecesora fusionada en CRRC (2015). Fusionado a id crrc. Fuente: Wikipedia CRRC/CSR,1,808
+Pacific Hydro,state-power-investment-corporation,State Power Investment,false,,SASAC,"Adquirida por State Power Investment Corp (SPIC) en 2016, SASAC central. Recomendacion: clasificar por matriz SPIC -> FUSIONADO a id state-power-investment-corporation (decision 2 aprobada, 2026-07-01).",3,787
 Industrial and Commercial Bank of China,industrial-and-commercial-bank-of-china,Industrial and Commercial Bank of China,false,,SOE,"FALSO 'and' (nombre legitimo). Banco estatal Big Four (control via Central Huijin/MOF, no SASAC). Fuente: Wikipedia ICBC",3,780
 China Construction Bank,china-construction-bank,China Construction Bank,false,,SOE,Banco estatal Big Four (Central Huijin). Fuente: Wikipedia CCB,2,752
-Xinjiang Goldwind,goldwind,Goldwind,false,,UNKNOWN,"Variante de Goldwind (fusionado a id goldwind). Propiedad mixta/ambigua: cotizada, mayor accionista China Three Gorges ~21%, sin controlador >50%. Fuente: Wikipedia Goldwind",3,720
-Tencent,tencent,Tencent,false,,POE,"Privada: cotizada HKEX; mayor accionista Naspers/Prosus. Fuente: Wikipedia Tencent",6,716
-Harbin Electric International,harbin-electric,Harbin Electric,false,,SASAC,"HEI = filial 100% de Harbin Electric Group (SASAC central). Fusionado a id harbin-electric. Fuente: SASAC/BHRRC",1,600
-Didi Chuxing,didi-chuxing,DiDi Global,false,,POE,"Privada: cotizada (fundador Cheng Wei); aunque con participaciones estatales minoritarias. Fuente: Wikipedia DiDi",4,584
-China National Electric Engineering Company and China Machinery Engineering Corporation,china-national-electric-engineering-comp,China National Electric Engineering Company and China Machinery Engineering Corporation,true,cneec|cmec,MIXED,"CONSORCIO. CNEEC (filial Sinomach) + CMEC (filial Sinomach) -> ambas del grupo Sinomach (SASAC). Posible doble conteo intra-grupo. Definir atribucion",1,553
+Xinjiang Goldwind,goldwind,Goldwind,false,,POE,"Variante de Goldwind (fusionado a id goldwind). Propiedad mixta/ambigua: cotizada, mayor accionista China Three Gorges ~21%, sin controlador >50%. Fuente: Wikipedia Goldwind -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Xinjiang Goldwind""), reemplaza estimacion web previa (era UNKNOWN).",3,720
+Tencent,tencent,Tencent,false,,POE,Privada: cotizada HKEX; mayor accionista Naspers/Prosus. Fuente: Wikipedia Tencent,6,716
+Harbin Electric International,harbin-electric,Harbin Electric,false,,SASAC,HEI = filial 100% de Harbin Electric Group (SASAC central). Fusionado a id harbin-electric. Fuente: SASAC/BHRRC,1,600
+Didi Chuxing,didi-chuxing,DiDi Global,false,,POE,Privada: cotizada (fundador Cheng Wei); aunque con participaciones estatales minoritarias. Fuente: Wikipedia DiDi,4,584
+China National Electric Engineering Company and China Machinery Engineering Corporation,china-national-electric-engineering-comp,China National Electric Engineering Company and China Machinery Engineering,true,cneec|sinomach,MIXED,CONSORCIO. CNEEC (filial Sinomach) + CMEC (filial Sinomach) -> ambas del grupo Sinomach (SASAC). Posible doble conteo intra-grupo. Definir atribucion,1,553
 Wison Energy,wison-energy,Wison Engineering,false,,POE,Privada: Wison Group (Hua Bangsong). Fuente: Wikipedia Wison,1,550
-China Railway Tenth Group,china-railway-tenth-group,China Railway Tenth Group,false,,SASAC,"Buro 10 -> filial de China Railway Group (CREC), SASAC central. Recomendacion: agrupar bajo china-railway-group. Fuente: CREC",1,550
+China Railway Tenth Group,china-railway-group,China Railway Group,false,,SASAC,"Buro 10 -> filial de China Railway Group (CREC), SASAC central. Recomendacion: agrupar bajo china-railway-group. Fuente: CREC -> FUSIONADO a id china-railway-group (decision 2 aprobada, 2026-07-01).",1,550
 Sinosteel,sinosteel,Sinosteel,false,,SASAC,SASAC central SOE (China Sinosteel Corp),1,546
-Shanghai Pengxin,shanghai-pengxin,Shanghai Pengxin Group,false,,POE,"Privada: conglomerado inmobiliario/agro (Jiang Zhaobai). Fuente: Bloomberg/Wikipedia",2,540
+Shanghai Pengxin,shanghai-pengxin,Shanghai Pengxin,false,,POE,Privada: conglomerado inmobiliario/agro (Jiang Zhaobai). Fuente: Bloomberg/Wikipedia,2,540
 Sany Heavy,sany-heavy,Sany Heavy Industry,false,,POE,Privada: Sany Group (Liang Wengen). Fuente: Wikipedia Sany,2,500
 Fosun International,fosun-international,Fosun International,false,,POE,"Privada: mayor conglomerado privado, fundador Guo Guangchang. Fuente: Wikipedia Fosun",6,496
-HNA,hna,HNA Group,false,,UNKNOWN,"Estructura de propiedad opaca historicamente (fundaciones/empleados); colapso y reestructuracion 2021 bajo Liaoning Fangda (privado). Dejo UNKNOWN. Verificar epoca de inversion",1,450
-Beijing Construction Engineering Group,beijing-construction-engineering-group,Beijing Construction Engineering Group,false,,SOE,SOE municipal: controlada por gobierno de Beijing (BCEG),1,425
-"Baiyin Nonferrous Group Co., Ltd",baiyin-nonferrous-group-co-ltd,Baiyin Nonferrous Group,false,,SOE,SOE provincial Gansu (Baiyin Nonferrous Metals). Verificar,1,420
-China Three Gorges (via EDP Renewables),china-three-gorges,China Three Gorges Corporation,false,,SASAC,"Alias: inversion via vehiculo EDP. Control ultimo CTG (SASAC central). Fusionado a id china-three-gorges",1,420
-China Railway Tunnel Group,china-railway-tunnel-group,China Railway Tunnel Group,false,,SASAC,"Filial de China Railway Group (CREC), SASAC central. Recomendacion: agrupar bajo china-railway-group. Fuente: BHRRC",1,420
-Terminal Portuario Jinzhao,terminal-portuario-jinzhao,Terminal Portuario Jinzhao,false,,UNKNOWN,"Vehiculo en Peru (proyecto puerto Marcona); controlador chino no confirmado (Jinzhao Mining). Verificar",1,405
-CSR Sifang,crrc,CRRC,false,,SASAC,"CSR Sifang = predecesora integrada en CRRC (Qingdao Sifang). Fusionado a id crrc. Fuente: Wikipedia CRRC Qingdao Sifang",6,394
-Honbridge Holdings,honbridge-holdings,Honbridge Holdings,false,,POE,Privada: holding inversion cotizado HK (recursos). Verificar,1,390
-China Road and Bridge Corporation,china-road-and-bridge-corporation,China Road and Bridge Corporation,false,,SASAC,"FALSO 'and'. CRBC = filial de CCCC (SASAC central). Recomendacion: agrupar bajo CCCC. Fuente: Wikipedia CRBC",5,376
+HNA,hna,HNA,false,,POE,"Estructura de propiedad opaca historicamente (fundaciones/empleados); colapso y reestructuracion 2021 bajo Liaoning Fangda (privado). Dejo UNKNOWN. Verificar epoca de inversion -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""HNA""), reemplaza estimacion web previa (era UNKNOWN).",1,450
+Beijing Construction Engineering Group,beijing-construction-engineering-group,Beijing Construction Engineering,false,,SOE,SOE municipal: controlada por gobierno de Beijing (BCEG),1,425
+"Baiyin Nonferrous Group Co., Ltd",baiyin-nonferrous-group-co-ltd,Baiyin Nonferrous,false,,SOE,SOE provincial Gansu (Baiyin Nonferrous Metals). Verificar,1,420
+China Three Gorges (via EDP Renewables),china-three-gorges,China Three Gorges,false,,SASAC,Alias: inversion via vehiculo EDP. Control ultimo CTG (SASAC central). Fusionado a id china-three-gorges,1,420
+China Railway Tunnel Group,china-railway-group,China Railway Group,false,,SASAC,"Filial de China Railway Group (CREC), SASAC central. Recomendacion: agrupar bajo china-railway-group. Fuente: BHRRC -> FUSIONADO a id china-railway-group (decision 2 aprobada, 2026-07-01).",1,420
+Terminal Portuario Jinzhao,terminal-portuario-jinzhao,Terminal Portuario Jinzhao,false,,UNKNOWN,Vehiculo en Peru (proyecto puerto Marcona); controlador chino no confirmado (Jinzhao Mining). Verificar,1,405
+CSR Sifang,crrc,CRRC,false,,SASAC,CSR Sifang = predecesora integrada en CRRC (Qingdao Sifang). Fusionado a id crrc. Fuente: Wikipedia CRRC Qingdao Sifang,6,394
+Honbridge Holdings,honbridge-holdings,Honbridge,false,,POE,Privada: holding inversion cotizado HK (recursos). Verificar,1,390
+China Road and Bridge Corporation,china-communications-construction-company,China Communications Construction,false,,SASAC,"FALSO 'and'. CRBC = filial de CCCC (SASAC central). Recomendacion: agrupar bajo CCCC. Fuente: Wikipedia CRBC -> FUSIONADO a id china-communications-construction-company (decision 2 aprobada, 2026-07-01).",5,376
 CAMC and Sinopharm,camc-and-sinopharm,CAMC and Sinopharm,true,camce|sinopharm,MIXED,"CONSORCIO. CAMCE (filial Sinomach, SASAC) + Sinopharm (SASAC central). Definir atribucion",1,372
-China International Water and Electric Corporation,china-international-water-and-electric-corporation,China International Water and Electric Corporation,false,,SASAC,"FALSO 'and'. CWE = filial de China Three Gorges (SASAC central). Recomendacion: agrupar bajo CTG",1,350
-China Railway Engineering Corporation,china-railway-engineering-corporation,China Railway Engineering Corporation,false,,SASAC,"CRECG = matriz estatal de China Railway Group (CREC), SASAC central. Posible mismo nodo que china-railway-group (matriz vs cotizada). Fuente: Wikipedia CREC",3,347
-China Nonferrous Metal Mining Group,china-nonferrous-metal-mining-group,China Nonferrous Metal Mining Group,false,,SASAC,SASAC central SOE (CNMC),1,340
-CED Prometheus,ced-prometheus,CED Prometheus,false,,UNKNOWN,Vehiculo de inversion; control ultimo no confirmado. Verificar,1,330
-BBCA Group,bbca-group,BBCA Group,false,,POE,"Anhui BBCA Biochemical - cotizada; verificar control (probable mixto provincial). Dejar revisar",1,320
-Huawei,huawei,Huawei,false,,POE,"Privada: propiedad de empleados via sindicato/Huawei Investment Holding (Ren Zhengfei fundador). Fuente: Wikipedia Huawei",7,301
+China International Water and Electric Corporation,china-three-gorges,China Three Gorges,false,,SASAC,"FALSO 'and'. CWE = filial de China Three Gorges (SASAC central). Recomendacion: agrupar bajo CTG -> FUSIONADO a id china-three-gorges (decision 2 aprobada, 2026-07-01).",1,350
+China Railway Engineering Corporation,china-railway-engineering-corporation,China Railway Engineering,false,,SASAC,"CRECG = matriz estatal de China Railway Group (CREC), SASAC central. Posible mismo nodo que china-railway-group (matriz vs cotizada). Fuente: Wikipedia CREC",3,347
+China Nonferrous Metal Mining Group,china-nonferrous-metal-mining-group,China Nonferrous Metal Mining,false,,SASAC,SASAC central SOE (CNMC),1,340
+CED Prometheus,ced-prometheus,CED Prometheus,false,,POE,"Vehiculo de inversion; control ultimo no confirmado. Verificar -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""CED Prometheus""), reemplaza estimacion web previa (era UNKNOWN).",1,330
+BBCA Group,bbca-group,BBCA,false,,POE,Anhui BBCA Biochemical - cotizada; verificar control (probable mixto provincial). Dejar revisar,1,320
+Huawei,huawei,Huawei,false,,POE,Privada: propiedad de empleados via sindicato/Huawei Investment Holding (Ren Zhengfei fundador). Fuente: Wikipedia Huawei,7,301
 China Investment Corporation,china-investment-corporation,China Investment Corporation,false,,SOE,"Fondo soberano estatal (bajo MOF/State Council, no SASAC). Fuente: Wikipedia CIC",1,300
-Xuzhou Construction Machinery,xuzhou-construction-machinery,XCMG,false,,SOE,"XCMG - SOE municipal Xuzhou (Jiangsu); reforma mixta parcial. Fuente: Wikipedia XCMG",2,300
+Xuzhou Construction Machinery,xuzhou-construction-machinery,XCMG,false,,SOE,XCMG - SOE municipal Xuzhou (Jiangsu); reforma mixta parcial. Fuente: Wikipedia XCMG,2,300
 Sinovac,sinovac,Sinovac Biotech,false,,POE,Privada: biofarmaceutica cotizada (Yin Weidong). Fuente: Wikipedia Sinovac,1,300
-ZTE,zte,ZTE,false,,SOE,"Mayor accionista Zhongxingxin controlado por SOEs (Xi'an Microelectronics/Aerospace). Control estatal de facto. Fuente: Wikipedia ZTE",6,290
+ZTE,zte,ZTE,false,,SASAC,"Mayor accionista Zhongxingxin controlado por SOEs (Xi'an Microelectronics/Aerospace). Control estatal de facto. Fuente: Wikipedia ZTE -> OWNERSHIP CORREGIDO a SASAC segun legacy/data/latam.json (clasificacion original ICLAC, investor=""ZTE""), reemplaza estimacion web previa (era SOE).",6,290
 JA Solar,ja-solar,JA Solar,false,,POE,Privada: fabricante solar (Jin Baofang). Fuente: Wikipedia JA Solar,1,286
-China National Building Material,china-national-building-material,China National Building Material,false,,SASAC,"SASAC central SOE (CNBM; ahora bajo Sinoma/CNBM group). Fuente: Wikipedia CNBM",1,280
-Yutong,yutong,Yutong Bus,false,,SOE,"Zhengzhou Yutong - controlador via gobierno municipal Zhengzhou (Yutong Group). Fuente: Wikipedia Yutong",1,278
-HydroChina,hydrochina,HydroChina,false,,SASAC,"HydroChina = predecesora integrada en PowerChina (SASAC central). Recomendacion: agrupar bajo powerchina",2,265
+China National Building Material,china-national-building-material,China National Building Material,false,,SASAC,SASAC central SOE (CNBM; ahora bajo Sinoma/CNBM group). Fuente: Wikipedia CNBM,1,280
+Yutong,yutong,Yutong Bus,false,,SOE,Zhengzhou Yutong - controlador via gobierno municipal Zhengzhou (Yutong Group). Fuente: Wikipedia Yutong,1,278
+HydroChina,powerchina,Power Construction Corporation of China,false,,SASAC,"HydroChina = predecesora integrada en PowerChina (SASAC central). Recomendacion: agrupar bajo powerchina -> FUSIONADO a id powerchina (decision 2 aprobada, 2026-07-01).",2,265
 Shanghai Shemar Power,shanghai-shemar-power,Shanghai Shemar Power Equipment,false,,POE,Privada: fabricante de aisladores compuestos. Verificar,1,260
-CAMCE Engineering and China National Electronics Import & Export Corporation,camce-engineering-and-china-national-ele,CAMCE Engineering and China National Electronics Import & Export Corporation,true,camce|ceiec,MIXED,"CONSORCIO. CAMCE (filial Sinomach, SASAC) + CEIEC (filial CETC, SASAC). Definir atribucion",1,240
-China United Engineering and Dongfang Turbine,china-united-engineering-and-dongfang-tu,China United Engineering and Dongfang Turbine,true,china-united-engineering|dongfang-turbine,MIXED,"CONSORCIO. China United Engineering (filial Sinomach, SASAC) + Dongfang Turbine (filial Dongfang Electric, SASAC). Definir atribucion",1,236
-China Metallurgical Group,china-metallurgical-group,China Metallurgical Group Corporation,false,,SASAC,"MCC - filial de China Minmetals (SASAC central). Fuente: Wikipedia MCC/Minmetals",1,230
-China Railway Group,china-railway-group,China Railway Group Limited,false,,SASAC,"CREC = cotizada de China Railway Engineering Corp (CRECG), SASAC central. Buros 1-10. Fuente: Wikipedia CREC",1,220
-ChemChina,chemchina,ChemChina,false,,SASAC,"SASAC central SOE (China National Chemical Corp). Desde 2021 bajo Sinochem Holdings (100% SASAC). Decision cliente: fusionar con sinochem? Fuente: Caixin/SASAC 2021",2,217
-Nextview,nextview,Nextview,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar,1,210
-Longsys,longsys,Longsys,false,,POE,"Privada: Shenzhen Longsys Electronics (memoria); cotizada. Verificar",1,205
-CMEC,cmec,China Machinery Engineering Corporation,false,,SASAC,"CMEC = filial de Sinomach (SASAC central). Decision cliente: fusionar con sinomach? Fuente: Wikipedia CMEC/SASAC",1,200
+CAMCE Engineering and China National Electronics Import & Export Corporation,camce-engineering-and-china-national-ele,CAMCE Engineering and China National Electronics Import & Export,true,camce|ceiec,MIXED,"CONSORCIO. CAMCE (filial Sinomach, SASAC) + CEIEC (filial CETC, SASAC). Definir atribucion",1,240
+China United Engineering and Dongfang Turbine,china-united-engineering-and-dongfang-tu,China United Engineering and Dongfang Turbine,true,china-united-engineering|dongfang-electric,MIXED,"CONSORCIO. China United Engineering (filial Sinomach, SASAC) + Dongfang Turbine (filial Dongfang Electric, SASAC). Definir atribucion",1,236
+China Metallurgical Group,china-metallurgical-group,China Metallurgical Group,false,,SASAC,MCC - filial de China Minmetals (SASAC central). Fuente: Wikipedia MCC/Minmetals,1,230
+China Railway Group,china-railway-group,China Railway Group,false,,SASAC,"CREC = cotizada de China Railway Engineering Corp (CRECG), SASAC central. Buros 1-10. Fuente: Wikipedia CREC",1,220
+ChemChina,chemchina,ChemChina,false,,SASAC,SASAC central SOE (China National Chemical Corp). Desde 2021 bajo Sinochem Holdings (100% SASAC). Decision cliente: fusionar con sinochem? Fuente: Caixin/SASAC 2021,2,217
+Nextview,nextview,Nextview,false,,POE,"Entidad poco documentada; control ultimo no confirmado. Verificar -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Nextview""), reemplaza estimacion web previa (era UNKNOWN).",1,210
+Longsys,longsys,Longsys,false,,POE,Privada: Shenzhen Longsys Electronics (memoria); cotizada. Verificar,1,205
+CMEC,sinomach,Sinomach,false,,SASAC,"CMEC = filial de Sinomach (SASAC central). Decision cliente: fusionar con sinomach? Fuente: Wikipedia CMEC/SASAC -> FUSIONADO a id sinomach (decision 2 aprobada, 2026-07-01).",1,200
 JCHX Mining Management,jchx-mining-management,JCHX Mining Management,false,,POE,Privada: cotizada Shanghai (servicios mineros). Verificar,1,180
-China Communications Bank,china-communications-bank,Bank of Communications,false,,SOE,"Banco estatal (Bank of Communications / BoCom); MOF mayor accionista. Fuente: Wikipedia BoCom",1,173
-Bosai Minerals,bosai-minerals,Bosai Minerals Group,false,,POE,"Privada: top private enterprise Chongqing. Fuente: ichongqing/Dun&Bradstreet",2,160
-Midea Group,midea-group,Midea Group,false,,POE,Privada: electrodomesticos (He Xiangjian). Fuente: Wikipedia Midea,4,146
+China Communications Bank,china-communications-bank,Bank of Communications,false,,SOE,Banco estatal (Bank of Communications / BoCom); MOF mayor accionista. Fuente: Wikipedia BoCom,1,173
+Bosai Minerals,bosai-minerals,Bosai Minerals,false,,POE,Privada: top private enterprise Chongqing. Fuente: ichongqing/Dun&Bradstreet,2,160
+Midea Group,midea-group,Midea,false,,POE,Privada: electrodomesticos (He Xiangjian). Fuente: Wikipedia Midea,4,146
 Ant Financial,ant-financial,Ant Group,false,,POE,Privada: afiliada a Alibaba (Jack Ma control efectivo). Fuente: Wikipedia Ant Group,1,146
 Revotech Asia Limited,revotech-asia-limited,Revotech Asia,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar,1,144
-Silk Road Fund,silk-road-fund,Silk Road Fund,false,,SOE,"Fondo estatal BRI (SAFE 65% / CIC 15% / EXIM 15% / CDB 5%). Fuente: Wikipedia Silk Road Fund",1,140
-China Great Wall Industry Corporation,china-great-wall-industry,China Great Wall Industry Corporation,false,,SASAC,"Aeroespacial: filial 100% de CASC (SASAC central). HOMONIMO: NO fusionar con Great Wall Motor. Fuente: Wikipedia CGWIC/CASC",1,140
-Foton Motor,foton-motor,Foton Motor,false,,SOE,"Beiqi Foton - filial de BAIC Group (SOE municipal Beijing). Fuente: Wikipedia Foton",3,139
-China Construction America and MCM,china-construction-america-and-mcm,China Construction America and MCM,true,china-construction-america|mcm,MIXED,"CONSORCIO. CCA (filial CSCEC, SASAC) + MCM (socio local). Definir atribucion",1,137
-Baiyin and Shougang,baiyin-and-shougang,Baiyin and Shougang,true,baiyin-nonferrous-group-co-ltd|shougang,MIXED,"CONSORCIO. Baiyin Nonferrous (SOE Gansu) + Shougang (SOE Beijing). Definir atribucion",1,132
-CGN Brazil,cgn-brazil,CGN Brazil,false,,SASAC,"Filial Brasil de China General Nuclear (CGN), SASAC central. Recomendacion: agrupar bajo china-general-nuclear-power-group",1,131
-Noble Group,noble-group,Noble Group,false,,POE,"Trading commodities cotizado Singapur (no estatal chino; fundador Richard Elman). Verificar pertinencia como inversor chino",2,130
+Silk Road Fund,silk-road-fund,Silk Road Fund,false,,SASAC,"Fondo estatal BRI (SAFE 65% / CIC 15% / EXIM 15% / CDB 5%). Fuente: Wikipedia Silk Road Fund -> OWNERSHIP CORREGIDO a SASAC segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Silk Road Fund""), reemplaza estimacion web previa (era SOE).",1,140
+China Great Wall Industry Corporation,china-great-wall-industry,China Great Wall Industry,false,,SASAC,Aeroespacial: filial 100% de CASC (SASAC central). HOMONIMO: NO fusionar con Great Wall Motor. Fuente: Wikipedia CGWIC/CASC,1,140
+Foton Motor,foton-motor,Foton Motor,false,,SOE,Beiqi Foton - filial de BAIC Group (SOE municipal Beijing). Fuente: Wikipedia Foton,3,139
+China Construction America and MCM,china-construction-america-and-mcm,China Construction America and MCM,true,china-state-construction-engineering-corporation|mcm,MIXED,"CONSORCIO. CCA (filial CSCEC, SASAC) + MCM (socio local). Definir atribucion",1,137
+Baiyin and Shougang,baiyin-and-shougang,Baiyin and Shougang,true,baiyin-nonferrous-group-co-ltd|shougang,MIXED,CONSORCIO. Baiyin Nonferrous (SOE Gansu) + Shougang (SOE Beijing). Definir atribucion,1,132
+CGN Brazil,china-general-nuclear-power-group,China General Nuclear Power,false,,SASAC,"Filial Brasil de China General Nuclear (CGN), SASAC central. Recomendacion: agrupar bajo china-general-nuclear-power-group -> FUSIONADO a id china-general-nuclear-power-group (decision 2 aprobada, 2026-07-01).",1,131
+Noble Group,noble-group,Noble Group,false,,POE,Trading commodities cotizado Singapur (no estatal chino; fundador Richard Elman). Verificar pertinencia como inversor chino,2,130
 Bank of China,bank-of-china,Bank of China,false,,SOE,Banco estatal Big Four (Central Huijin). Fuente: Wikipedia BOC,4,112
-Shougang,shougang,Shougang Group,false,,SOE,SOE municipal Beijing (Shougang Group / Capital Steel). Fuente: Wikipedia Shougang,1,110
-ICBC,icbc,Industrial and Commercial Bank of China,false,,SOE,"ICBC = Industrial and Commercial Bank of China (mismo banco que fila ICBC completa). Banco estatal Big Four. Decision cliente: fusionar con industrial-and-commercial-bank-of-china?",1,109
-Zhongrong Xinda and Jiangtong Group,zhongrong-xinda-and-jiangtong-group,Zhongrong Xinda and Jiangtong Group,true,zhongrong-xinda|jiangtong-group,MIXED,"CONSORCIO. Zhongrong Xinda (privada) + Jiangtong/Jiangxi Copper (SOE provincial). Definir atribucion",1,106
+Shougang,shougang,Shougang,false,,SOE,SOE municipal Beijing (Shougang Group / Capital Steel). Fuente: Wikipedia Shougang,1,110
+ICBC,icbc,Industrial and Commercial Bank of China,false,,SOE,ICBC = Industrial and Commercial Bank of China (mismo banco que fila ICBC completa). Banco estatal Big Four. Decision cliente: fusionar con industrial-and-commercial-bank-of-china?,1,109
+Zhongrong Xinda and Jiangtong Group,zhongrong-xinda-and-jiangtong-group,Zhongrong Xinda and Jiangtong,true,zhongrong-xinda|jiangtong-group,MIXED,CONSORCIO. Zhongrong Xinda (privada) + Jiangtong/Jiangxi Copper (SOE provincial). Definir atribucion,1,106
 Jinko Solar,jinko-solar,JinkoSolar,false,,POE,Privada: fabricante solar cotizado NYSE (Li Xiande). Fuente: Wikipedia JinkoSolar,1,104
-Guangxi Road and Bridge,guangxi-road-and-bridge,Guangxi Road and Bridge,false,,SOE,"FALSO 'and'. SOE provincial Guangxi (Guangxi Communications Investment Group). Verificar",1,103
+Guangxi Road and Bridge,guangxi-road-and-bridge,Guangxi Road and Bridge,false,,SASAC,"FALSO 'and'. SOE provincial Guangxi (Guangxi Communications Investment Group). Verificar -> OWNERSHIP CORREGIDO a SASAC segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Guangxi Road and Bridge""), reemplaza estimacion web previa (era SOE).",1,103
 Harbin Electric,harbin-electric,Harbin Electric,false,,SASAC,SASAC central SOE (Harbin Electric Corporation). Fuente: SASAC,1,101
-China Dalian International,china-dalian-international,China Dalian International Economic & Technical Cooperation Group,false,,SOE,SOE municipal Dalian (CDIG). Verificar,3,101
-Shaanxi Automobile Group,shaanxi-automobile-group,Shaanxi Automobile Group,false,,SOE,SOE provincial Shaanxi (Shacman). Fuente: Wikipedia Shaanxi Automobile,1,100
-Jiangsu Communication Clean Energy,jiangsu-communication-clean-energy,Jiangsu Communication Clean Energy,false,,UNKNOWN,Control ultimo no confirmado (probable SOE provincial Jiangsu). Verificar,1,100
-Alibaba,alibaba,Alibaba Group,false,,POE,Privada: cotizada NYSE/HKEX (Jack Ma fundador). Fuente: Wikipedia Alibaba,1,100
+China Dalian International,china-dalian-international,China Dalian International Economic & Technical Cooperation,false,,SOE,SOE municipal Dalian (CDIG). Verificar,3,101
+Shaanxi Automobile Group,shaanxi-automobile-group,Shaanxi Automobile,false,,POE,"SOE provincial Shaanxi (Shacman). Fuente: Wikipedia Shaanxi Automobile -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Shaanxi Automobile Group""), reemplaza estimacion web previa (era SOE).",1,100
+Jiangsu Communication Clean Energy,jiangsu-communication-clean-energy,Jiangsu Communication Clean Energy,false,,POE,"Control ultimo no confirmado (probable SOE provincial Jiangsu). Verificar -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Jiangsu Communication Clean Energy (CCETC)""), reemplaza estimacion previa (era UNKNOWN).",1,100
+Alibaba,alibaba,Alibaba,false,,POE,Privada: cotizada NYSE/HKEX (Jack Ma fundador). Fuente: Wikipedia Alibaba,1,100
 Zotye Holding Group,zotye-holding-group,Zotye Automobile,false,,POE,Privada: automotriz (Tieniu Group / Ying Jianren). Fuente: Wikipedia Zotye,2,98
-China Three Gorges and China International Water & Electric Corporation,china-three-gorges-and-china-internation,China Three Gorges and China International Water & Electric Corporation,true,china-three-gorges|china-international-water-and-electric-corporation,MIXED,"CONSORCIO. CTG + CWE (CWE es filial de CTG -> mismo grupo SASAC, posible doble conteo matriz-filial). Definir atribucion",1,90
-TCL Corporation,tcl-corporation,TCL Technology,false,,MIXED,"Origen SOE Huizhou; reforma mixta, gestion privada (Li Dongsheng). Propiedad mixta. Fuente: Wikipedia TCL",2,85
-Hubei Energy,hubei-energy,Hubei Energy Group,false,,SOE,"SOE provincial Hubei; participacion de China Three Gorges. Verificar",1,78
-Foresun Group,foresun-group,Foresun Group,false,,POE,Privada: conglomerado (verificar). Control no confirmado,1,75
-"China National Petroleum Corporation, Sinopec, and Andes Petroleum",china-national-petroleum-corporation-sin,"China National Petroleum Corporation, Sinopec, and Andes Petroleum",true,china-national-petroleum-corporation|sinopec|andes-petroleum,MIXED,"CONSORCIO. CNPC + Sinopec (SASAC). Andes Petroleum = JV CNPC+CNOOC. Definir atribucion",1,72
-Sinovel Wind,sinovel-wind,Sinovel Wind Group,false,,POE,"Privada: cotizada Shanghai (Han Junliang); historia de fraude. Verificar",1,71
-Jiangsu Yanghe Brewery,jiangsu-yanghe-brewery,Jiangsu Yanghe Brewery,false,,MIXED,"Yanghe - origen SOE provincial Jiangsu (Suqian SASAC) con reforma de gestion mixta. Verificar",1,65
+China Three Gorges and China International Water & Electric Corporation,china-three-gorges-and-china-internation,China Three Gorges and China International Water & Electric,true,china-three-gorges|china-three-gorges,MIXED,"CONSORCIO. CTG + CWE (CWE es filial de CTG -> mismo grupo SASAC, posible doble conteo matriz-filial). Definir atribucion",1,90
+TCL Corporation,tcl-corporation,TCL Technology,false,,SOE,"Origen SOE Huizhou; reforma mixta, gestion privada (Li Dongsheng). Propiedad mixta. Fuente: Wikipedia TCL -> OWNERSHIP CORREGIDO a SOE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""TCL Corporation""), reemplaza estimacion web previa (era MIXED).",2,85
+Hubei Energy,hubei-energy,Hubei Energy,false,,SOE,SOE provincial Hubei; participacion de China Three Gorges. Verificar,1,78
+Foresun Group,foresun-group,Foresun,false,,POE,Privada: conglomerado (verificar). Control no confirmado,1,75
+"China National Petroleum Corporation, Sinopec, and Andes Petroleum",china-national-petroleum-corporation-sin,"China National Petroleum Corporation, Sinopec, and Andes Petroleum",true,china-national-petroleum-corporation|sinopec|andes-petroleum,MIXED,CONSORCIO. CNPC + Sinopec (SASAC). Andes Petroleum = JV CNPC+CNOOC. Definir atribucion,1,72
+Sinovel Wind,sinovel-wind,Sinovel Wind,false,,MIXED,"Privada: cotizada Shanghai (Han Junliang); historia de fraude. Verificar -> OWNERSHIP CORREGIDO a MIXED segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Sinovel Wind""), reemplaza estimacion web previa (era POE).",1,71
+Jiangsu Yanghe Brewery,jiangsu-yanghe-brewery,Jiangsu Yanghe Brewery,false,,POE,"Yanghe - origen SOE provincial Jiangsu (Suqian SASAC) con reforma de gestion mixta. Verificar -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Jiangsu Yanghe Brewery""), reemplaza estimacion web previa (era MIXED).",1,65
 CNNET,cnnet,CNNET,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar,1,63
 Dalian Huafeng Aquatic Products,dalian-huafeng-aquatic-products,Dalian Huafeng Aquatic Products,false,,POE,Privada: productos acuicolas Dalian. Verificar,1,55
 EverChina,everchina,EverChina,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar,2,54
 Geely,geely,Geely,false,,POE,Privada: Zhejiang Geely Holding (Li Shufu). Fuente: Wikipedia Geely,1,54
-Changyu Pioneer Wine,changyu-pioneer-wine,Changyu Pioneer Wine,false,,MIXED,"Yantai Changyu - origen SOE municipal Yantai con reforma mixta (EMBO + Illva Saronno). Verificar",1,50
+Changyu Pioneer Wine,changyu-pioneer-wine,Changyu Pioneer Wine,false,,MIXED,Yantai Changyu - origen SOE municipal Yantai con reforma mixta (EMBO + Illva Saronno). Verificar,1,50
 CNTIC Trading,cntic-trading,CNTIC Trading,false,,SASAC,"CNTIC = China National Technical Import & Export Corp, filial de Genertec (SASAC central). Verificar",1,49
-LiuGong Machinery,liugong-machinery,LiuGong,false,,SOE,"Guangxi LiuGong - SOE provincial Guangxi. Fuente: Wikipedia LiuGong",3,47
+LiuGong Machinery,liugong-machinery,LiuGong,false,,POE,"Guangxi LiuGong - SOE provincial Guangxi. Fuente: Wikipedia LiuGong -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Liugong""), reemplaza estimacion web previa (era SOE).",3,47
 Goldwind Science & Technology,goldwind,Goldwind,false,,UNKNOWN,"Variante de Goldwind (mismo emisor, fusionado a id goldwind). Propiedad mixta/ambigua. Fuente: Wikipedia Goldwind",1,45
 Trina Solar,trina-solar,Trina Solar,false,,POE,Privada: fabricante solar (Gao Jifan). Fuente: Wikipedia Trina Solar,3,43
-Chihong Zinc and Germanium,chihong-zinc-and-germanium,Yunnan Chihong Zinc and Germanium,false,,SOE,"FALSO 'and'. Filial de Yunnan Metallurgical Group / Yunnan Provincial SASAC. Verificar",1,42
+Chihong Zinc and Germanium,chihong-zinc-and-germanium,Yunnan Chihong Zinc and Germanium,false,,SASAC,"FALSO 'and'. Filial de Yunnan Metallurgical Group / Yunnan Provincial SASAC. Verificar -> OWNERSHIP CORREGIDO a SASAC segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Chihong Zinc and Germanium""), reemplaza estimacion web previa (era SOE).",1,42
 Chongqing Shineray Motorcycle,chongqing-shineray-motorcycle,Shineray,false,,POE,Privada: Chongqing Shineray Group (Gong Daxing). Verificar,1,41
-CNQC,cnqc,China National Quingjian Group,false,,UNKNOWN,"CNQC International Holdings (Qingdao); control ultimo no confirmado (origen SOE Qingdao). Verificar",2,40
-23rd Metallurgical Construction Group,23rd-metallurgical-construction-group,23rd Metallurgical Construction Group,false,,SOE,"China 23rd Metallurgical - filial de MCC/Minmetals o SOE provincial. Verificar",3,39
-Chengxin Lithium Group,chengxin-lithium-group,Chengxin Lithium Group,false,,POE,Privada: Sichuan Chengxin Lithium cotizada (Yi Ruiyao). Verificar,1,38
-Gree,gree,Gree Electric,false,,MIXED,"Origen SOE Zhuhai; tras 2019 mayor accionista Hillhouse (privado), gestion privada. Propiedad mixta. Fuente: Wikipedia Gree",2,33
+CNQC,cnqc,China National Quingjian,false,,UNKNOWN,CNQC International Holdings (Qingdao); control ultimo no confirmado (origen SOE Qingdao). Verificar,2,40
+23rd Metallurgical Construction Group,23rd-metallurgical-construction-group,23rd Metallurgical Construction,false,,SOE,China 23rd Metallurgical - filial de MCC/Minmetals o SOE provincial. Verificar,3,39
+Chengxin Lithium Group,chengxin-lithium-group,Chengxin Lithium,false,,POE,Privada: Sichuan Chengxin Lithium cotizada (Yi Ruiyao). Verificar,1,38
+Gree,gree,Gree Electric,false,,SOE,"Origen SOE Zhuhai; tras 2019 mayor accionista Hillhouse (privado), gestion privada. Propiedad mixta. Fuente: Wikipedia Gree -> OWNERSHIP CORREGIDO a SOE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Gree""), reemplaza estimacion web previa (era MIXED).",2,33
 Envision Energy,envision-energy,Envision Energy,false,,POE,Privada: tecnologia eolica/energia (Zhang Lei). Fuente: Wikipedia Envision,1,33
-China State Construction Engineering Corporation,china-state-construction-engineering-corporation,China State Construction Engineering Corporation,false,,SASAC,SASAC central SOE (CSCEC),1,30
+China State Construction Engineering Corporation,china-state-construction-engineering-corporation,China State Construction Engineering,false,,SASAC,SASAC central SOE (CSCEC),1,30
 Goldwind,goldwind,Goldwind,false,,UNKNOWN,"Propiedad mixta/ambigua: cotizada, mayor accionista China Three Gorges ~21%, sin controlador >50%. Fuente: Wikipedia Goldwind",1,27
-Hebei Wenfeng Industrial Group,hebei-wenfeng-industrial-group,Hebei Wenfeng Industrial Group,false,,POE,Privada: grupo industrial Hebei (metales). Verificar,1,26
-Yapp Automotive Systems,yapp-automotive-systems,YAPP Automotive Systems,false,,POE,Privada: sistemas de combustible automotriz (Yangzhou). Verificar,1,24
-Nanjing Red Sun,nanjing-red-sun,Red Sun,false,,POE,Privada: Nanjing Red Sun agroquimicos cotizada. Verificar,1,23
-Nuctech,nuctech,Nuctech,false,,SOE,"Origen Tsinghua University (Tsinghua Tongfang); control estatal universitario. Fuente: Wikipedia Nuctech",1,21
-Junefield,junefield,Junefield Group,false,,POE,"Privada: Junefield (mineria/joyeria, Hong Kong). Verificar",1,21
-Shanghai Fisheries General Corporation,shanghai-fisheries-general-corporation,Shanghai Fisheries General Corporation,false,,SOE,"SOE municipal Shanghai (pesca; parte de Bright Food / Shanghai SASAC). Verificar",1,21
-Pengxin Agricultural Holdings Company Limited,pengxin-agricultural-holdings-company-limited,Pengxin Agricultural Holdings,false,,POE,"Vinculada a Shanghai Pengxin (privada, Jiang Zhaobai). Decision cliente: fusionar con shanghai-pengxin?",1,20
+Hebei Wenfeng Industrial Group,hebei-wenfeng-industrial-group,Hebei Wenfeng Industrial,false,,POE,Privada: grupo industrial Hebei (metales). Verificar,1,26
+Yapp Automotive Systems,yapp-automotive-systems,YAPP Automotive Systems,false,,SOE,"Privada: sistemas de combustible automotriz (Yangzhou). Verificar -> OWNERSHIP CORREGIDO a SOE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Yapp Automotive Systems""), reemplaza estimacion web previa (era POE).",1,24
+Nanjing Red Sun,nanjing-red-sun,Red Sun,false,,SOE,"Privada: Nanjing Red Sun agroquimicos cotizada. Verificar -> OWNERSHIP CORREGIDO a SOE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Nanjing Red Sun""), reemplaza estimacion web previa (era POE).",1,23
+Nuctech,nuctech,Nuctech,false,,SOE,Origen Tsinghua University (Tsinghua Tongfang); control estatal universitario. Fuente: Wikipedia Nuctech,1,21
+Junefield,junefield,Junefield,false,,POE,"Privada: Junefield (mineria/joyeria, Hong Kong). Verificar",1,21
+Shanghai Fisheries General Corporation,shanghai-fisheries-general-corporation,Shanghai Fisheries General,false,,SOE,SOE municipal Shanghai (pesca; parte de Bright Food / Shanghai SASAC). Verificar,1,21
+Pengxin Agricultural Holdings Company Limited,shanghai-pengxin,Shanghai Pengxin,false,,POE,"Vinculada a Shanghai Pengxin (privada, Jiang Zhaobai). Decision cliente: fusionar con shanghai-pengxin? -> FUSIONADO a id shanghai-pengxin (decision 2 aprobada, 2026-07-01).",1,20
 Chongqing Huapont Pharm Co Ltd,chongqing-huapont-pharm-co-ltd,Chongqing Huapont Pharm,false,,POE,Privada: farma/agroquimica cotizada (Chongqing). Verificar,1,20
-Sinoma Blade,sinoma-blade,Sinoma Wind Power Blade,false,,SASAC,"Filial de Sinoma/CNBM (SASAC central). Recomendacion: agrupar bajo CNBM",1,20
-Wuhan Fiberhome International Technologies,wuhan-fiberhome-international-technologies,Fiberhome,false,,SOE,"Fiberhome (FiberHome Technologies) - controlada por SASAC (matriz estatal). Fuente: Wikipedia Fiberhome",1,20
+Sinoma Blade,china-national-building-material,China National Building Material,false,,SASAC,"Filial de Sinoma/CNBM (SASAC central). Recomendacion: agrupar bajo CNBM -> FUSIONADO a id china-national-building-material (decision 2 aprobada, 2026-07-01).",1,20
+Wuhan Fiberhome International Technologies,wuhan-fiberhome-international-technologies,Fiberhome,false,,SOE,Fiberhome (FiberHome Technologies) - controlada por SASAC (matriz estatal). Fuente: Wikipedia Fiberhome,1,20
 ZhengChang,zhengchang,Zhengchang,false,,POE,Privada: maquinaria de piensos (Jiangsu Zhengchang). Verificar,1,19
 AngelAlign,angelalign,Angelalign Technology,false,,POE,Privada: ortodoncia cotizada HK (Angelalign). Verificar,1,19
 Jiangxi Copper,jiangxi-copper,Jiangxi Copper,false,,SOE,SOE provincial Jiangxi (Jiangxi Copper Corp). Fuente: Wikipedia Jiangxi Copper,1,18
-HANAQ Group,hanaq-group,HANAQ Group,false,,POE,"Privada: HANAQ (agro/comercio, Argentina-China). Posible duplicado de fila 'Hanaq'. Verificar",1,15
-China Jinjiang Environment Holding Company Limited,china-jinjiang-environment-holding-company-limited,China Jinjiang Environment Holding,false,,POE,Privada: waste-to-energy cotizada Singapur (Zhejiang). Verificar,1,15
-Lenovo,lenovo,Lenovo,false,,MIXED,"Mayor accionista Legend Holdings; Legend controlada parcialmente por Academia China de Ciencias (estatal) + privados. Propiedad mixta. Fuente: Wikipedia Lenovo",1,14
-Bluestar Silicones,bluestar-silicones,Bluestar Silicones,false,,SASAC,"Filial de China National Bluestar, subsidiaria de ChemChina (SASAC central). Recomendacion: vincular a chemchina",1,12
+HANAQ Group,hanaq-group,HANAQ,false,,POE,"Privada: HANAQ (agro/comercio, Argentina-China). Posible duplicado de fila 'Hanaq'. Verificar",1,15
+China Jinjiang Environment Holding Company Limited,china-jinjiang-environment-holding-company-limited,China Jinjiang Environment,false,,POE,Privada: waste-to-energy cotizada Singapur (Zhejiang). Verificar,1,15
+Lenovo,lenovo,Lenovo,false,,POE,"Mayor accionista Legend Holdings; Legend controlada parcialmente por Academia China de Ciencias (estatal) + privados. Propiedad mixta. Fuente: Wikipedia Lenovo -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Lenovo""), reemplaza estimacion web previa (era MIXED).",1,14
+Bluestar Silicones,chemchina,ChemChina,false,,SOE,"Filial de China National Bluestar, subsidiaria de ChemChina (SASAC central). Recomendacion: vincular a chemchina -> FUSIONADO a id chemchina (decision 2 aprobada, 2026-07-01). -> OWNERSHIP CORREGIDO a SOE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Bluestar Silicones""), reemplaza estimacion web previa (era SASAC).",1,12
 Johnson Electric,johnson-electric,Johnson Electric,false,,POE,"Privada: Johnson Electric Holdings (Hong Kong, familia Wang). Fuente: Wikipedia Johnson Electric",1,12
-Yangtze Optical Fibre and Cable,yangtze-optical-fibre-and-cable,Yangtze Optical Fibre and Cable,false,,MIXED,"FALSO 'and'. YOFC - JV con accionistas estatales (China Huaxin) y privados/extranjeros (Draka). Propiedad mixta. Verificar",1,12
-Nexteer Automotive,nexteer-automotive,Nexteer Automotive,false,,SOE,"Controlada por AVIC (Aviation Industry Corp of China), SASAC central. Fuente: Wikipedia Nexteer",1,11
-Solartech International Holdings,solartech-international-holdings,Solartech International Holdings,false,,POE,Privada: holding solar cotizado HK. Verificar,1,10
+Yangtze Optical Fibre and Cable,yangtze-optical-fibre-and-cable,Yangtze Optical Fibre and Cable,false,,MIXED,FALSO 'and'. YOFC - JV con accionistas estatales (China Huaxin) y privados/extranjeros (Draka). Propiedad mixta. Verificar,1,12
+Nexteer Automotive,nexteer-automotive,Nexteer Automotive,false,,POE,"Controlada por AVIC (Aviation Industry Corp of China), SASAC central. Fuente: Wikipedia Nexteer -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Nexteer Automotive""), reemplaza estimacion web previa (era SOE).",1,11
+Solartech International Holdings,solartech-international-holdings,Solartech International,false,,POE,Privada: holding solar cotizado HK. Verificar,1,10
 Qihoo 360,qihoo-360,Qihoo 360,false,,POE,Privada: ciberseguridad (Zhou Hongyi). Fuente: Wikipedia Qihoo 360,1,10
 Gold Anda Agricultural Technology,gold-anda-agricultural-technology,Gold Anda Agricultural Technology,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar,1,10
-Hebei Huatong Wires and Cables,hebei-huatong-wires-and-cables,Hebei Huatong Wires and Cables,false,,POE,"FALSO 'and'. Privada: fabricante de cables Hebei. Verificar",1,10
-BGI Genomics,bgi-genomics,BGI Genomics,false,,POE,"Privada: genomica (BGI Group; Wang Jian). Fuente: Wikipedia BGI",1,10
+Hebei Huatong Wires and Cables,hebei-huatong-wires-and-cables,Hebei Huatong Wires and Cables,false,,POE,FALSO 'and'. Privada: fabricante de cables Hebei. Verificar,1,10
+BGI Genomics,bgi-genomics,BGI Genomics,false,,POE,Privada: genomica (BGI Group; Wang Jian). Fuente: Wikipedia BGI,1,10
 ExcellBio,excellbio,ExcellBio,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar,1,10
-Ningbo Tuopu Group,ningbo-tuopu-group,Tuopu Group,false,,POE,Privada: autopartes Ningbo cotizada (Wu Jianshu). Verificar,1,9
+Ningbo Tuopu Group,ningbo-tuopu-group,Tuopu,false,,POE,Privada: autopartes Ningbo cotizada (Wu Jianshu). Verificar,1,9
 Hytera,hytera,Hytera,false,,POE,Privada: comunicaciones Shenzhen cotizada (Chen Qingzhou). Fuente: Wikipedia Hytera,2,8
-Zoomlion,zoomlion,Zoomlion,false,,MIXED,"Origen SOE Changsha (instituto estatal); reforma mixta, accionariado disperso. Propiedad mixta. Fuente: Wikipedia Zoomlion",1,8
+Zoomlion,zoomlion,Zoomlion,false,,POE,"Origen SOE Changsha (instituto estatal); reforma mixta, accionariado disperso. Propiedad mixta. Fuente: Wikipedia Zoomlion -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Zoomlion""), reemplaza estimacion web previa (era MIXED).",1,8
 Zhen Jiang No 2,zhen-jiang-no-2,Zhenjiang No.2,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar,1,7
-Hanaq,hanaq,HANAQ Group,false,,POE,"Privada: HANAQ. Posible duplicado de fila 'HANAQ Group'. Decision cliente: fusionar a hanaq-group?",1,6.3
+Hanaq,hanaq,HANAQ,false,,POE,Privada: HANAQ. Posible duplicado de fila 'HANAQ Group'. Decision cliente: fusionar a hanaq-group?,1,6.3
 Fenchem Biotek,fenchem-biotek,Fenchem Biotek,false,,POE,Privada: ingredientes/nutricion Nanjing. Verificar,1,6
-Sky Solar Holdings,sky-solar-holdings,Sky Solar Holdings,false,,POE,Privada: desarrollador solar cotizado (Weili Su). Verificar,2,6
-Advanced Optronic Devices Brasil,advanced-optronic-devices-brasil,Advanced Optronic Devices Brasil,false,,UNKNOWN,Filial Brasil; matriz china no confirmada. Verificar,1,5
+Sky Solar Holdings,sky-solar-holdings,Sky Solar,false,,POE,Privada: desarrollador solar cotizado (Weili Su). Verificar,2,6
+Advanced Optronic Devices Brasil,advanced-optronic-devices-brasil,Advanced Optronic Devices Brasil,false,,POE,"Filial Brasil; matriz china no confirmada. Verificar -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Advanced Optronic Devices Brasil""), reemplaza estimacion web previa (era UNKNOWN).",1,5
 Sanxing Electric,sanxing-electric,Sanxing Electric,false,,POE,Privada: equipos electricos (verificar). Control no confirmado,1,5
 Maverick Motos,maverick-motos,Maverick Motos,false,,UNKNOWN,Marca de motos en Brasil; matriz china no confirmada. Verificar,1,4
 Fubao Food Company,fubao-food-company,Fubao Food,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar,1,4
 ReneSola,renesola,ReneSola,false,,POE,Privada: solar cotizada (Li Xianshou). Fuente: Wikipedia ReneSola,1,4
 Shanghai Kangzheng,shanghai-kangzheng,Shanghai Kangzheng,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar,1,3
-Traxx Motocicletas Do Brasil,traxx-motocicletas-do-brasil,Traxx Motocicletas Do Brasil,false,,UNKNOWN,Marca de motos en Brasil; matriz china no confirmada. Verificar,1,3
+Traxx Motocicletas Do Brasil,traxx-motocicletas-do-brasil,Traxx Motocicletas Do Brasil,false,,SOE,"Marca de motos en Brasil; matriz china no confirmada. Verificar -> OWNERSHIP CORREGIDO a SOE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Traxx Motocicletas Do Brasil""), reemplaza estimacion web previa (era UNKNOWN).",1,3
 Aihuishou,aihuishou,AiHuiShou (ATRenew),false,,POE,Privada: reciclaje electronica cotizada NYSE (ATRenew). Verificar,1,3
 ET Solar,et-solar,ET Solar,false,,POE,Privada: fabricante solar (Nanjing). Verificar,1,3
 Yingli Solar,yingli-solar,Yingli Green Energy,false,,POE,Privada: fabricante solar (Miao Liansheng). Fuente: Wikipedia Yingli,1,3
 eBaoTech Corporation,ebaotech-corporation,eBaoTech,false,,POE,Privada: software de seguros (Shanghai). Verificar,1,3
 China Natural Resources,china-natural-resources,China Natural Resources,false,,POE,Privada: holding minero cotizado Nasdaq (Feize Zhang). Verificar,1,2
-China Development Bank,china-development-bank,China Development Bank,false,,SOE,"Banco politico estatal (100% State Council via MOF/Central Huijin). Fuente: Wikipedia CDB",1,2
-Cheetah Mobile,cheetah-mobile,Cheetah Mobile,false,,POE,"Privada: software movil (vinculada a Kingsoft; Fu Sheng). Fuente: Wikipedia Cheetah Mobile",1,2
-Ample Auto,ample-auto,Ample Auto,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar,1,2
-Chemchina,chemchina,ChemChina,false,,SASAC,"Variante de ChemChina (casing). Fusionado a id chemchina. SASAC central (via Sinochem Holdings 2021)",1,2
-Pingle,pingle,Pingle Group,false,,POE,Privada: maquinaria de molienda (Hebei Pingle). Verificar,1,1
-Export-Import Bank of China,export-import-bank-of-china,Export-Import Bank of China,false,,SOE,"Banco politico estatal (100% State Council). Fuente: Wikipedia EXIM Bank",1,1
-CRRC Qingdao Sifang,crrc,CRRC,false,,SASAC,"CRRC Qingdao Sifang = filial de CRRC. Fusionado a id crrc. Fuente: Wikipedia CRRC Qingdao Sifang",1,0
-CCCC Shanghai Dredging,cccc-shanghai-dredging,CCCC Shanghai Dredging,false,,SASAC,"Filial de CCCC (SASAC central). Recomendacion: agrupar bajo china-communications-construction-company",1,0
-Dashang Group,dashang-group,Dashang Group,false,,MIXED,"Dalian Dashang - origen SOE municipal, reforma mixta (retail). Verificar",1,0
+China Development Bank,china-development-bank,China Development Bank,false,,SOE,Banco politico estatal (100% State Council via MOF/Central Huijin). Fuente: Wikipedia CDB,1,2
+Cheetah Mobile,cheetah-mobile,Cheetah Mobile,false,,POE,Privada: software movil (vinculada a Kingsoft; Fu Sheng). Fuente: Wikipedia Cheetah Mobile,1,2
+Ample Auto,ample-auto,Ample Auto,false,,POE,"Entidad poco documentada; control ultimo no confirmado. Verificar -> OWNERSHIP CORREGIDO a POE segun legacy/data/latam.json (clasificacion original ICLAC, investor=""Ample Auto""), reemplaza estimacion web previa (era UNKNOWN).",1,2
+Chemchina,chemchina,ChemChina,false,,SASAC,Variante de ChemChina (casing). Fusionado a id chemchina. SASAC central (via Sinochem Holdings 2021),1,2
+Pingle,pingle,Pingle,false,,POE,Privada: maquinaria de molienda (Hebei Pingle). Verificar,1,1
+Export-Import Bank of China,export-import-bank-of-china,Export-Import Bank of China,false,,SOE,Banco politico estatal (100% State Council). Fuente: Wikipedia EXIM Bank,1,1
+CRRC Qingdao Sifang,crrc,CRRC,false,,SASAC,CRRC Qingdao Sifang = filial de CRRC. Fusionado a id crrc. Fuente: Wikipedia CRRC Qingdao Sifang,1,0
+CCCC Shanghai Dredging,china-communications-construction-company,China Communications Construction,false,,SASAC,"Filial de CCCC (SASAC central). Recomendacion: agrupar bajo china-communications-construction-company -> FUSIONADO a id china-communications-construction-company (decision 2 aprobada, 2026-07-01).",1,0
+Dashang Group,dashang-group,Dashang,false,,MIXED,"Dalian Dashang - origen SOE municipal, reforma mixta (retail). Verificar",1,0
 COSCO and Xiaomi,cosco-and-xiaomi,COSCO and Xiaomi,true,cosco|xiaomi,MIXED,"CONSORCIO. COSCO (SASAC) + Xiaomi (privada, Lei Jun). Definir atribucion",1,0
-China Mingjin Group,china-mingjin-group,China Mingjin Group,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar,1,0
-ChemChina (Syngenta),chemchina,ChemChina,false,,SASAC,"Alias: Syngenta = activo adquirido por ChemChina 2017. Fusionado a id chemchina. SASAC central",1,0
+China Mingjin Group,china-mingjin-group,China Mingjin,false,,UNKNOWN,Entidad poco documentada; control ultimo no confirmado. Verificar,1,0
+ChemChina (Syngenta),chemchina,ChemChina,false,,SASAC,Alias: Syngenta = activo adquirido por ChemChina 2017. Fusionado a id chemchina. SASAC central,1,0

@@ -51,7 +51,18 @@
     "click_hint": "Click a node to filter",
     "loading": "Building diagram…",
     "empty": "No data for the current filters",
-    "empty_money": "No amounts in the selected range. Try the \"Projects\" metric."
+    "empty_money": "No amounts in the selected range. Try the \"Projects\" metric.",
+    "ownership": "Ownership",
+    "own_sasac": "SASAC (central state-owned)",
+    "own_soe": "SOE (other state-owned)",
+    "own_poe": "POE (private)",
+    "own_mixed": "MIXED (mixed / consortium)",
+    "own_unknown": "Undetermined",
+    "consortiums": "Consortiums",
+    "cons_all": "All",
+    "cons_only": "Consortiums only",
+    "cons_none": "Exclude consortiums",
+    "consortium_members": "includes"
   },
   "methodology": {
     "title": "Methodology",

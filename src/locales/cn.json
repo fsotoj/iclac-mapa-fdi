@@ -51,7 +51,18 @@
     "click_hint": "点击节点进行筛选",
     "loading": "正在生成图表…",
     "empty": "当前筛选无数据",
-    "empty_money": "所选范围内无金额。请尝试“项目”指标。"
+    "empty_money": "所选范围内无金额。请尝试“项目”指标。",
+    "ownership": "所有制",
+    "own_sasac": "SASAC（中央国有）",
+    "own_soe": "SOE（其他国有）",
+    "own_poe": "POE（民营）",
+    "own_mixed": "MIXED（混合/联合体）",
+    "own_unknown": "未确定",
+    "consortiums": "联合体",
+    "cons_all": "全部",
+    "cons_only": "仅联合体",
+    "cons_none": "不含联合体",
+    "consortium_members": "包括"
   },
   "methodology": {
     "title": "方法论",

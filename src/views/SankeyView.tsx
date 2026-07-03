@@ -7,8 +7,8 @@ import { TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsOption } from 'echarts'
 import type { Investment } from '@/types/data'
-import type { InvestorMap, SankeyMetric } from '@/lib/sankey'
-import { buildSankeyData, distinctCompanies, resolveCompanyId } from '@/lib/sankey'
+import type { ConsortiumMode, InvestorMap, SankeyMetric } from '@/lib/sankey'
+import { buildSankeyData, distinctCompanies, scopeInvestments } from '@/lib/sankey'
 import { sectorColor } from '@/lib/sectors'
 import { applyFilters, distinctSectors, distinctCountries, yearBounds } from '@/lib/filter'
 import { useFilters } from '@/hooks/useFilters'
@@ -22,6 +22,11 @@ echarts.use([SankeyChart, TooltipComponent, CanvasRenderer])
 // Fallback node colors per depth: investor / country (sector uses sectorColor).
 const LEVEL_COLOR = ['#545453', '#377F83', '#0CCABC'] as const
 const TOP_N = 20
+
+// Fixed vocabulary from investors_map.csv (SASAC ⊂ SOE conceptually, but they
+// are disjoint labels in the data). Unmapped investors count as UNKNOWN.
+const OWNERSHIP_VALUES = ['SASAC', 'SOE', 'POE', 'MIXED', 'UNKNOWN'] as const
+const CONSORTIUM_MODES: ConsortiumMode[] = ['all', 'only', 'none']
 
 type ClickParams = { dataType?: string; name?: string }
 
@@ -99,16 +104,21 @@ export default function SankeyView() {
   const nameToId = useMemo(() => new Map(companies.map(c => [c.name, c.id])), [companies])
 
   // Shares the map's URL filters (country/year/sector/type/construction), then
-  // applies the Sankey-only investor selection on top (by canonical company_id).
-  const scoped = useMemo(() => {
-    const base = applyFilters(investments, filters)
-    if (filters.investors.length === 0) return base
-    const sel = new Set(filters.investors)
-    return base.filter(inv => sel.has(resolveCompanyId(inv.investor ?? '', map)))
-  }, [investments, filters, map])
+  // applies the Sankey-only dimensions (investor selection, ownership, consortium
+  // mode) on top — these need the canonical map, so the map view ignores them.
+  const scoped = useMemo(
+    () =>
+      scopeInvestments(applyFilters(investments, filters), map, {
+        investors: filters.investors,
+        ownership: filters.ownership,
+        consortium: filters.consortium
+      }),
+    [investments, filters, map]
+  )
 
-  // With a selection, show every chosen company (don't bucket into "others").
-  const topN = filters.investors.length > 0 ? Math.max(filters.investors.length, 1) : TOP_N
+  // With a selection, show everything it matches (selected companies plus the
+  // consortiums they participate in) — never bucket a selection into "others".
+  const topN = filters.investors.length > 0 ? Number.POSITIVE_INFINITY : TOP_N
   const data = useMemo(
     () => buildSankeyData(scoped, map, { metric, topN, othersInvestor: t('sankey.others') }),
     [scoped, map, metric, topN, t]
@@ -185,7 +195,7 @@ export default function SankeyView() {
   )
 
   // Click a node to toggle its filter: investor (by company_id), country, sector.
-  const toggle = (key: 'countries' | 'sectors' | 'investors', value: string) => {
+  const toggle = (key: 'countries' | 'sectors' | 'investors' | 'ownership', value: string) => {
     const cur = filters[key]
     const next = cur.includes(value) ? cur.filter(x => x !== value) : [...cur, value]
     setFilters({ [key]: next })
@@ -247,6 +257,33 @@ export default function SankeyView() {
               valueMax={yMax}
               onChange={(vMin, vMax) => setFilters({ yearMin: vMin, yearMax: vMax })}
             />
+          </div>
+        </FilterDropdown>
+        <FilterDropdown label={t('sankey.ownership')} count={filters.ownership.length}>
+          <CheckList
+            items={[...OWNERSHIP_VALUES]}
+            selected={filters.ownership}
+            onToggle={o => toggle('ownership', o)}
+            label={o => t(`sankey.own_${o.toLowerCase()}`, o)}
+          />
+        </FilterDropdown>
+        <FilterDropdown
+          label={t('sankey.consortiums')}
+          badge={filters.consortium !== 'all' ? t(`sankey.cons_${filters.consortium}`) : undefined}
+        >
+          <div className="p-2">
+            {CONSORTIUM_MODES.map(m => (
+              <label key={m} className="flex cursor-pointer items-center gap-2 rounded px-1 py-1 text-sm hover:bg-gray-50">
+                <input
+                  type="radio"
+                  name="consortium-mode"
+                  checked={filters.consortium === m}
+                  onChange={() => setFilters({ consortium: m })}
+                  className="shrink-0"
+                />
+                <span className="text-gray-800">{t(`sankey.cons_${m}`)}</span>
+              </label>
+            ))}
           </div>
         </FilterDropdown>
 
