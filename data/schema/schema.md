@@ -226,9 +226,9 @@ Reglas de archivo e inter-fila:
 - **Multi-point = punto por punto** (confirmado): una inversión con N sitios = N registros.
   Al **sumar montos**, deduplicar por `Id_Investment` para no sobrecontar.
 
-**Umbral del validador (2.3):** el cliente acepta **95%** de filas válidas como umbral
-(correo 24-06-2026). El validador reporta el % válido y falla bajo 95% (no exige 100%);
-el reporte indica qué filas fallan y por qué.
+**Umbral del validador (2.3):** **propuesto 95%** de filas válidas (Parte III.2 del entregable,
+"Proponemos"; por confirmar por cliente). El validador reporta el % válido y falla bajo el umbral
+(no exige 100%); el reporte indica qué filas fallan y por qué.
 
 ---
 
