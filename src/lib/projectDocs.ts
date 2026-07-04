@@ -18,8 +18,24 @@ export const dedupeById = (invs: Investment[]): Investment[] => {
   return out
 }
 
-/** Group deduped investments by country, projects sorted by year desc, countries A→Z. */
-export const groupByCountry = (invs: Investment[]): CountryGroup[] => {
+export type CardSort = 'year' | 'amount'
+
+// year: desc, missing years last. amount: desc, missing amounts last —
+// a null amount is "unknown", not zero, so it never outranks a real value.
+const compareBy = (sortBy: CardSort) => (a: Investment, b: Investment): number => {
+  if (sortBy === 'amount') {
+    const av = a.investment_musd
+    const bv = b.investment_musd
+    if (av === null && bv === null) return (b.year ?? 0) - (a.year ?? 0)
+    if (av === null) return 1
+    if (bv === null) return -1
+    return bv - av
+  }
+  return (b.year ?? 0) - (a.year ?? 0)
+}
+
+/** Group deduped investments by country, projects sorted by `sortBy`, countries A→Z. */
+export const groupByCountry = (invs: Investment[], sortBy: CardSort = 'year'): CountryGroup[] => {
   const byCountry = new Map<string, Investment[]>()
   for (const inv of dedupeById(invs)) {
     const country = inv.country ?? '—'
@@ -30,10 +46,14 @@ export const groupByCountry = (invs: Investment[]): CountryGroup[] => {
   return [...byCountry.entries()]
     .map(([country, projects]) => ({
       country,
-      projects: projects.sort((a, b) => (b.year ?? 0) - (a.year ?? 0))
+      projects: projects.sort(compareBy(sortBy))
     }))
     .sort((a, b) => a.country.localeCompare(b.country))
 }
+
+/** Deduped flat list (no country grouping), globally sorted by `sortBy`. */
+export const flatList = (invs: Investment[], sortBy: CardSort = 'year'): Investment[] =>
+  dedupeById(invs).sort(compareBy(sortBy))
 
 type Lang = string
 

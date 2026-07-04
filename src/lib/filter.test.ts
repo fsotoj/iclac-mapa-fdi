@@ -67,6 +67,23 @@ describe('applyFilters', () => {
     expect(applyFilters(q, withFilters({ query: 'sino' })).map(r => r.id)).toEqual(['x'])
   })
 
+  describe('focusId (single-investment isolation)', () => {
+    it('returns every row of the focused id, ignoring all other filters', () => {
+      const multi = [
+        makeInv({ id: 'a', country: 'Brasil', year: 2020 }),
+        makeInv({ id: 'a', country: 'Brasil', year: 2020 }), // second waypoint row
+        makeInv({ id: 'b', country: 'Argentina', year: 2010 })
+      ]
+      // Filters that would exclude 'a' — isolation must win.
+      const out = applyFilters(multi, withFilters({ focusId: 'a', countries: ['Argentina'], yearMin: 2021 }))
+      expect(out.map(r => r.id)).toEqual(['a', 'a'])
+    })
+
+    it('counts as an active filter', () => {
+      expect(activeFilterCount(withFilters({ focusId: 'a' }))).toBe(1)
+    })
+  })
+
   describe('with the investor map (third argument)', () => {
     const MAP: InvestorMap = {
       COFCO: { company_id: 'cofco', company_canonical: 'COFCO', ownership: 'SASAC' },

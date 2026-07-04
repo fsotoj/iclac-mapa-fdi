@@ -16,6 +16,7 @@ import { useFilters } from '@/hooks/useFilters'
 import InvestorFilter from '@/components/InvestorFilter'
 import FilterDropdown from '@/components/FilterDropdown'
 import YearRangeSlider from '@/components/YearRangeSlider'
+import CheckList from '@/components/CheckList'
 
 // Register only what the Sankey needs — the bundler drops the rest of echarts.
 echarts.use([SankeyChart, TooltipComponent, CanvasRenderer])
@@ -30,40 +31,6 @@ const OWNERSHIP_VALUES = ['SASAC', 'SOE', 'POE', 'MIXED', 'UNKNOWN'] as const
 const CONSORTIUM_MODES: ConsortiumMode[] = ['all', 'only', 'none']
 
 type ClickParams = { dataType?: string; name?: string }
-
-// Checkbox list for the país / sector dropdowns. Empty selection = all (every box
-// checked); clicking one from "all" narrows to just it (same as clicking a node).
-function CheckList({
-  items,
-  selected,
-  onToggle,
-  color,
-  label
-}: {
-  items: string[]
-  selected: string[]
-  onToggle: (v: string) => void
-  color?: (v: string) => string
-  label?: (v: string) => string
-}) {
-  const all = selected.length === 0
-  return (
-    <div className="max-h-72 overflow-y-auto p-2">
-      {items.map(it => {
-        const active = all || selected.includes(it)
-        return (
-          <label key={it} className="flex cursor-pointer items-center gap-2 rounded px-1 py-1 text-sm hover:bg-gray-50">
-            <input type="checkbox" checked={active} onChange={() => onToggle(it)} className="shrink-0" />
-            {color && (
-              <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: color(it), opacity: active ? 1 : 0.4 }} />
-            )}
-            <span className="min-w-0 flex-1 truncate text-gray-800">{label ? label(it) : it}</span>
-          </label>
-        )
-      })}
-    </div>
-  )
-}
 
 export default function SankeyView() {
   const { t, i18n } = useTranslation()
@@ -95,15 +62,29 @@ export default function SankeyView() {
       })
   }, [])
 
-  // Company options for the filter: from the full dataset so the list is stable.
-  const companies = useMemo(() => distinctCompanies(investments, map), [investments, map])
+  // Company options: faceted — computed with every OTHER filter applied (standard
+  // faceting: a facet never narrows itself), so the list and its per-row values
+  // react to country/year/sector/ownership. Selected companies never drop out,
+  // even when the other filters leave them with zero matches.
+  const allCompanies = useMemo(() => distinctCompanies(investments, map), [investments, map])
+  const optionsScope = useMemo(
+    () => applyFilters(investments, { ...filters, investors: [], focusId: null }, map),
+    [investments, filters, map]
+  )
+  const companies = useMemo(() => {
+    const scopedCompanies = distinctCompanies(optionsScope, map)
+    const present = new Set(scopedCompanies.map(c => c.id))
+    const kept = allCompanies.filter(c => filters.investors.includes(c.id) && !present.has(c.id))
+    return kept.length ? [...scopedCompanies, ...kept].sort((a, b) => a.name.localeCompare(b.name)) : scopedCompanies
+  }, [optionsScope, map, allCompanies, filters.investors])
   const sectors = useMemo(() => distinctSectors(investments), [investments])
   const countries = useMemo(() => distinctCountries(investments), [investments])
   const [yearMin, yearMax] = useMemo(() => yearBounds(investments), [investments])
   const yMin = filters.yearMin ?? yearMin
   const yMax = filters.yearMax ?? yearMax
   const yearActive = yMin > yearMin || yMax < yearMax
-  const nameToId = useMemo(() => new Map(companies.map(c => [c.name, c.id])), [companies])
+  // Node-click → filter lookup uses the stable full list (nodes can name any company).
+  const nameToId = useMemo(() => new Map(allCompanies.map(c => [c.name, c.id])), [allCompanies])
 
   // Shared URL filters plus the investor-map dimensions, all inside applyFilters
   // (it scopes by investor/ownership/consortium when given the canonical map).

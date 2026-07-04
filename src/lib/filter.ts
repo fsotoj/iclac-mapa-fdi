@@ -29,6 +29,10 @@ export type Filters = {
   investors: string[]
   ownership: string[]
   consortium: ConsortiumMode
+  // Isolate a single investment (card action). When set, applyFilters returns
+  // every row of that id (full multi-point/line geometry) and IGNORES all other
+  // filters — isolation must always show the investment.
+  focusId: string | null
 }
 
 export const DEFAULT_FILTERS: Filters = {
@@ -47,7 +51,8 @@ export const DEFAULT_FILTERS: Filters = {
   query: '',
   investors: [],
   ownership: [],
-  consortium: 'all'
+  consortium: 'all',
+  focusId: null
 }
 
 // Counts data-filtering dimensions that differ from default — ignores view/pie*,
@@ -64,7 +69,8 @@ export const activeFilterCount = (f: Filters): number =>
     f.query !== '',
     f.investors.length > 0,
     f.ownership.length > 0,
-    f.consortium !== 'all'
+    f.consortium !== 'all',
+    f.focusId !== null
   ].filter(Boolean).length
 
 const norm = (s: string): string =>
@@ -93,6 +99,8 @@ const matchesQuery = (inv: Investment, q: string): boolean => {
 }
 
 export const applyFilters = (data: Investment[], f: Filters, map?: InvestorMap): Investment[] => {
+  // Isolation wins over everything: always show the focused investment whole.
+  if (f.focusId !== null) return data.filter(inv => inv.id === f.focusId)
   const base = data.filter(inv => {
     if (f.countries.length > 0 && (!inv.country || !f.countries.includes(inv.country))) return false
     if (f.yearMin !== null && (inv.year === null || inv.year < f.yearMin)) return false

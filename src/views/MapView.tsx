@@ -222,6 +222,20 @@ export default function MapView() {
     setTarget({ id: inv.id, token: Date.now() })
   }, [])
 
+  // Card action: isolate one investment (URL `id`). Toggle off if already focused;
+  // on isolate also fly to it. applyFilters short-circuits on focusId.
+  const handleIsolate = useCallback(
+    (inv: Investment) => {
+      if (filters.focusId === inv.id) {
+        setFilters({ focusId: null })
+      } else {
+        setFilters({ focusId: inv.id })
+        setTarget({ id: inv.id, token: Date.now() })
+      }
+    },
+    [filters.focusId, setFilters]
+  )
+
   useEffect(() => {
     Promise.all([
       fetch('/data/south-america.geojson').then(r => r.json()),
@@ -251,7 +265,6 @@ export default function MapView() {
 
   const countries = useMemo(() => distinctCountries(investments), [investments])
   const sectors = useMemo(() => distinctSectors(investments), [investments])
-  const companies = useMemo(() => distinctCompanies(investments, investorMap), [investments, investorMap])
   const [yearMin, yearMax] = useMemo(() => yearBounds(investments), [investments])
   // Key only on fields applyFilters reads. view/pie* live in the same filters
   // object but don't change the result set; without this, every cards toggle
@@ -277,9 +290,39 @@ export default function MapView() {
       filters.query,
       investorsKey,
       ownershipKey,
+      filters.consortium,
+      filters.focusId
+    ]
+  )
+  // Company options: faceted — every filter except the investor facet itself
+  // (and the isolation lens) narrows the list, so rows/values react to
+  // country/year/sector/ownership. Selected companies never drop out.
+  const allCompanies = useMemo(() => distinctCompanies(investments, investorMap), [investments, investorMap])
+  const optionsScope = useMemo(
+    () => applyFilters(investments, { ...filters, investors: [], focusId: null }, investorMap),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      investments,
+      investorMap,
+      countriesKey,
+      filters.yearMin,
+      filters.yearMax,
+      typesKey,
+      filters.includeConstruction,
+      filters.research,
+      sectorsKey,
+      filters.query,
+      ownershipKey,
       filters.consortium
     ]
   )
+  const companies = useMemo(() => {
+    const scopedCompanies = distinctCompanies(optionsScope, investorMap)
+    const present = new Set(scopedCompanies.map(c => c.id))
+    const kept = allCompanies.filter(c => filters.investors.includes(c.id) && !present.has(c.id))
+    return kept.length ? [...scopedCompanies, ...kept].sort((a, b) => a.name.localeCompare(b.name)) : scopedCompanies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [optionsScope, investorMap, allCompanies, investorsKey])
 
   const filteredGeo = useMemo<CountryFeatureCollection | null>(() => {
     if (!geo) return null
@@ -373,6 +416,17 @@ export default function MapView() {
                     ({t('filter.without_amount', { count: agg.withoutAmount })})
                   </span>
                 )}
+                {filters.focusId !== null && (
+                  <button
+                    type="button"
+                    onClick={() => setFilters({ focusId: null })}
+                    title={t('filter.isolated_exit')}
+                    className="ml-2 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-gray-900 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-gray-700"
+                  >
+                    {t('filter.isolated')}
+                    <span aria-hidden>×</span>
+                  </button>
+                )}
                 {activeFilterCount(filters) > 0 && (
                   <Link
                     to={{ pathname: '/sankey', search: location.search }}
@@ -414,7 +468,13 @@ export default function MapView() {
                     </svg>
                   </button>
                 </div>
-                <ProjectDocsCards investments={filtered} lang={i18n.language} onLocate={handleLocate} />
+                <ProjectDocsCards
+                  investments={filtered}
+                  lang={i18n.language}
+                  onLocate={handleLocate}
+                  onIsolate={handleIsolate}
+                  focusedId={filters.focusId}
+                />
               </aside>
             )}
           </div>

@@ -2,13 +2,15 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Investment } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
-import { formatMoney, groupByCountry, localizedDetail } from '@/lib/projectDocs'
+import { flatList, formatMoney, groupByCountry, localizedDetail, type CardSort } from '@/lib/projectDocs'
 import { useFilters } from '@/hooks/useFilters'
 
 type Props = {
   investments: Investment[]
   lang: string
   onLocate?: (inv: Investment) => void
+  onIsolate?: (inv: Investment) => void
+  focusedId?: string | null
 }
 
 const PinIcon = () => (
@@ -41,7 +43,27 @@ const Chevron = ({ open }: { open: boolean }) => (
   </svg>
 )
 
-const Card = ({ inv, lang, onLocate }: { inv: Investment; lang: string; onLocate?: (inv: Investment) => void }) => {
+const TargetIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4">
+    <circle cx="12" cy="12" r="6.5" />
+    <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" />
+    <path strokeLinecap="round" d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" />
+  </svg>
+)
+
+const Card = ({
+  inv,
+  lang,
+  onLocate,
+  onIsolate,
+  focused
+}: {
+  inv: Investment
+  lang: string
+  onLocate?: (inv: Investment) => void
+  onIsolate?: (inv: Investment) => void
+  focused?: boolean
+}) => {
   const { t } = useTranslation()
   const [showStudies, setShowStudies] = useState(false)
   const meta = [inv.investor, inv.year].filter(Boolean).join(' · ')
@@ -57,6 +79,17 @@ const Card = ({ inv, lang, onLocate }: { inv: Investment; lang: string; onLocate
         <h4 className="min-w-0 flex-1 text-sm font-medium leading-snug text-gray-900">
           {localizedDetail(inv, lang)}
         </h4>
+        {onIsolate && (
+          <button
+            type="button"
+            onClick={() => onIsolate(inv)}
+            aria-pressed={focused}
+            title={t(focused ? 'list.isolate_off' : 'list.isolate')}
+            className={`shrink-0 rounded ${focused ? 'bg-gray-900 p-0.5 text-white' : 'text-gray-400 hover:text-gray-900'}`}
+          >
+            <TargetIcon />
+          </button>
+        )}
         {onLocate && (
           <button
             type="button"
@@ -121,11 +154,49 @@ const SearchIcon = () => (
   </svg>
 )
 
-export default function ProjectDocsCards({ investments, lang, onLocate }: Props) {
+// Tiny joined toggle for the sort / grouping controls in the panel header.
+function MiniSegmented<T extends string>({
+  items,
+  value,
+  onPick
+}: {
+  items: { value: T; label: string }[]
+  value: T
+  onPick: (v: T) => void
+}) {
+  return (
+    <div className="flex overflow-hidden rounded border border-gray-300 text-[11px]">
+      {items.map((it, i) => (
+        <button
+          key={it.value}
+          type="button"
+          onClick={() => onPick(it.value)}
+          aria-pressed={value === it.value}
+          className={`px-2 py-0.5 ${i > 0 ? 'border-l border-gray-300' : ''} ${
+            value === it.value ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          {it.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export default function ProjectDocsCards({ investments, lang, onLocate, onIsolate, focusedId }: Props) {
   const { t } = useTranslation()
   const { filters, setFilters } = useFilters()
   const query = filters.query
-  const groups = useMemo(() => groupByCountry(investments), [investments])
+  const [sortBy, setSortBy] = useState<CardSort>('year')
+  const [grouped, setGrouped] = useState(true)
+  const groups = useMemo(
+    () => (grouped ? groupByCountry(investments, sortBy) : []),
+    [investments, sortBy, grouped]
+  )
+  const flat = useMemo(
+    () => (grouped ? [] : flatList(investments, sortBy)),
+    [investments, sortBy, grouped]
+  )
   const [open, setOpen] = useState<Set<string>>(() => new Set())
 
   // Debounced search: type into a local draft, commit to the URL filter after a pause.
@@ -184,10 +255,43 @@ export default function ProjectDocsCards({ investments, lang, onLocate }: Props)
             </button>
           )}
         </div>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+          <MiniSegmented
+            items={[
+              { value: 'year', label: t('list.sort_year') },
+              { value: 'amount', label: t('list.sort_amount') }
+            ]}
+            value={sortBy}
+            onPick={setSortBy}
+          />
+          <MiniSegmented
+            items={[
+              { value: 'grouped', label: t('list.grouped') },
+              { value: 'flat', label: t('list.flat') }
+            ]}
+            value={grouped ? 'grouped' : 'flat'}
+            onPick={v => setGrouped(v === 'grouped')}
+          />
+        </div>
       </div>
 
-      {groups.length === 0 && (
+      {(grouped ? groups.length === 0 : flat.length === 0) && (
         <p className="px-3 py-4 text-sm text-gray-400">{t('list.no_results')}</p>
+      )}
+
+      {!grouped && flat.length > 0 && (
+        <div className="space-y-2 px-3 py-3">
+          {flat.map(inv => (
+            <Card
+              key={inv.id}
+              inv={inv}
+              lang={lang}
+              onLocate={onLocate}
+              onIsolate={onIsolate}
+              focused={focusedId === inv.id}
+            />
+          ))}
+        </div>
       )}
 
       {groups.map(group => {
@@ -197,7 +301,7 @@ export default function ProjectDocsCards({ investments, lang, onLocate }: Props)
             <button
               type="button"
               onClick={() => toggle(group.country)}
-              className="sticky top-[45px] z-10 flex w-full items-center gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-sm font-semibold text-teal-800 shadow-sm"
+              className="sticky top-[75px] z-10 flex w-full items-center gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-sm font-semibold text-teal-800 shadow-sm"
             >
               <Chevron open={isOpen} />
               {t('list.projects_in', { country: group.country, count: group.projects.length })}
@@ -205,7 +309,14 @@ export default function ProjectDocsCards({ investments, lang, onLocate }: Props)
             {isOpen && (
               <div className="space-y-2 px-3 py-3">
                 {group.projects.map(inv => (
-                  <Card key={inv.id} inv={inv} lang={lang} onLocate={onLocate} />
+                  <Card
+                    key={inv.id}
+                    inv={inv}
+                    lang={lang}
+                    onLocate={onLocate}
+                    onIsolate={onIsolate}
+                    focused={focusedId === inv.id}
+                  />
                 ))}
               </div>
             )}

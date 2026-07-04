@@ -95,6 +95,8 @@
     "investments_count": "{{count}} 个投资",
     "total_value": "US$ {{value}} 百万",
     "without_amount": "{{count}} 无金额",
+    "isolated": "已单独显示 1 项投资",
+    "isolated_exit": "取消单独显示",
     "points_lines": "{{points}} 个点 · {{lines}} 条线",
     "map_shows": "地图显示",
     "points": "点",
@@ -129,7 +131,13 @@
     "studies_network": "某些中文资源仅对中国境内用户开放。",
     "locate": "在地图上显示",
     "search": "搜索…",
-    "no_results": "无结果"
+    "no_results": "无结果",
+    "sort_year": "年份",
+    "sort_amount": "金额",
+    "grouped": "按国家",
+    "flat": "列表",
+    "isolate": "在地图上单独显示",
+    "isolate_off": "取消单独显示"
   },
   "sector": {
     "Energy": "能源",

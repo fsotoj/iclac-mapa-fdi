@@ -95,6 +95,8 @@
     "investments_count": "{{count}} investments",
     "total_value": "US$ {{value}} MM",
     "without_amount": "{{count}} without amount",
+    "isolated": "1 investment isolated",
+    "isolated_exit": "Remove isolation",
     "points_lines": "{{points}} points · {{lines}} lines",
     "map_shows": "Show on map",
     "points": "Points",
@@ -129,7 +131,13 @@
     "studies_network": "Some resources in Chinese are only available to users located inside China.",
     "locate": "Show on map",
     "search": "Search…",
-    "no_results": "No results"
+    "no_results": "No results",
+    "sort_year": "Year",
+    "sort_amount": "Amount",
+    "grouped": "By country",
+    "flat": "List",
+    "isolate": "Isolate on map",
+    "isolate_off": "Remove isolation"
   },
   "sector": {
     "Energy": "Energy",

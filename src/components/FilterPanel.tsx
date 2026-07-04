@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { useFilters } from '@/hooks/useFilters'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import type { PieMetric, ResearchFilter } from '@/lib/filter'
-import { matchesCompany, type CompanyOption, type ConsortiumMode } from '@/lib/sankey'
+import type { CompanyOption, ConsortiumMode } from '@/lib/sankey'
 import CollapsibleSection from './CollapsibleSection'
 import YearRangeSlider from './YearRangeSlider'
+import CheckList from './CheckList'
+import InvestorFilter from './InvestorFilter'
 
 type Props = {
   countries: string[]
@@ -71,8 +73,8 @@ const MAP_MODE_LABELS: Record<MapMode, string> = {
   money: 'filter.by_money'
 }
 
-// Data layer treats [] as "all". Sentinel marks the explicit "no country" state,
-// which matches no investment and no geo feature.
+// Data layer treats [] as "all". Legacy URLs may still carry the '__none__'
+// sentinel (old select-all UI); the UI strips it and the first toggle clears it.
 const NONE = '__none__'
 
 const toggleInArray = (arr: string[], v: string): string[] =>
@@ -115,7 +117,6 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
   // Collapsed by default on phones so the map gets the full width; the thin rail
   // stays as the affordance to reopen. Desktop keeps the panel open.
   const [collapsed, setCollapsed] = useState(isMobile)
-  const [companyQuery, setCompanyQuery] = useState('')
 
   if (collapsed) {
     return (
@@ -151,8 +152,9 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
   const yMin = filters.yearMin ?? yearMin
   const yMax = filters.yearMax ?? yearMax
   // Empty selection means "all" in the data layer; treat it as every box checked.
-  const allCountries = filters.countries.length === 0
-  const noneCountries = filters.countries.length === 1 && filters.countries[0] === NONE
+  // Same semantics as the Sankey: clicking one country from "all" narrows to it.
+  const selectedCountries = filters.countries.filter(c => c !== NONE)
+  const allCountries = selectedCountries.length === 0
 
   return (
     <>
@@ -188,39 +190,15 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
       <CollapsibleSection
         label={t('filter.country')}
         summary={
-          allCountries
-            ? t('common.all')
-            : noneCountries
-              ? t('filter.none_selected')
-              : t('filter.n_selected', { count: filters.countries.length })
+          allCountries ? t('common.all') : t('filter.n_selected', { count: selectedCountries.length })
         }
       >
-        <div className="max-h-40 overflow-y-auto rounded border border-gray-300 p-2 space-y-1">
-          <label className="flex items-center gap-2 border-b border-gray-100 pb-1 font-medium text-gray-700">
-            <input
-              type="checkbox"
-              checked={allCountries}
-              onChange={() => setFilters({ countries: allCountries ? [NONE] : [] })}
-            />
-            {t('filter.select_all')}
-          </label>
-          {countries.map(c => (
-            <label key={c} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={allCountries || filters.countries.includes(c)}
-                onChange={() => {
-                  const base = allCountries ? countries : noneCountries ? [] : filters.countries
-                  const next = toggleInArray(base, c)
-                  setFilters({
-                    countries:
-                      next.length === 0 ? [NONE] : next.length === countries.length ? [] : next
-                  })
-                }}
-              />
-              {c}
-            </label>
-          ))}
+        <div className="rounded border border-gray-300">
+          <CheckList
+            items={countries}
+            selected={selectedCountries}
+            onToggle={c => setFilters({ countries: toggleInArray(selectedCountries, c) })}
+          />
         </div>
       </CollapsibleSection>
 
@@ -279,38 +257,13 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
           filters.investors.length === 0 ? t('common.all') : t('filter.n_selected', { count: filters.investors.length })
         }
       >
-        <input
-          type="text"
-          value={companyQuery}
-          onChange={e => setCompanyQuery(e.target.value)}
-          placeholder={t('list.search')}
-          className="mb-1 w-full rounded border border-gray-300 px-2 py-1 text-xs focus:border-teal-500 focus:outline-none"
-        />
-        <div className="max-h-40 overflow-y-auto rounded border border-gray-300 p-2 space-y-1">
-          {filters.investors.length > 0 && (
-            <button
-              onClick={() => setFilters({ investors: [] })}
-              className="mb-1 text-[11px] text-gray-500 underline hover:text-gray-900"
-            >
-              {t('common.clear')}
-            </button>
-          )}
-          {companies
-            .filter(c => matchesCompany(c, companyQuery))
-            .map(c => (
-              <label
-                key={c.id}
-                className="flex items-center gap-2"
-                title={c.memberNames ? `${c.name} — ${t('sankey.consortium_members')}: ${c.memberNames.join(', ')}` : c.name}
-              >
-                <input
-                  type="checkbox"
-                  checked={filters.investors.includes(c.id)}
-                  onChange={() => setFilters({ investors: toggleInArray(filters.investors, c.id) })}
-                />
-                <span className="min-w-0 flex-1 truncate">{c.name}</span>
-              </label>
-            ))}
+        <div className="rounded border border-gray-300">
+          <InvestorFilter
+            options={companies}
+            selected={filters.investors}
+            onChange={ids => setFilters({ investors: ids })}
+            metric={filters.pieMetric}
+          />
         </div>
       </CollapsibleSection>
 
