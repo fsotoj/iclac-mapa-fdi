@@ -1,4 +1,5 @@
 import type { Investment } from '@/types/data'
+import i18n from '@/i18n'
 
 export type CountryGroup = {
   country: string
@@ -40,7 +41,7 @@ export const localizedDetail = (inv: Investment, lang: Lang): string =>
   (lang.startsWith('en') ? inv.detail_en ?? inv.detail_es : inv.detail_es ?? inv.detail_en) ?? '—'
 
 export const localizedArea = (inv: Investment, lang: Lang): string =>
-  (lang.startsWith('en') ? inv.area_en ?? inv.area_es : inv.area_es ?? inv.area_en) ?? ''
+  i18n.t(`sector.${inv.area_en}`, { lng: lang, defaultValue: inv.area_en ?? inv.area_es ?? '' })
 
 export const formatMoney = (n: number | null): string =>
   n === null ? '—' : n.toLocaleString('en-US')

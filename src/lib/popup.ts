@@ -1,4 +1,5 @@
 import type { Investment } from '@/types/data'
+import i18n from '@/i18n'
 import { sectorColor } from './sectors'
 
 const escape = (s: string | null | undefined): string => {
@@ -16,6 +17,9 @@ const formatMoney = (n: number | null | undefined): string => {
 }
 
 type Lang = 'es' | 'en' | 'cn' | string
+
+const localizedSector = (inv: Investment, lang: Lang): string =>
+  i18n.t(`sector.${inv.area_en}`, { lng: lang, defaultValue: inv.area_en ?? inv.area_es ?? '' })
 
 const labels = (lang: Lang) => {
   if (lang.startsWith('en')) {
@@ -70,8 +74,7 @@ const sectorBadge = (color: string, area: string): string =>
   </div>`
 
 export const buildInvestmentTooltip = (inv: Investment, lang: Lang): string => {
-  const isEn = lang.startsWith('en')
-  const area = isEn ? inv.area_en ?? inv.area_es : inv.area_es ?? inv.area_en
+  const area = localizedSector(inv, lang)
   const color = sectorColor(inv.area_en)
 
   return `<div style="font-family:system-ui,sans-serif;min-width:140px;max-width:220px">
@@ -84,7 +87,7 @@ export const buildInvestmentPopup = (inv: Investment, lang: Lang): string => {
   const L = labels(lang)
   const isEn = lang.startsWith('en')
   const detail = isEn ? inv.detail_en ?? inv.detail_es : inv.detail_es ?? inv.detail_en
-  const area = isEn ? inv.area_en ?? inv.area_es : inv.area_es ?? inv.area_en
+  const area = localizedSector(inv, lang)
   const color = sectorColor(inv.area_en)
 
   const bookIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="14" height="14" style="flex-shrink:0"><path fill="currentColor" d="M19 10h7v2h-7zm0 5h7v2h-7zm0 5h7v2h-7zM6 10h7v2H6zm0 5h7v2H6zm0 5h7v2H6z"/><path fill="currentColor" d="M28 5H4a2.002 2.002 0 0 0-2 2v18a2.002 2.002 0 0 0 2 2h24a2.002 2.002 0 0 0 2-2V7a2.002 2.002 0 0 0-2-2M4 7h11v18H4Zm13 18V7h11v18Z"/></svg>`
