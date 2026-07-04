@@ -238,7 +238,7 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
       <section>
         <label className="block text-xs font-medium text-gray-600 mb-1">{t('filter.project_type')}</label>
         <Segmented
-          items={PROJECT_TYPES.map(pt => ({ value: pt, label: pt }))}
+          items={PROJECT_TYPES.map(pt => ({ value: pt, label: t(`project_type.${pt}`) }))}
           isActive={pt => filters.types.length === 0 || filters.types.includes(pt)}
           onPick={pt => {
             const current = filters.types.length === 0 ? [...PROJECT_TYPES] : filters.types

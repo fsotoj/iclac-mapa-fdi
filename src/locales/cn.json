@@ -140,5 +140,10 @@
     "Infrastructure": "基础建设",
     "Agroindustry": "农业",
     "Finance": "金融"
+  },
+  "project_type": {
+    "Adquisición": "收购",
+    "Greenfield": "绿地投资",
+    "Construcción": "建筑工程"
   }
 }

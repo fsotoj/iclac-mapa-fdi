@@ -140,5 +140,10 @@
     "Infrastructure": "Infraestructura",
     "Agroindustry": "Agroindustria",
     "Finance": "Finanzas"
+  },
+  "project_type": {
+    "Adquisición": "Adquisición",
+    "Greenfield": "Greenfield",
+    "Construcción": "Construcción"
   }
 }

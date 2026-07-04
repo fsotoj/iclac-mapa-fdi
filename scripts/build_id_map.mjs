@@ -59,13 +59,13 @@ for (const [id, info] of byId) {
     Id_Investment_actual: id,
     Country: info.country,
     COUNTRY_ISO_ALPHA3: info.alpha3,
-    Secuencia: seq,
+    Id_Seq: seq,
     Id_Investment_nuevo: `${info.alpha3}-${String(seq).padStart(4, '0')}`,
     Filas_en_base: info.rowCount
   })
 }
 
-out.sort((a, b) => a.COUNTRY_ISO_ALPHA3.localeCompare(b.COUNTRY_ISO_ALPHA3) || a.Secuencia - b.Secuencia)
+out.sort((a, b) => a.COUNTRY_ISO_ALPHA3.localeCompare(b.COUNTRY_ISO_ALPHA3) || a.Id_Seq - b.Id_Seq)
 
 // Chequeo de colisiones en el espacio nuevo
 const seen = new Map()

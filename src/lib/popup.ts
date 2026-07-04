@@ -21,6 +21,9 @@ type Lang = 'es' | 'en' | 'cn' | string
 const localizedSector = (inv: Investment, lang: Lang): string =>
   i18n.t(`sector.${inv.area_en}`, { lng: lang, defaultValue: inv.area_en ?? inv.area_es ?? '' })
 
+const localizedProjectType = (inv: Investment, lang: Lang): string =>
+  i18n.t(`project_type.${inv.project_type}`, { lng: lang, defaultValue: inv.project_type ?? '' })
+
 const labels = (lang: Lang) => {
   if (lang.startsWith('en')) {
     return {
@@ -129,7 +132,7 @@ export const buildInvestmentPopup = (inv: Investment, lang: Lang): string => {
       <tbody>
         <tr><td style="padding:2px 0;color:#6b7280;width:70px">${L.investor}</td><td style="padding:2px 0;font-weight:600">${escape(inv.investor) || '—'}</td></tr>
         <tr><td style="padding:2px 0;color:#6b7280">${L.year}</td><td style="padding:2px 0">${inv.year ?? '—'}</td></tr>
-        <tr><td style="padding:2px 0;color:#6b7280">${L.type}</td><td style="padding:2px 0">${escape(inv.project_type)}</td></tr>
+        <tr><td style="padding:2px 0;color:#6b7280">${L.type}</td><td style="padding:2px 0">${escape(localizedProjectType(inv, lang))}</td></tr>
         <tr><td style="padding:2px 0;color:#6b7280">${L.amount}</td><td style="padding:2px 0;font-weight:600">${formatMoney(inv.investment_musd)}</td></tr>
       </tbody>
     </table>
