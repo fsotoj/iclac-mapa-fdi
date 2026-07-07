@@ -1,0 +1,30 @@
+# Valida los archivos de datos por país (data/source/*.xlsx) contra el esquema
+# canónico (data/schema/schema.md §7) en cada PR que los toque.
+# Verde = cumple el esquema (≥95% filas válidas, sin errores de archivo) → merge
+# habilita el rebuild de Netlify (npm run etl). Rojo = el log del paso y el
+# summary indican qué filas fallan y por qué (valor recibido y esperado).
+name: validate-data
+
+# DESCONECTADO por ahora (decisión 2026-07-05): solo ejecución manual hasta que
+# llegue la base final del cliente y arranque el flujo por país. Para conectar,
+# descomentar el bloque pull_request.
+on:
+  # pull_request:
+  #   paths:
+  #     - 'data/source/**'
+  #     - 'scripts/validate_data.mjs'
+  #     - 'scripts/lib/validate.mjs'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Validar archivos de datos
+        run: npm run validate

@@ -11,6 +11,7 @@
     "lint": "eslint . --ext js,jsx,ts,tsx --report-unused-disable-directives --max-warnings 0",
     "etl": "node scripts/etl.mjs",
     "conflicts": "node scripts/export_vector_conflicts.mjs",
+    "validate": "node scripts/validate_data.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

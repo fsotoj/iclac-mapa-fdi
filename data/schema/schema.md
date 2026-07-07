@@ -91,7 +91,7 @@ Obligatoriedad:
 | `Area_ES` | enum | **req** | traducción canónica (`sectores.md`) | Debe corresponder 1:1 con `Area_EN`. |
 | `Detail_ES` | texto | opt | | Descripción en español. |
 | `Detail_EN` | texto | opt | | Descripción en inglés. |
-| `Investment` | decimal | opt | **millones de USD** (unidad por confirmar, §8) | Queda **opcional**: hay inversiones reales sin monto público. Mismo valor en todas las filas de una inversión. |
+| `Investment` | decimal | opt | **millones de USD** (✅ confirmado por cliente, 2026-07-05) | Queda **opcional**: hay inversiones reales sin monto público. Mismo valor en todas las filas de una inversión. |
 | `Location` | texto | opt | dirección / lugar | Texto plano, **sin URLs** embebidas. |
 | `Project_Type` | enum | **req** | `Adquisición` \| `Greenfield` \| `Construcción` | **Valores mutuamente excluyentes.** Canónico en español, tildes correctas. Ver §9. |
 | `Joint_Venture` | bool-YN | opt | `Yes` \| `No` | |
@@ -199,7 +199,7 @@ Area_EN              enum   req   sectores.md::EN (match exacto, case-sensitive)
 Area_ES              enum   req   sectores.md::ES ; pairs-with Area_EN
 Detail_ES            text   opt
 Detail_EN            text   opt
-Investment           number opt   >=0 ; unit=MUSD (unidad por confirmar)
+Investment           number opt   >=0 ; unit=MUSD (confirmado)
 Location             text   opt   no-url
 Project_Type         enum   req   {Adquisición,Greenfield,Construcción} (mutuamente excluyentes)
 Joint_Venture        enum   opt   {Yes,No}
@@ -237,10 +237,10 @@ Reglas de archivo e inter-fila:
 | Tema | Estado |
 |---|---|
 | **Formato exacto de `Id_Investment`** basado en ISO (+ columna `Id_Seq`) | Propuesta concreta en §5 (`ALPHA3-NNNN`) + tabla de equivalencia entregada. **Por confirmar y aplicar por cliente.** |
-| **Unidad de `Investment`** | Asumida **millones de USD**; falta confirmación explícita del cliente. |
 
-Resueltos en v1.2 (ya no abiertos): exclusividad de `Construcción` (§9), lista de sectores y 8ª
-categoría (`sectores.md`), `News` vs `Research` (§6), `Company_Id`/`previous_fdi` fuera del esquema (§5).
+Resueltos (ya no abiertos): **unidad de `Investment` = millones de USD** (✅ confirmado por cliente,
+2026-07-05), exclusividad de `Construcción` (§9), lista de sectores y 8ª categoría (`sectores.md`),
+`News` vs `Research` (§6), `Company_Id`/`previous_fdi` fuera del esquema (§5).
 
 Ver `docs/generales/next_steps.md` y `docs/sprint_3/entrega_2606_validacion_esquema_04072026.html`.
 

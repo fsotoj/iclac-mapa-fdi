@@ -140,6 +140,7 @@ Finance:       rgba(173,77,14,1)
 ## Scripts (no estándar de npm)
 
 - `npm run etl` (`scripts/etl.mjs`) — XLSX → `public/data/investments.json`. Corre en cada build Netlify.
+- `npm run validate` (`scripts/validate_data.mjs` + núcleo `scripts/lib/validate.mjs`) — valida XLSX por país contra `data/schema/schema.md` §7. Corre en GH Actions (`validate-data.yml`) en PRs que tocan `data/source/**`. También acepta rutas explícitas (bases agregadas). Umbral 95% e id `ALPHA3-NNNN` como warning = pendientes de confirmación cliente (`--strict-ids`). Tests en `scripts/validate.test.mjs`.
 - `npm run conflicts` (`scripts/export_vector_conflicts.mjs`) — genera XLSX de conflictos Vector para revisión cliente.
 - `node scripts/merge_geo.mjs` — **one-off idempotente**, NO está en build chain. Mergea polígonos Panamá (de `legacy/data/america.geojson`) + México (de `public/data/mx.json`) en `south-america.geojson`. Re-correr es seguro: skip si ya están.
 - `node scripts/build_investors_map.mjs` — **one-off**, genera `public/data/investors_map.json` desde `data/schema/investors_map.csv` (mapeo investor_raw→canónico/ownership para el Sankey). NO está en build chain aún; foldear en `etl.mjs` antes del handover.
