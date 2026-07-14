@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { validateRows } from './lib/validate.mjs'
 
-// Fila válida del contrato v1.2 (chile.xlsx). Overrides por test.
+// Fila válida del contrato v1.2 (CHILE.xlsx). Overrides por test.
 const makeRow = (over = {}) => ({
   Id_Investment: 'CHL-0001',
   Id_Seq: 1,
@@ -31,7 +31,7 @@ const makeRow = (over = {}) => ({
   ...over
 })
 
-const run = (rows, opts = {}) => validateRows(rows, { filename: 'chile.xlsx', ...opts })
+const run = (rows, opts = {}) => validateRows(rows, { filename: 'CHILE.xlsx', ...opts })
 const errorsOf = (r) => r.issues.filter((x) => x.severity === 'error')
 const warningsOf = (r) => r.issues.filter((x) => x.severity === 'warning')
 const rules = (xs) => xs.map((x) => x.rule)
@@ -70,6 +70,20 @@ describe('reglas de archivo', () => {
   it('nombre de archivo fuera de convención = fileError', () => {
     const r = validateRows([makeRow()], { filename: 'Datos Chile (final).xlsx' })
     expect(r.fileErrors.some((f) => f.rule === 'archivo/nombre')).toBe(true)
+  })
+
+  it('convención vieja (español minúscula) ya no es canónica', () => {
+    const r = validateRows([makeRow()], { filename: 'chile.xlsx' })
+    expect(r.fileErrors.some((f) => f.rule === 'archivo/nombre')).toBe(true)
+    // pero como agregado: no exige país único
+    expect(rules(errorsOf(r))).not.toContain('fila/pais-archivo')
+  })
+
+  it('convención cliente (MAYÚSCULA inglés) es canónica y exige país del archivo', () => {
+    const ok = validateRows([makeRow()], { filename: 'CHILE.xlsx' })
+    expect(ok.fileErrors.some((f) => f.rule === 'archivo/nombre')).toBe(false)
+    const cross = validateRows([makeRow()], { filename: 'BRAZIL.xlsx' })
+    expect(rules(errorsOf(cross))).toContain('fila/pais-archivo')
   })
 
   it('más de una hoja = fileError', () => {

@@ -69,8 +69,10 @@ const humanizeId = (id: string): string =>
     .map(w => (w.length <= 3 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1)))
     .join(' ')
 
+// Dedupe: members fused to their parent id can repeat the same name
+// (e.g. CTG + CWE→CTG would read "China Three Gorges, China Three Gorges").
 const memberNamesOf = (entry: InvestorMapEntry | undefined, index: Map<string, string>): string[] | undefined =>
-  entry?.members?.length ? entry.members.map(id => index.get(id) ?? humanizeId(id)) : undefined
+  entry?.members?.length ? [...new Set(entry.members.map(id => index.get(id) ?? humanizeId(id)))] : undefined
 
 // Distinct canonical companies for the investor filter, sorted alphabetically.
 // `total` = Σ money (MM), `count` = number of investments (both deduped by id).

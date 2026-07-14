@@ -54,12 +54,15 @@ export const COUNTRY_ISO = {
 
 export const ID_FORMAT = /^[A-Z]{3}-\d{4}$/
 
-// Nombre de archivo esperado por país (español, sin tilde — schema §1). La base
-// trae Country en inglés; este mapa acepta el nombre español del archivo.
-const FILE_ES = {
-  Brazil: 'brasil', Peru: 'peru', Mexico: 'mexico', Panama: 'panama',
-  Suriname: 'surinam', Guyana: 'guyana'
+// Nombre de archivo por país: país en MAYÚSCULA, inglés, sin tildes (schema §1).
+// Convención adoptada de la primera carga del cliente al repo (09-07-2026);
+// reemplaza la "minúscula/español" de v1.2.
+const FILENAME_BY_ALPHA3 = {
+  ARG: 'ARGENTINA', BOL: 'BOLIVIA', BRA: 'BRAZIL', CHL: 'CHILE', COL: 'COLOMBIA',
+  ECU: 'ECUADOR', GUY: 'GUYANA', MEX: 'MEXICO', PAN: 'PANAMA', PRY: 'PARAGUAY',
+  PER: 'PERU', SUR: 'SURINAME', URY: 'URUGUAY', VEN: 'VENEZUELA'
 }
+const CANONICAL_FILENAMES = new Set(Object.values(FILENAME_BY_ALPHA3))
 
 // Columnas requeridas por el esquema v1.2. Id_Seq y News son parte del contrato
 // nuevo; en bases legadas su ausencia se reporta como warning (ver missingSoft).
@@ -109,8 +112,9 @@ const coordKey = (coords) => coords.map((n) => n.toFixed(6)).join(',')
 
 const looksLikeUrl = (s) => /https?:\/\//i.test(s)
 
-// Nombre de archivo canónico: minúscula, sin tildes, espacios→_ (schema §1).
-export const isCanonicalFilename = (name) => /^[a-z0-9_]+\.xlsx$/.test(name)
+// Nombre de archivo canónico: país del proyecto en MAYÚSCULA/inglés (schema §1).
+export const isCanonicalFilename = (name) =>
+  name.endsWith('.xlsx') && CANONICAL_FILENAMES.has(name.slice(0, -'.xlsx'.length))
 
 // ---- Núcleo ----
 
@@ -133,7 +137,7 @@ export const validateRows = (rows, opts = {}) => {
   if (filename && !isCanonicalFilename(filename)) {
     fileErrors.push({
       rule: 'archivo/nombre',
-      message: `El nombre "${filename}" no sigue la convención: minúsculas, español, sin tildes, espacios como "_" (ej: chile.xlsx, costa_rica.xlsx).`
+      message: `El nombre "${filename}" no sigue la convención: país en MAYÚSCULA, en inglés, sin tildes (ej: CHILE.xlsx, BRAZIL.xlsx).`
     })
   }
   if (sheetCount > 1) {
@@ -318,13 +322,12 @@ export const validateRows = (rows, opts = {}) => {
         `País "${country}" no está en la lista de países del proyecto: verificar nombre (o avisar para ampliar la lista).`)
     }
     // Consistencia archivo↔país: solo en el flujo por país (nombre canónico =
-    // país en minúscula/sin tilde). Archivos agregados (nombre no canónico) la saltan.
-    if (filenameCountry && country && filename && isCanonicalFilename(filename)) {
-      const norm = (s) => s.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/\s+/g, '_')
-      const accepted = new Set([norm(country), FILE_ES[country] ? norm(FILE_ES[country]) : norm(country)])
-      if (!accepted.has(filenameCountry)) {
+    // país en MAYÚSCULA/inglés). Archivos agregados (nombre no canónico) la saltan.
+    if (filenameCountry && country && isoInfo && filename && isCanonicalFilename(filename)) {
+      const expected = FILENAME_BY_ALPHA3[isoInfo.alpha3]
+      if (filenameCountry !== expected) {
         fail(i, 'fila/pais-archivo', 'Country', country,
-          `La fila es de ${country} pero el archivo es "${filename}": cada archivo lleva un solo país (esperado: "${[...accepted][accepted.size - 1]}.xlsx").`)
+          `La fila es de ${country} pero el archivo es "${filename}": cada archivo lleva un solo país (esperado: "${expected}.xlsx").`)
       }
     }
 

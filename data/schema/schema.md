@@ -1,10 +1,16 @@
 # Esquema canónico de datos — mapa_FDI
 
-**Versión:** 1.2 (2026-07-04)
+**Versión:** 1.3 (2026-07-14)
 **Estado:** contrato vigente para el flujo por país. Base del validador JS de GH Actions (2.3).
 **Fuente de verdad:** Parte II (II.1–II.7) de `docs/sprint_3/entrega_2606_validacion_esquema_04072026.html` (entregable cliente). Este .md es la versión técnica de ese contrato.
 
-> **Changelog v1.2 (2026-07-04):** sincronizado con la Parte II del entregable 26/06.
+> **Changelog v1.3 (2026-07-14):** nombre de archivo por país pasa a **país en MAYÚSCULA, en
+> inglés, sin tildes** (`CHILE.xlsx`, `BRAZIL.xlsx`). Es la convención con que el cliente hizo su
+> primera carga al repo (09-07); se adopta tal cual para no hacerle renombrar nada. Reemplaza
+> "minúscula/español" de v1.2. Lista cerrada de nombres válidos = países del proyecto
+> (`FILENAME_BY_ALPHA3` en el validador).
+>
+> **v1.2 (2026-07-04):** sincronizado con la Parte II del entregable 26/06.
 > `Year` pasa a **req**; `Investment` queda **opt** (hay inversiones reales sin monto público).
 > Nueva columna `Id_Seq` (secuencia por país, **propuesta pendiente de confirmación cliente**) y
 > formato propuesto de `Id_Investment` = `ALPHA3-NNNN` (§5). Nueva columna `News` (enum `Yes`/`No`, req).
@@ -25,8 +31,9 @@ Lo que no aparezca aquí, el ETL y el validador lo **ignoran** (columnas extra p
 
 ## 1. Alcance y formato del archivo
 
-- **Un archivo por país** en `data/source/`, nombrado en **minúscula, en español, sin tildes, espacios → `_`**
-  (p. ej. `chile.xlsx`, `costa_rica.xlsx`, `republica_dominicana.xlsx`). Es como el equipo ya reparte el trabajo.
+- **Un archivo por país** en `data/source/`, nombrado con el **país en MAYÚSCULA, en inglés,
+  sin tildes** (p. ej. `CHILE.xlsx`, `BRAZIL.xlsx`, `PERU.xlsx`). Convención adoptada de la
+  carga del cliente 09-07 (v1.3; antes minúscula/español).
 - **Una sola hoja** con los datos.
 - Primera fila = cabeceras exactas de la tabla §3 (sensibles a mayúsculas).
 - Codificación UTF-8. Decimales con punto (`1234.5`), no coma.
@@ -216,7 +223,7 @@ Columnas prohibidas (error si aparecen): `Acquisition`, `Greenfield`, `Construct
 Columnas no reconocidas distintas de las prohibidas: **se ignoran** (permitidas).
 
 Reglas de archivo e inter-fila:
-- Nombre de archivo: minúscula, español, sin tildes, espacios → `_` (`chile.xlsx`). Una sola hoja.
+- Nombre de archivo: país en MAYÚSCULA, inglés, sin tildes (`CHILE.xlsx`). Una sola hoja.
 - Consistencia país: nombre de archivo ↔ `Country` ↔ `COUNTRY_ISO_ALPHA3` ↔ `COUNTRY_ISO_NUM` ↔ prefijo de `Id_Investment`.
 - Una **línea** = grupo de filas con mismo `(Id_Investment, Path)` y `Vector=Vector`.
   En una línea, los campos no geográficos deben ser idénticos entre sus filas.
