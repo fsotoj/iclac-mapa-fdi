@@ -15,6 +15,18 @@ import { useTranslation } from 'react-i18next'
 const ENDPOINT = 'https://api.web3forms.com/submit'
 const ACCESS_KEY = import.meta.env.VITE_WEB3FORMS_KEY as string | undefined
 
+// Sin clave la vista degrada al mailto, que a simple vista se confunde con "el deploy
+// quedó viejo". Vite hornea las VITE_* como literal en build: definir la variable en el
+// panel de Netlify NO arregla un deploy ya construido, hay que rebuildear. Dejar el
+// motivo escrito en consola en vez de que haya que deducirlo del bundle.
+if (!ACCESS_KEY && typeof console !== 'undefined') {
+  console.warn(
+    '[contacto] VITE_WEB3FORMS_KEY ausente en build: se muestra el correo directo en vez del formulario. ' +
+      'Si ya la definiste en Netlify, falta rebuildear (Trigger deploy → Clear cache and deploy site) ' +
+      'y que la variable tenga scope "Builds" en el deploy context correcto.'
+  )
+}
+
 // Fallback visible cuando el envío falla, y única salida si no hay clave configurada.
 const CONTACT_EMAIL = 'comunicaciones.iclac@gmail.com'
 
