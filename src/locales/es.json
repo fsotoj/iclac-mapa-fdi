@@ -101,6 +101,7 @@
     "points_lines": "{{points}} puntos · {{lines}} líneas",
     "map_shows": "Mostrar en el mapa",
     "points": "Puntos",
+    "aggregate": "Datos agregados",
     "by_project": "Proyectos",
     "by_money": "Monto",
     "collapse": "Ocultar filtros",

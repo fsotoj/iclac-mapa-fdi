@@ -15,6 +15,7 @@ import FilterPanel from '@/components/FilterPanel'
 import SectorLegend from '@/components/SectorLegend'
 import ProjectDocsCards from '@/components/ProjectDocsCards'
 import ProjectDocsTable from '@/components/ProjectDocsTable'
+import MiniSegmented from '@/components/MiniSegmented'
 import { buildDonutSvg, buildLegendHtml, tallyByArea, tallyMoneyByArea, type SectorTally } from '@/lib/clusterDonut'
 import type { PieMetric } from '@/lib/filter'
 import { buildInvestmentPopup, buildInvestmentTooltip } from '@/lib/popup'
@@ -419,34 +420,66 @@ export default function MapView() {
                 box so the fichas overlay (sibling) can sit above them on mobile. */}
             <div className="relative isolate flex-1">
               {mapEl}
-              <div className="absolute left-2 top-2 z-[800] max-w-[calc(100%-7.5rem)] rounded-lg border border-white/50 bg-white/95 px-2.5 py-1.5 text-xs shadow-md backdrop-blur-md sm:left-4 sm:top-4 sm:max-w-[calc(100%-9rem)] sm:px-3 sm:text-sm">
-                <span className="font-medium">{t('filter.investments_count', { count: agg.count })}</span>
-                <span className="mx-2">·</span>
-                <span className="font-medium">{t('filter.total_value', { value: totalValue })}</span>
-                {agg.withoutAmount > 0 && (
-                  <span className="ml-2 text-gray-500">
-                    ({t('filter.without_amount', { count: agg.withoutAmount })})
-                  </span>
-                )}
-                {filters.focusId !== null && (
-                  <button
-                    type="button"
-                    onClick={() => setFilters({ focusId: null })}
-                    title={t('filter.isolated_exit')}
-                    className="ml-2 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-gray-900 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-gray-700"
-                  >
-                    {t('filter.isolated')}
-                    <span aria-hidden>×</span>
-                  </button>
-                )}
-                {activeFilterCount(filters) > 0 && (
-                  <Link
-                    to={{ pathname: '/sankey', search: location.search }}
-                    className="ml-2 whitespace-nowrap font-medium text-teal-700 hover:underline"
-                  >
-                    {t('nav.view_in_sankey')}
-                  </Link>
-                )}
+              {/* Totals + display control as ONE cluster: the toggle switches how
+                  the map draws the very figures shown above it (count vs amount).
+                  Display is not a filter — it never changes which investments are
+                  shown — so it lives here, on the map, not in the filter panel. */}
+              <div className="absolute left-2 top-2 z-[800] max-w-[calc(100%-7.5rem)] rounded-lg border border-white/50 bg-white/95 text-xs shadow-md backdrop-blur-md sm:left-4 sm:top-4 sm:max-w-[calc(100%-9rem)] sm:text-sm">
+                <div className="px-2.5 py-1.5 sm:px-3">
+                  <span className="font-medium">{t('filter.investments_count', { count: agg.count })}</span>
+                  <span className="mx-2">·</span>
+                  <span className="font-medium">{t('filter.total_value', { value: totalValue })}</span>
+                  {agg.withoutAmount > 0 && (
+                    <span className="ml-2 text-gray-500">
+                      ({t('filter.without_amount', { count: agg.withoutAmount })})
+                    </span>
+                  )}
+                  {filters.focusId !== null && (
+                    <button
+                      type="button"
+                      onClick={() => setFilters({ focusId: null })}
+                      title={t('filter.isolated_exit')}
+                      className="ml-2 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-gray-900 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-gray-700"
+                    >
+                      {t('filter.isolated')}
+                      <span aria-hidden>×</span>
+                    </button>
+                  )}
+                  {activeFilterCount(filters) > 0 && (
+                    <Link
+                      to={{ pathname: '/sankey', search: location.search }}
+                      className="ml-2 whitespace-nowrap font-medium text-teal-700 hover:underline"
+                    >
+                      {t('nav.view_in_sankey')}
+                    </Link>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 border-t border-gray-200 px-2.5 py-1.5 sm:px-3">
+                  <MiniSegmented
+                    items={[
+                      { value: 'points', label: t('filter.points') },
+                      { value: 'aggregate', label: t('filter.aggregate') }
+                    ]}
+                    value={filters.pieByCountry ? 'aggregate' : 'points'}
+                    onPick={v => setFilters({ pieByCountry: v === 'aggregate' })}
+                  />
+                  {/* Second level only in the aggregate state — no reserved space,
+                      so the cluster stays one row while showing points. The chevron
+                      marks it as a drill-down of "aggregate", not a peer control. */}
+                  {filters.pieByCountry && (
+                    <>
+                      <span aria-hidden className="select-none px-0.5 text-gray-400">›</span>
+                      <MiniSegmented
+                        items={[
+                          { value: 'count', label: t('filter.by_project') },
+                          { value: 'money', label: t('filter.by_money') }
+                        ]}
+                        value={filters.pieMetric}
+                        onPick={v => setFilters({ pieMetric: v })}
+                      />
+                    </>
+                  )}
+                </div>
               </div>
               {/* Opener only — while the list is open its own header title carries
                   the label + close, so the floating button would just duplicate it. */}

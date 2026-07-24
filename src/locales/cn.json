@@ -101,6 +101,7 @@
     "points_lines": "{{points}} 个点 · {{lines}} 条线",
     "map_shows": "地图显示",
     "points": "点",
+    "aggregate": "汇总数据",
     "by_project": "项目",
     "by_money": "金额",
     "collapse": "隐藏筛选",

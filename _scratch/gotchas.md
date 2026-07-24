@@ -1,0 +1,1 @@
+al usar filtro de investor en mapa se recarga toda la página
