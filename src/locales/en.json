@@ -24,8 +24,22 @@
   },
   "contact": {
     "title": "Contact Us",
-    "description": "We welcome your reactions and contributions to the Repository. Email the ICLAC and Inter-American Dialogue representatives directly.",
-    "button": "Email us"
+    "description": "We welcome your reactions and contributions to the Repository. Write to us through this form and the ICLAC and Inter-American Dialogue representatives will get back to you.",
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "organization": "Institution or organization (optional)",
+      "message": "Message",
+      "send": "Send message",
+      "sending": "Sending…",
+      "ok_title": "Message sent",
+      "ok_body": "Thank you for writing. We will reply to the address you provided.",
+      "send_another": "Send another message",
+      "error": "The message could not be sent. Please try again or email us at",
+      "or_email": "Or email us directly at",
+      "bot": "Do not fill in this field"
+    },
+    "description_mailto": "We welcome your reactions and contributions to the Repository. Email the ICLAC and Inter-American Dialogue representatives directly."
   },
   "footer": {
     "tagline": "Regional Repository of Chinese Investments in Latin America",
@@ -35,7 +49,8 @@
     "label": "About",
     "map": {
       "title": "About the map",
-      "body": "The Regional Repository maps Chinese foreign direct investment (FDI) and construction projects across Latin America, classified by type, sector, and company.\nOn the map, points are single-site investments (mines, plants, offices) and vectors mark projects spanning several cities (roads, railways, cables). The toggle groups by country into pie charts and switches between number of projects and amount. The book icon means the investment has an academic case study."
+      "body": "This map, produced by Chile’s Millennium Nucleus on the Impacts of China in Latin America and the Caribbean (ICLAC) and the Inter-American Dialogue, with critical input from partner organizations from across the region, visualizes the extent of Chinese foreign direct investment (mergers and acquisitions, greenfield projects, and joint ventures). It also includes examples of Chinese construction projects, which are prominent in certain economic sectors across the region. The map tool is searchable by year, type of investment, and based on whether these projects have associated case studies. Available studies are accessible in each country’s list of Chinese investments. At present, this project includes analysis of Chinese investment in Argentina, Bolivia, Brazil, Chile, Colombia, Ecuador, Guyana, Panama, Paraguay, Peru, Suriname and Uruguay, and estimates of investments in Venezuela, but will soon expand to include projects in several other countries, in coordination with partner institutions.\nOn the map, points are single-site investments (mines, plants, offices) and vectors mark projects spanning several cities (roads, railways, cables). The book icon means the investment has an academic case study.",
+      "citation": "Suggested citation: Francisco Urdinez and Margaret Myers (2024) “Regional Repository of Chinese Investments in Latin America”, ICLAC and Inter-American Dialogue."
     },
     "sankey": {
       "title": "About the diagram",

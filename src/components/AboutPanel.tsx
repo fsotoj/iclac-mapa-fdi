@@ -8,15 +8,45 @@ const ROUTE_KEY: Record<string, string> = {
   '/sankey': 'sankey'
 }
 
+// Auto-open is once per browser, ever — not once per session. Re-opening on every
+// visit would read as a nag on a tool people come back to.
+const SEEN_KEY = 'iclac.about.seen'
+
+// Memoised per page load, deliberately outside React: StrictMode double-invokes both
+// effects and state initialisers in dev, so an un-memoised read+write would burn the
+// flag on the first pass and answer "already seen" on the second — panel never opens.
+let firstVisit: boolean | null = null
+const consumeFirstVisit = () => {
+  if (firstVisit === null) {
+    try {
+      firstVisit = !localStorage.getItem(SEEN_KEY)
+      if (firstVisit) localStorage.setItem(SEEN_KEY, '1')
+    } catch {
+      firstVisit = false // storage blocked (private mode): never auto-open
+    }
+  }
+  return firstVisit
+}
+
 export default function AboutPanel() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { pathname } = useLocation()
   const key = ROUTE_KEY[pathname]
-  const [open, setOpen] = useState(false)
+  // Opens itself on a first-ever visit — an icon alone rarely gets clicked, and the
+  // context text is the thing worth seeing. Resolved at mount rather than in an effect
+  // so nothing can close it before it paints. Guarded on `key` so landing straight on
+  // Methodology or Contact does not silently spend the one-time open.
+  const [open, setOpen] = useState(() => !!ROUTE_KEY[pathname] && consumeFirstVisit())
   const ref = useRef<HTMLDivElement>(null)
 
-  // Close on route change so stale context text never lingers.
-  useEffect(() => setOpen(false), [pathname])
+  // Close on route change so stale context text never lingers. Compares against the
+  // last path instead of firing on mount, which would undo the first-visit open.
+  const lastPath = useRef(pathname)
+  useEffect(() => {
+    if (lastPath.current === pathname) return
+    lastPath.current = pathname
+    setOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     if (!open) return
@@ -35,34 +65,43 @@ export default function AboutPanel() {
   if (!key) return null
 
   const paragraphs = t(`about.${key}.body`).split('\n').filter(Boolean)
+  // Only the map carries the published citation; sankey has none.
+  const citationKey = `about.${key}.citation`
+  const citation = i18n.exists(citationKey) ? t(citationKey) : null
 
   return (
-    <>
-      {/* Leading divider lives here (not in Layout) so it vanishes with the button
-          on routes that have no "about" text — no orphan separator. */}
-      <span className="h-5 w-px bg-gray-300" aria-hidden />
-      <div ref={ref} className="relative">
-        <button
+    <div ref={ref} className="relative shrink-0">
+      {/* Icon-only, in the brand green rather than the nav's gray: beside the title a
+          gray icon+label reads as a nav link that drifted off the cluster. Colour is
+          what marks it clickable, and it adds no box to an already busy header. */}
+      <button
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className={`flex items-center gap-1 text-sm ${open ? 'font-semibold text-gray-900' : 'text-gray-500 hover:text-gray-900'}`}
+        aria-label={t('about.label')}
+        title={t('about.label')}
+        className={`flex items-center rounded-full transition-colors ${open ? 'text-[#093b4d]' : 'text-[#377F83] hover:text-[#093b4d]'}`}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-4 w-4">
-          <circle cx="12" cy="12" r="9" />
-          <path strokeLinecap="round" d="M12 11v5" />
-          <circle cx="12" cy="7.6" r="0.6" fill="currentColor" stroke="none" />
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-6 w-6">
+          {/* Open state fills the disc so the trigger reads as "active", not just hovered. */}
+          <circle cx="12" cy="12" r="9" fill={open ? 'currentColor' : 'none'} />
+          <path strokeLinecap="round" stroke={open ? '#fff' : 'currentColor'} d="M12 11v5" />
+          <circle cx="12" cy="7.6" r="0.7" fill={open ? '#fff' : 'currentColor'} stroke="none" />
         </svg>
-        {t('about.label')}
       </button>
 
+      {/* Anchored under the button on desktop. On mobile the button sits mid-header,
+          so anchoring there pushes the panel off-screen: pin it to the viewport instead. */}
       {open && (
-        <div className="absolute right-0 z-[1001] mt-2 w-96 max-w-[calc(100vw-2rem)] rounded-lg border border-gray-200 bg-white p-4 shadow-lg">
+        <div className="fixed inset-x-2 top-[3.75rem] z-[1001] max-h-[75vh] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-lg sm:max-h-[80vh] sm:absolute sm:inset-x-auto sm:left-0 sm:top-full sm:mt-2 sm:w-96 sm:max-w-[calc(100vw-2rem)]">
           <h3 className="mb-2 text-sm font-semibold text-[#093b4d]">{t(`about.${key}.title`)}</h3>
           <div className="space-y-2 text-[13px] leading-relaxed text-gray-600">
             {paragraphs.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
           </div>
+          {citation && (
+            <p className="mt-3 border-t border-gray-100 pt-3 text-[11px] leading-relaxed text-gray-500">{citation}</p>
+          )}
           <div className="mt-3 flex gap-3 border-t border-gray-100 pt-3 text-xs">
             <NavLink to="/methodology" className="font-medium text-[#377F83] hover:underline">
               {t('nav.methodology')}
@@ -73,7 +112,6 @@ export default function AboutPanel() {
           </div>
         </div>
       )}
-      </div>
-    </>
+    </div>
   )
 }

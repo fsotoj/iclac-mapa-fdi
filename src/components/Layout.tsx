@@ -58,6 +58,11 @@ export default function Layout() {
               <h1 className="text-[13px] font-semibold leading-tight text-gray-900 sm:text-base">{t('app.subject')}</h1>
               <p className="hidden text-xs text-gray-500 sm:block sm:truncate">{t('app.kind')}</p>
             </div>
+            {/* Contextual "About" belongs beside the title, not in the nav cluster
+                (Margaret UAT): it describes what you are looking at, not where to go.
+                Sibling of the title block, so the row's items-center centres it on the
+                header height rather than on the title's own line. */}
+            <AboutPanel />
           </div>
 
           {/* Desktop cluster: full nav + contextual About + language switch. */}
@@ -74,7 +79,6 @@ export default function Layout() {
                 </NavLink>
               ))}
             </nav>
-            <AboutPanel />
             <span className="h-5 w-px bg-gray-300" aria-hidden />
             {langButtons}
           </div>
