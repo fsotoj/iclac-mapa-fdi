@@ -10,10 +10,11 @@
 //
 // Exit 1 si algún archivo falla (error de archivo o % válido < umbral).
 import XLSX from 'xlsx'
-import { appendFileSync, existsSync, readdirSync } from 'node:fs'
+import { appendFileSync, existsSync, readdirSync, statSync } from 'node:fs'
 import { basename, resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { validateRows } from './lib/validate.mjs'
+import { loadRegistry, loadCountryBorders } from './lib/load_registry.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(__dirname, '..')
@@ -28,14 +29,21 @@ const strictIds = args.includes('--strict-ids')
 const fileArgs = args.filter((a) => !a.startsWith('--'))
 const threshold = Number(process.env.VALIDATE_THRESHOLD ?? 95)
 
-let files = fileArgs.map((f) => resolve(process.cwd(), f))
-if (files.length === 0) {
-  files = existsSync(SOURCE_DIR)
-    ? readdirSync(SOURCE_DIR)
-        .filter((f) => f.endsWith('.xlsx') && !f.startsWith('~$') && !LEGACY_FILES.has(f))
-        .map((f) => resolve(SOURCE_DIR, f))
-    : []
+const xlsxIn = (dir) =>
+  readdirSync(dir)
+    .filter((f) => f.endsWith('.xlsx') && !f.startsWith('~$') && !LEGACY_FILES.has(f))
+    .map((f) => resolve(dir, f))
+
+// Cada argumento puede ser un archivo o un DIRECTORIO (se expande a sus *.xlsx).
+// Así el mismo comando sirve para el flujo por país del repo cliente
+// (data/sources/countries) y para archivos sueltos.
+let files = []
+for (const a of fileArgs) {
+  const p = resolve(process.cwd(), a)
+  if (existsSync(p) && statSync(p).isDirectory()) files.push(...xlsxIn(p))
+  else files.push(p)
 }
+if (files.length === 0 && existsSync(SOURCE_DIR)) files = xlsxIn(SOURCE_DIR)
 
 if (files.length === 0) {
   console.log('validate_data: no hay archivos por país que validar en data/source/ (solo base legada). OK.')
@@ -45,6 +53,11 @@ if (files.length === 0) {
 const MAX_PER_RULE = 15
 const summaryRows = []
 let anyFailed = false
+
+// Registro de países (país como dato) + bordes disponibles para el chequeo de geometría.
+const registry = loadRegistry()
+const countryBorders = registry ? loadCountryBorders(registry) : null
+if (registry) console.log(`Registro de países: ${registry.list.length} · bordes disponibles: ${countryBorders ? countryBorders.size : 'n/d'}`)
 
 for (const file of files) {
   const name = basename(file)
@@ -64,7 +77,9 @@ for (const file of files) {
     filename: name,
     strictIds,
     threshold,
-    sheetCount: wb.SheetNames.length
+    sheetCount: wb.SheetNames.length,
+    registry,
+    countryBorders
   })
 
   // -- errores de archivo --

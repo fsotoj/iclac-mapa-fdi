@@ -25,9 +25,9 @@ echarts.use([SankeyChart, TooltipComponent, CanvasRenderer])
 const LEVEL_COLOR = ['#545453', '#377F83', '#0CCABC'] as const
 const TOP_N = 20
 
-// Fixed vocabulary from investors_map.csv (SASAC ⊂ SOE conceptually, but they
-// are disjoint labels in the data). Unmapped investors count as UNKNOWN.
-const OWNERSHIP_VALUES = ['SASAC', 'SOE', 'POE', 'MIXED', 'UNKNOWN'] as const
+// Vocabulario de ownership de investors_map.csv (enum de la revisión externa,
+// v1.4). Inversores sin mapeo cuentan como UNKNOWN.
+const OWNERSHIP_VALUES = ['Central SOE', 'Local SOE', 'POE', 'MIXED', 'UNKNOWN'] as const
 const CONSORTIUM_MODES: ConsortiumMode[] = ['all', 'only', 'none']
 
 type ClickParams = { dataType?: string; name?: string }
@@ -243,7 +243,7 @@ export default function SankeyView() {
             items={[...OWNERSHIP_VALUES]}
             selected={filters.ownership}
             onToggle={o => toggle('ownership', o)}
-            label={o => t(`sankey.own_${o.toLowerCase()}`, o)}
+            label={o => t(`sankey.own_${o.toLowerCase().replace(/\s+/g, '_')}`, o)}
           />
         </FilterDropdown>
         <FilterDropdown

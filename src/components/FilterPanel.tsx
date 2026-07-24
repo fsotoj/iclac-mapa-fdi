@@ -49,7 +49,7 @@ const RAIL: ({ key: string; node: ReactNode } | null)[] = [
   { key: 'filter.map_shows', node: IconChart }
 ]
 
-const OWNERSHIP_VALUES = ['SASAC', 'SOE', 'POE', 'MIXED', 'UNKNOWN'] as const
+const OWNERSHIP_VALUES = ['Central SOE', 'Local SOE', 'POE', 'MIXED', 'UNKNOWN'] as const
 const CONSORTIUM_MODES: ConsortiumMode[] = ['all', 'only', 'none']
 
 // Thin uppercase group separator ("Inversiones" / "Inversores" / "Visualización").
@@ -285,7 +285,7 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
                   setFilters({ ownership: next.length === OWNERSHIP_VALUES.length ? [] : next })
                 }}
               />
-              <span className="min-w-0 flex-1 truncate">{t(`sankey.own_${o.toLowerCase()}`, o)}</span>
+              <span className="min-w-0 flex-1 truncate">{t(`sankey.own_${o.toLowerCase().replace(/\s+/g, '_')}`, o)}</span>
             </label>
           ))}
         </div>

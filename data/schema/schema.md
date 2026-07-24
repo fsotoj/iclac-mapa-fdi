@@ -1,9 +1,33 @@
 # Esquema canónico de datos — mapa_FDI
 
-**Versión:** 1.3 (2026-07-14)
+**Versión:** 1.4 (2026-07-23)
 **Estado:** contrato vigente para el flujo por país. Base del validador JS de GH Actions (2.3).
 **Fuente de verdad:** Parte II (II.1–II.7) de `docs/sprint_3/entrega_2606_validacion_esquema_04072026.html` (entregable cliente). Este .md es la versión técnica de ese contrato.
 
+> **Changelog v1.4 (2026-07-23):** cambios para que el validador sea **resiliente** (rojo = problema
+> real, no cosmético) y para que incorporar un país no requiera tocar código.
+> - **Nombre de archivo case-insensitive.** `chile.xlsx` y `CHILE.xlsx` valen igual. La diferencia
+>   de mayúsculas la absorbe la normalización, no es un error. *Por qué:* el ida-y-vuelta de
+>   renombres costaba tiempo sin cambiar el significado del dato.
+> - **País como dato, no código.** El alcance de países sale de las constantes del validador a un
+>   registro `data/schema/countries.csv` (semilla pre-cargada por nosotros: toda LATAM +
+>   Centroamérica + Caribe; **México excluido a propósito**). Sumar un país = editar ese CSV (o
+>   nosotros la semilla), sin tocar el validador. Un país fuera del registro = "fuera de la lista",
+>   con instrucción, no error críptico.
+> - **Capa de normalización determinista (curaciones).** Antes de validar se arreglan de nuestro
+>   lado, sin pérdida: apóstrofe de Excel en `COUNTRY_ISO_NUM`/`Id_Seq` (`'152`→`152`), `Country` a
+>   forma canónica (`CHILE`→`Chile`, `Brasil`→`Brazil`). Cada arreglo se **lista** (no se enmascara).
+> - **`Area_ES` fuera de la validación de formato.** El mapa traduce keyed por `Area_EN`, así que la
+>   etiqueta ES es redundante. Se conserva SÓLO el **conflicto conceptual** (`fila/sector-conflicto`,
+>   warning): cuando `Area_ES` apunta a un sector distinto de `Area_EN` (ej: `PRY-0001` COFCO
+>   `Energy` vs `Agroindustria`) — ahí una de las dos está mal.
+> - **`Ownership` entra al contrato**, mandada por la base del cliente (§5.1). Enum:
+>   `Central SOE / Local SOE / POE / MIXED / UNKNOWN`.
+> - **Geometría de país** como compuerta blanda: si un país no tiene borde cargado, avisa (no bota);
+>   el país entra al mapa cuando su borde existe y sus datos pasan (§11).
+> - **Umbral de rechazo explícito por severidad:** un archivo se rechaza si tiene un problema de
+>   archivo (basta uno) o si baja del umbral de filas válidas. Warnings/curaciones nunca botan.
+>
 > **Changelog v1.3 (2026-07-14):** nombre de archivo por país pasa a **país en MAYÚSCULA, en
 > inglés, sin tildes** (`CHILE.xlsx`, `BRAZIL.xlsx`). Es la convención con que el cliente hizo su
 > primera carga al repo (09-07); se adopta tal cual para no hacerle renombrar nada. Reemplaza
@@ -31,9 +55,10 @@ Lo que no aparezca aquí, el ETL y el validador lo **ignoran** (columnas extra p
 
 ## 1. Alcance y formato del archivo
 
-- **Un archivo por país** en `data/source/`, nombrado con el **país en MAYÚSCULA, en inglés,
-  sin tildes** (p. ej. `CHILE.xlsx`, `BRAZIL.xlsx`, `PERU.xlsx`). Convención adoptada de la
-  carga del cliente 09-07 (v1.3; antes minúscula/español).
+- **Un archivo por país** en `data/source/`, nombrado con el **país en inglés, sin tildes**
+  (p. ej. `CHILE.xlsx`, `BRAZIL.xlsx`, `PERU.xlsx`, `COSTA_RICA.xlsx`). **Case-insensitive (v1.4):**
+  `chile.xlsx` y `CHILE.xlsx` valen igual; la normalización unifica. La lista de nombres válidos =
+  países del registro `data/schema/countries.csv` (columna `filename`).
 - **Una sola hoja** con los datos.
 - Primera fila = cabeceras exactas de la tabla §3 (sensibles a mayúsculas).
 - Codificación UTF-8. Decimales con punto (`1234.5`), no coma.
@@ -95,7 +120,8 @@ Obligatoriedad:
 | `Vector` | enum | **req** | `Punto` \| `Vector` | Define geometría. Ver §1. |
 | `Path` | entero | **req** | `0` para `Punto`; `≥1` para `Vector` | Numera la línea dentro de un `Id_Investment`. Agrupa vértices `(id, Path)`. Ver §1. |
 | `Area_EN` | enum | **req** | 8 sectores canónicos (`sectores.md`) | **Match exacto** con una de las 8 claves EN; el frontend traduce a es/en/cn vía i18n keyed por `Area_EN`. Mismatch = punto **gris** + categoría duplicada en filtro, en los 3 idiomas. |
-| `Area_ES` | enum | **req** | traducción canónica (`sectores.md`) | Debe corresponder 1:1 con `Area_EN`. |
+| `Area_ES` | texto | opt | — | **v1.4: informativa, ya no se valida por formato** (el mapa traduce desde `Area_EN`). Sólo se chequea el **conflicto conceptual** con `Area_EN` (warning): si apunta a otro sector, una de las dos está mal. |
+| `Ownership` | enum | **req** ⏳ | `Central SOE` \| `Local SOE` \| `POE` \| `MIXED` \| `UNKNOWN` | Propiedad de la empresa inversora. **La manda la base del cliente** (v1.4, §5.1). Categorías de Yifang Wang/Dialogue. Valor fuera del enum = **warning** (en adopción: `SOE`→`Local SOE`, `SASAC`→`Central SOE`), no bota. La identidad canónica de empresa (para el Sankey) sigue de nuestro lado en `investors_map.csv`. |
 | `Detail_ES` | texto | opt | | Descripción en español. |
 | `Detail_EN` | texto | opt | | Descripción en inglés. |
 | `Investment` | decimal | opt | **millones de USD** (✅ confirmado por cliente, 2026-07-05) | Queda **opcional**: hay inversiones reales sin monto público. Mismo valor en todas las filas de una inversión. |
@@ -165,12 +191,50 @@ la garantiza el prefijo.
 `scripts/build_id_map.mjs`) — los 450 ids actuales mapeados al formato nuevo (id actual → id nuevo,
 con país e `Id_Seq`), verificados sin colisiones. Basta aplicar el reemplazo.
 
+### 5.1 `Ownership`: fuente = revisión experta (`investors_map.csv`), NO la base (v1.4)
+
+**Fuente de verdad = `data/schema/investors_map.csv`**, curado de nuestro lado desde la revisión
+externa (Dialogue/Yifang Wang, 17-07). Enum `Central SOE / Local SOE / POE / MIXED / UNKNOWN`. El
+Sankey y el filtro leen ownership de ahí (`investors_map.json`), **no** de la columna de la base.
+
+**Por qué no la base:** la verificación del cruce (`scripts/audit_ownership_cross.mjs`, 23-07)
+mostró que la entrega del cliente **no aplicó ninguna de las 30 correcciones** de la revisión
+experta (hizo solo el rename mecánico `SASAC`→`Central SOE`). Clasificar propiedad de firmas chinas
+(central vs local vs mixta) es trabajo experto, no de data-entry. Por eso ownership + identidad de
+empresa viven en una tabla analista-owned (`investors_map.csv`), no en el flujo por país.
+
+La columna `Ownership` del archivo del cliente es **opcional / cross-check**: el validador avisa
+(warning) si un valor no está en el enum (`SOE`→`Local SOE`, `SASAC`→`Central SOE`), pero no la usa
+como fuente. **Propuesta de handover (ver `next_steps` Parte E):** sacar `Ownership` del contrato
+del cliente y mantenerla solo de nuestro lado.
+
+### 5.2 Convención de dos lugares (24-07)
+
+El manejo del inversor se reparte en **dos artefactos, con responsabilidades distintas**:
+
+1. **La base por país (`Investor`)** lleva el nombre **RAW, tal como viene de la fuente**. No se
+   normaliza. Conserva procedencia (ej: "Pacific Hydro", no "State Power Investment"). Lo mantiene
+   el cliente al cargar inversiones. Recuperación del histórico: `scripts/restore_investor_raw.mjs`
+   (join por `Id_Investment_Original` contra la base vieja, ~96%).
+2. **La tabla de inversores (`data/schema/investors_map.csv`)** mapea `investor_raw` → identidad
+   canónica (`company_id`, `company_canonical`, consorcio/`members`) + `ownership`. **También pasa
+   por el validador** (`scripts/validate_investors.mjs` / núcleo `scripts/lib/validate_investors.mjs`):
+   enum de ownership, `investor_raw` único, `company_id ↔ company_canonical` 1:1, ownership
+   consistente por `company_id`. El ETL une base ↔ tabla por el nombre (raw y canónico) en el build.
+
+   **Steward (a definir por ICLAC):** la poblamos nosotros para la v1, pero mantenerla es trabajo
+   experto (estructura corporativa china) y **NO es tarea permanente nuestra ni del data-entry**.
+   Antes del cierre, ICLAC debe designar quién la mantiene (equipo con ese conocimiento, o Diálogo).
+
+Inversor nuevo que aparece en la base y no está en la tabla → cae a `UNKNOWN` y lo lista
+`scripts/check_investor_coverage.mjs`; quien tenga la tabla a cargo lo clasifica. El mapa no se rompe.
+
 ### Fuera del esquema: `Company_Id` / `previous_fdi`
 
-**No son columnas del archivo del cliente** (salen del esquema en v1.2). La identidad canónica de
-empresa y su clasificación de propiedad (SOE/POE/SASAC) se resuelven **de nuestro lado** con
-`data/schema/investors_map.csv` (mapeo `investor_raw` → canónico/ownership; script
-`scripts/build_investors_map.mjs`, decisiones aprobadas por Francisco 03-07-2026).
+**No son columnas del archivo del cliente.** La identidad canónica de empresa se resuelve **de
+nuestro lado** con `data/schema/investors_map.csv` (mapeo `investor_raw` → canónico; script
+`scripts/build_investors_map.mjs`). El **atributo ownership** ahora viene de la base (§5.1), no del
+CSV.
 
 ---
 
@@ -203,7 +267,8 @@ Investor             text   req
 Vector               enum   req   {Punto,Vector}
 Path                 int    req   Vector==Punto => 0 ; Vector==Vector => >=1
 Area_EN              enum   req   sectores.md::EN (match exacto, case-sensitive)
-Area_ES              enum   req   sectores.md::ES ; pairs-with Area_EN
+Area_ES              text   opt   INFORMATIVA (v1.4, no se valida formato) ; sólo warning si concepto != Area_EN (fila/sector-conflicto)
+Ownership            enum   req   {Central SOE,Local SOE,POE,MIXED,UNKNOWN} (v1.4, la manda la base — §5.1)
 Detail_ES            text   opt
 Detail_EN            text   opt
 Investment           number opt   >=0 ; unit=MUSD (confirmado)
@@ -222,8 +287,16 @@ Columnas prohibidas (error si aparecen): `Acquisition`, `Greenfield`, `Construct
 `*_ORIG`, `*_ARREGLADO`, `Project_Type_ES`, `Project_Type_EN`, `__EMPTY*`.
 Columnas no reconocidas distintas de las prohibidas: **se ignoran** (permitidas).
 
+Curación automática (determinista, sin pérdida — se lista, no se enmascara):
+- `COUNTRY_ISO_NUM` / `Id_Seq`: se quita el apóstrofe inicial de Excel (`'152` → `152`).
+- `Country`: se lleva a forma canónica del registro (`CHILE`/`chile`/`Brasil` → `Chile`/`Brazil`).
+- Nombre de archivo: match case-insensitive contra el registro.
+
 Reglas de archivo e inter-fila:
-- Nombre de archivo: país en MAYÚSCULA, inglés, sin tildes (`CHILE.xlsx`). Una sola hoja.
+- Nombre de archivo: país en inglés sin tildes, **case-insensitive** (`CHILE.xlsx` = `chile.xlsx`);
+  lista válida = `data/schema/countries.csv`. Una sola hoja.
+- País fuera del registro = `archivo/nombre` (fuera de la lista, con instrucción). País sin borde de
+  geometría = `archivo/sin-borde` (warning, compuerta blanda; ver §11).
 - Consistencia país: nombre de archivo ↔ `Country` ↔ `COUNTRY_ISO_ALPHA3` ↔ `COUNTRY_ISO_NUM` ↔ prefijo de `Id_Investment`.
 - Una **línea** = grupo de filas con mismo `(Id_Investment, Path)` y `Vector=Vector`.
   En una línea, los campos no geográficos deben ser idénticos entre sus filas.
@@ -268,3 +341,24 @@ El ETL deriva `is_construction = (Project_Type === 'Construcción')` y el front 
 **Conexión con el sector:** la categoría Construcción/Infraestructura es también la **8ª categoría de
 sector** de la metodología ("infrastructure/construction projects"), cuyo monto se **excluye del total
 FDI** (`Area_EN = Infrastructure`, `Area_ES = Infraestructura`; ver `sectores.md`).
+
+---
+
+## 10. País como dato + geometría (v1.4)
+
+El alcance de países dejó de estar hardcodeado en el validador. Vive en el registro
+`data/schema/countries.csv` (columnas `alpha3,numeric,name,aliases,filename`), **pre-cargado por
+nosotros** con toda LATAM + Centroamérica + Caribe. **México NO está en la semilla a propósito**
+(exclusión metodológica 14-07): un `mexico.xlsx` cae como "país fuera de la lista".
+
+Incorporar un país nuevo:
+1. **Geometría de país** (compuerta blanda): la sembramos nosotros desde Natural Earth
+   (`scripts/build_borders.mjs` → `data/sources/geo/borders.geojson`). Sin borde, el validador
+   avisa `archivo/sin-borde` (no bota); el país no se dibuja hasta tenerlo.
+2. **Datos sin bloqueantes:** el archivo del país pasa el contrato (§3/§7).
+3. **Filtro en build:** el ETL ingesta **sólo los países que pasan**; `build_borders` arma el
+   `south-america.geojson` del mapa **sólo con esos**. El mapa muestra únicamente países validados
+   (validación ↔ "en vivo" atados por construcción).
+
+El validador y el ETL cargan el registro vía `scripts/lib/load_registry.mjs`; el núcleo
+(`scripts/lib/validate.mjs`) lo recibe por `opts.registry` y sigue puro.

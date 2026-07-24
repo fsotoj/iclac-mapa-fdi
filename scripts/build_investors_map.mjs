@@ -1,6 +1,8 @@
 // Converts data/schema/investors_map.csv -> public/data/investors_map.json
-// (keyed by investor_raw). NOTE: `scripts/etl.mjs` now does this too on every
-// build; this standalone remains for regenerating the JSON without a full ETL run.
+// (keyed by investor_raw AND company_canonical, para que la base nueva —que usa
+// el nombre canónico como Investor— también resuelva; sin esto ~50% cae a UNKNOWN).
+// NOTE: `scripts/etl.mjs` now does this too on every build; this standalone
+// remains for regenerating the JSON without a full ETL run.
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -44,6 +46,8 @@ for (const line of rows.slice(1)) {
   const members = (c[iMembers] ?? '').split('|').map(s => s.trim()).filter(Boolean)
   if (members.length) entry.members = members
   map[c[iRaw]] = entry
+  // También por nombre canónico (la base del cliente usa el canónico como Investor).
+  if (c[iCanon] && !(c[iCanon] in map)) map[c[iCanon]] = entry
 }
 
 writeFileSync(OUT, JSON.stringify(map), 'utf8')

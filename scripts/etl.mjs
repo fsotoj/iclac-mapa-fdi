@@ -1,8 +1,15 @@
 #!/usr/bin/env node
 import XLSX from 'xlsx'
-import { writeFileSync, mkdirSync, readFileSync, existsSync, readdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync, readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
 import { dirname, resolve, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { canonCountry } from './lib/normalize.mjs'
+import { validateRows } from './lib/validate.mjs'
+import { loadRegistry, loadCountryBorders } from './lib/load_registry.mjs'
+
+const registry = loadRegistry()
+const countryBorders = registry ? loadCountryBorders(registry) : null
+const canonIndex = registry?.canonIndex
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(__dirname, '..')
@@ -98,8 +105,11 @@ const legacyVectorOverlay = buildLegacyVectorOverlay()
 console.log(`Legacy vector overlay loaded: ${legacyVectorOverlay.size} ids`)
 
 const resolveVector = (rawVector, rawId) => {
-  const idKey = String(parseInt(String(rawId), 10))
-  const legacy = legacyVectorOverlay.get(idKey)
+  // Overlay legado keyeado por id NUMÉRICO (base vieja). Con los ids nuevos
+  // ALPHA3-NNNN el parseInt da NaN → el overlay no aplica y se usa el Vector de
+  // la fila (la base por país ya trae Vector limpio). Ver deuda documentada §8.
+  const idNum = parseInt(String(rawId), 10)
+  const legacy = Number.isNaN(idNum) ? undefined : legacyVectorOverlay.get(String(idNum))
   if (legacy) {
     if (rawVector !== legacy) stats.vectorOverlayUsed++
     return legacy
@@ -174,7 +184,7 @@ const cleanRow = row => {
     id,
     coords,
     year: parseNumber(row.Year),
-    country: cleanStr(row.Country),
+    country: canonCountry(row.Country, canonIndex).value ?? null,
     investor,
     area_en: areaEn,
     area_es: areaEs,
@@ -185,7 +195,9 @@ const cleanRow = row => {
     project_type: projectType,
     is_construction: projectType === 'Construcción',
     is_joint_venture: jointVentureFlag,
-    origin_of_seller: cleanStr(row['Origin of seller']),
+    // Renombrada a Origin_Of_Seller (v1.2); fallback al nombre viejo por si llega base legada.
+    origin_of_seller: cleanStr(row.Origin_Of_Seller) ?? cleanStr(row['Origin of seller']),
+    ownership: cleanStr(row.Ownership),
     stake: parseNumber(row.Stake),
     has_research: hasResearch,
     research_cases: cases,
@@ -195,13 +207,40 @@ const cleanRow = row => {
   }
 }
 
-console.log(`Reading: ${inputPath}`)
-const wb = XLSX.readFile(inputPath)
+// Lee las filas de un xlsx. Prefiere la hoja 'Total' (base legada agregada); si
+// no existe, usa la primera hoja (flujo por país: 'Datos'/'Sheet1').
+const readWorkbook = (file) => {
+  const wb = XLSX.readFile(file)
+  const sheet = wb.Sheets['Total'] ?? wb.Sheets[wb.SheetNames[0]]
+  return { rows: XLSX.utils.sheet_to_json(sheet, { defval: null }), sheetCount: wb.SheetNames.length }
+}
 
-const totalSheet = wb.Sheets['Total']
-if (!totalSheet) { console.error('No "Total" sheet'); process.exit(1) }
-
-const rawRows = XLSX.utils.sheet_to_json(totalSheet, { defval: null })
+let rawRows = []
+if (existsSync(inputPath) && statSync(inputPath).isDirectory()) {
+  // Flujo por país: un xlsx por país. FILTRO EN BUILD (decisión 23-07): solo
+  // ingesta los países cuyo archivo PASA la validación. Así el mapa muestra
+  // únicamente países validados; los que fallan se omiten (el informe explica).
+  const files = readdirSync(inputPath)
+    .filter((f) => f.endsWith('.xlsx') && !f.startsWith('~$'))
+    .sort()
+  const noFilter = process.argv.includes('--no-filter')
+  console.log(`Reading dir: ${inputPath} (${files.length} archivos)${noFilter ? ' [sin filtro]' : ''}`)
+  for (const f of files) {
+    const { rows, sheetCount } = readWorkbook(resolve(inputPath, f))
+    if (!noFilter) {
+      const { stats } = validateRows(rows, { filename: f, registry, countryBorders, sheetCount })
+      if (!stats.passed) {
+        console.log(`  ${f}: OMITIDO — no pasa validación (${stats.validPct}% válidas, ${stats.errors} errores)`)
+        continue
+      }
+    }
+    console.log(`  ${f}: ${rows.length} filas ✓`)
+    rawRows.push(...rows)
+  }
+} else {
+  console.log(`Reading: ${inputPath}`)
+  rawRows = readWorkbook(inputPath).rows
+}
 
 const cleaned = []
 for (const r of rawRows) {
@@ -239,6 +278,7 @@ for (const r of pointOnlyRows) {
     is_construction: r.is_construction,
     is_joint_venture: r.is_joint_venture,
     origin_of_seller: r.origin_of_seller,
+    ownership: r.ownership,
     stake: r.stake,
     has_research: r.has_research,
     research_cases: r.research_cases,
@@ -268,6 +308,8 @@ for (const [, rows] of candidateGroups) {
       is_construction: r.is_construction,
       is_joint_venture: r.is_joint_venture,
       origin_of_seller: r.origin_of_seller,
+    ownership: r.ownership,
+      ownership: r.ownership,
       stake: r.stake,
       has_research: r.has_research,
       research_cases: r.research_cases,
@@ -314,6 +356,7 @@ for (const [, rows] of candidateGroups) {
     is_construction: first.is_construction,
     is_joint_venture: first.is_joint_venture,
     origin_of_seller: first.origin_of_seller,
+    ownership: first.ownership,
     stake: first.stake,
     has_research: mergedHasResearch,
     research_cases: mergedCases,
@@ -384,6 +427,8 @@ if (existsSync(investorsCsvPath)) {
     const members = (c[iMembers] ?? '').split('|').map(s => s.trim()).filter(Boolean)
     if (members.length) entry.members = members
     investorMap[c[iRaw]] = entry
+    // También por canónico: la base del cliente usa el nombre canónico como Investor.
+    if (c[iCanon] && !(c[iCanon] in investorMap)) investorMap[c[iCanon]] = entry
   }
   writeFileSync(investorsJsonPath, JSON.stringify(investorMap), 'utf8')
   console.log(`Investor map: ${Object.keys(investorMap).length} entries -> ${investorsJsonPath}`)

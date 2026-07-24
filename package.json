@@ -12,6 +12,8 @@
     "etl": "node scripts/etl.mjs",
     "conflicts": "node scripts/export_vector_conflicts.mjs",
     "validate": "node scripts/validate_data.mjs",
+    "validate:report": "node scripts/build_validation_report.mjs",
+    "validate:investors": "node scripts/validate_investors.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

@@ -7,6 +7,8 @@
 // datos malos. Mensajes en español, legibles para no-programadores: siempre
 // valor recibido + valor esperado.
 
+import { stripLeadingApostrophe, canonCountry, matchFilenameCountry } from './normalize.mjs'
+
 // ---- Enums y constantes del esquema ----
 
 // 8 sectores canónicos (data/schema/sectores.md v1.2). EN es la clave exacta
@@ -27,6 +29,11 @@ export const PROJECT_TYPES = ['Adquisición', 'Greenfield', 'Construcción']
 const PROJECT_TYPE_HINTS = { Adquisión: 'Adquisición', Adquisicón: 'Adquisición', Acquisition: 'Adquisición' }
 
 const YES_NO = ['Yes', 'No']
+
+// Ownership (v1.4): enum de Yifang Wang/Dialogue. La base la manda el cliente.
+export const OWNERSHIP_TYPES = ['Central SOE', 'Local SOE', 'POE', 'MIXED', 'UNKNOWN']
+// Formas viejas a migrar (Flo usó SOE donde iba Local SOE; SASAC → Central SOE).
+const OWNERSHIP_HINTS = { SOE: 'Local SOE', SASAC: 'Central SOE' }
 
 // Países del alcance actual + ISO (mismo universo que COUNTRY_TO_ISO3 de
 // build_fdi_share.mjs, más variantes de nombre vistas en las bases).
@@ -112,9 +119,29 @@ const coordKey = (coords) => coords.map((n) => n.toFixed(6)).join(',')
 
 const looksLikeUrl = (s) => /https?:\/\//i.test(s)
 
-// Nombre de archivo canónico: país del proyecto en MAYÚSCULA/inglés (schema §1).
+// Nombre de archivo canónico: país del proyecto, en inglés, sin tildes.
+// Case-insensitive (v1.4): acepta CHILE.xlsx y chile.xlsx por igual — la
+// diferencia de mayúsculas la absorbe la normalización, no es un error.
 export const isCanonicalFilename = (name) =>
-  name.endsWith('.xlsx') && CANONICAL_FILENAMES.has(name.slice(0, -'.xlsx'.length))
+  matchFilenameCountry(name, CANONICAL_FILENAMES).matched
+
+// Concepto EN al que apunta un valor de Area_ES (para detectar conflicto EN↔ES,
+// no formato). Canónicos + variantes no canónicas conceptualmente claras.
+const ES_CONCEPT = {}
+for (const [en, es] of Object.entries(SECTOR_PAIRS)) ES_CONCEPT[es.toLowerCase()] = en
+Object.assign(ES_CONCEPT, {
+  agroindustria: 'Agroindustry',
+  tic: 'ICT',
+  manufacturas: 'Manufacturing',
+  manufactura: 'Manufacturing'
+})
+const conceptOfAreaEs = (es) => {
+  const k = String(es ?? '').trim().toLowerCase()
+  if (!k) return null
+  if (ES_CONCEPT[k]) return ES_CONCEPT[k]
+  for (const [esk, en] of Object.entries(ES_CONCEPT)) if (k.startsWith(esk)) return en
+  return null
+}
 
 // ---- Núcleo ----
 
@@ -125,26 +152,49 @@ export const isCanonicalFilename = (name) =>
  * @param {boolean} [opts.strictIds=false] formato ALPHA3-NNNN como error (tras confirmación cliente)
  * @param {number} [opts.threshold=95] % mínimo de filas válidas
  * @param {number} [opts.sheetCount=1] nº de hojas del workbook
+ * @param {object} [opts.registry] registro de países (countries.csv). Si se omite, usa el hardcodeado.
+ * @param {Set<string>} [opts.countryBorders] alpha-3 con borde de país disponible (para el chequeo de geometría). null = no chequear.
  */
 export const validateRows = (rows, opts = {}) => {
-  const { filename = null, strictIds = false, threshold = 95, sheetCount = 1 } = opts
+  const { filename = null, strictIds = false, threshold = 95, sheetCount = 1, registry = null, countryBorders = null } = opts
+  // Registro de países: del CSV si se pasa, o el hardcodeado como fallback (tests/legacy).
+  const ISO = registry?.countryIso ?? COUNTRY_ISO
+  const FN_BY_A3 = registry?.filenameByAlpha3 ?? FILENAME_BY_ALPHA3
+  const CANON_FN = registry?.canonicalFilenames ?? CANONICAL_FILENAMES
+  const canonIndex = registry?.canonIndex // undefined → canonCountry usa su índice por defecto
   const fileErrors = []
   const issues = []
+  const curaciones = [] // { rule, kind, column, count } — arreglos deterministas de nuestro lado
   const push = (severity, rule, row, column, value, message) =>
     issues.push({ severity, rule, row, column, value, message })
 
   // ---- Reglas de archivo ----
-  if (filename && !isCanonicalFilename(filename)) {
+  const fnMatch = filename ? matchFilenameCountry(filename, CANON_FN) : { matched: false, changed: false, canonical: null }
+  if (filename && !fnMatch.matched) {
     fileErrors.push({
       rule: 'archivo/nombre',
-      message: `El nombre "${filename}" no sigue la convención: país en MAYÚSCULA, en inglés, sin tildes (ej: CHILE.xlsx, BRAZIL.xlsx).`
+      message: `El nombre "${filename}" no corresponde a un país del proyecto (en inglés, sin tildes; ej: CHILE.xlsx, BRAZIL.xlsx). Las mayúsculas/minúsculas no importan.`
     })
+  } else if (filename && fnMatch.changed) {
+    curaciones.push({ rule: 'curacion/nombre-archivo', kind: 'caso', column: null, count: 1,
+      message: `Nombre de archivo normalizado a "${fnMatch.canonical}" (las mayúsculas/minúsculas no importan).` })
   }
   if (sheetCount > 1) {
     fileErrors.push({
       rule: 'archivo/hojas',
       message: `El archivo tiene ${sheetCount} hojas; debe tener una sola hoja de datos.`
     })
+  }
+  // Geometría de país (compuerta blanda): si el país no tiene borde disponible,
+  // sus inversiones no se dibujan en el mapa hasta que se agregue. Avisa, no bota.
+  // countryBorders=null → no se chequea (no se pasó la lista de bordes).
+  if (fnMatch.matched && countryBorders) {
+    const stem = fnMatch.canonical.slice(0, -'.xlsx'.length)
+    const alpha3 = Object.keys(FN_BY_A3).find((a3) => FN_BY_A3[a3] === stem)
+    if (alpha3 && !countryBorders.has(alpha3)) {
+      push('warning', 'archivo/sin-borde', 0, null, null,
+        'Este país todavía no tiene borde de país cargado: sus inversiones no se dibujarán en el mapa hasta agregar la geometría. No bota el archivo.')
+    }
   }
 
   const columns = rows.length ? Object.keys(rows[0]) : []
@@ -188,19 +238,46 @@ export const validateRows = (rows, opts = {}) => {
   const hasCol = (c) => columns.includes(c)
   const currentYear = new Date().getFullYear()
 
+  // ---- Normalización de valores (determinista, sin pérdida) ----
+  // Se arregla la representación ANTES de validar, así el reporte no se llena de
+  // miles de errores cosméticos. Cada arreglo se lista en `curaciones`.
+  const normCount = { isoNum: 0, idSeq: 0, country: 0 }
+  const normRows = rows.map((row) => {
+    const out = { ...row }
+    if (hasCol('COUNTRY_ISO_NUM')) {
+      const r = stripLeadingApostrophe(out.COUNTRY_ISO_NUM)
+      if (r.changed) { out.COUNTRY_ISO_NUM = r.value; normCount.isoNum++ }
+    }
+    if (hasCol('Id_Seq')) {
+      const r = stripLeadingApostrophe(out.Id_Seq)
+      if (r.changed) { out.Id_Seq = r.value; normCount.idSeq++ }
+    }
+    if (hasCol('Country')) {
+      const r = canonCountry(out.Country, canonIndex)
+      if (r.changed) { out.Country = r.value; normCount.country++ }
+    }
+    return out
+  })
+  if (normCount.isoNum) curaciones.push({ rule: 'curacion/iso-apostrofe', column: 'COUNTRY_ISO_NUM', count: normCount.isoNum,
+    message: `Se quitó el apóstrofe inicial de COUNTRY_ISO_NUM ('152 → 152) en ${normCount.isoNum} fila(s).` })
+  if (normCount.idSeq) curaciones.push({ rule: 'curacion/idseq-apostrofe', column: 'Id_Seq', count: normCount.idSeq,
+    message: `Se quitó el apóstrofe inicial de Id_Seq en ${normCount.idSeq} fila(s).` })
+  if (normCount.country) curaciones.push({ rule: 'curacion/pais-canonico', column: 'Country', count: normCount.country,
+    message: `Se normalizó Country a su forma canónica (ej: CHILE → Chile) en ${normCount.country} fila(s).` })
+
   // Estado inter-fila
   const rowValid = new Array(rows.length).fill(true)
   const idMeta = new Map() // id -> { country, investor, year, amount, row }
   const lineMeta = new Map() // `${id}|${path}` (Vector) -> { detail, amount, area, row }
   const coordToIds = new Map() // coordKey -> Map(id -> primera fila)
-  const filenameCountry = filename ? filename.replace(/\.xlsx$/, '') : null
+  const filenameCountry = fnMatch.matched ? fnMatch.canonical.slice(0, -'.xlsx'.length) : null
 
   const fail = (i, rule, column, value, message) => {
     rowValid[i] = false
     push('error', rule, i + 2, column, value, message)
   }
 
-  rows.forEach((row, i) => {
+  normRows.forEach((row, i) => {
     const excelRow = i + 2
 
     // Fila totalmente vacía: warning, no cuenta al umbral (se salta).
@@ -277,10 +354,27 @@ export const validateRows = (rows, opts = {}) => {
       fail(i, 'fila/sector-en', 'Area_EN', areaEn,
         `Sector "${areaEn}" no es uno de los 8 canónicos en inglés (${Object.keys(SECTOR_PAIRS).join(', ')})${hint}. Un valor no exacto pinta la inversión gris y duplica la categoría en el filtro, en los 3 idiomas.`)
     }
+    // Area_ES ya NO se valida por formato (el mapa traduce keyed por Area_EN, así
+    // que la etiqueta ES es redundante — v1.4). Se conserva SÓLO el conflicto
+    // conceptual: cuando Area_ES apunta a un sector DISTINTO del de Area_EN, una
+    // de las dos está mal (ver next_steps §0.b C9). Warning, no bloquea.
     const areaEs = cleanStr(row.Area_ES)
-    if (areaEn !== null && areaEn in SECTOR_PAIRS && areaEs !== null && areaEs !== SECTOR_PAIRS[areaEn]) {
-      fail(i, 'fila/sector-es', 'Area_ES', areaEs,
-        `Area_ES "${areaEs}" no corresponde a Area_EN "${areaEn}": debe ser "${SECTOR_PAIRS[areaEn]}".`)
+    if (areaEn !== null && areaEs !== null) {
+      const concept = conceptOfAreaEs(areaEs)
+      if (concept && concept !== areaEn) {
+        push('warning', 'fila/sector-conflicto', excelRow, 'Area_ES', areaEs,
+          `Conflicto de sector: Area_EN dice "${areaEn}" pero Area_ES "${areaEs}" corresponde a "${concept}". Una de las dos está mal; revisar cuál es el sector real.`)
+      }
+    }
+
+    // -- Ownership (v1.4, en adopción: warning, no bota) --
+    // La base la manda el cliente. Enum de Yifang. `SASAC`/`SOE` son las formas
+    // viejas que hay que migrar a Central SOE / Local SOE (Flo no adoptó Local SOE).
+    const ownership = cleanStr(row.Ownership)
+    if (ownership !== null && !OWNERSHIP_TYPES.includes(ownership)) {
+      const hint = OWNERSHIP_HINTS[ownership] ? ` (¿quiso decir "${OWNERSHIP_HINTS[ownership]}"?)` : ''
+      push('warning', 'fila/ownership', excelRow, 'Ownership', ownership,
+        `Ownership "${ownership}" no está en el enum (${OWNERSHIP_TYPES.join(', ')})${hint}.`)
     }
 
     // -- Project_Type --
@@ -304,7 +398,7 @@ export const validateRows = (rows, opts = {}) => {
     // -- ISO --
     const isoNumRaw = row.COUNTRY_ISO_NUM === null || row.COUNTRY_ISO_NUM === undefined ? null : String(row.COUNTRY_ISO_NUM).trim()
     const country = cleanStr(row.Country)
-    const isoInfo = country ? COUNTRY_ISO[country] : undefined
+    const isoInfo = country ? ISO[country] : undefined
     if (isoNumRaw !== null && !/^\d{3}$/.test(isoNumRaw)) {
       fail(i, 'fila/iso-num', 'COUNTRY_ISO_NUM', isoNumRaw,
         `COUNTRY_ISO_NUM "${isoNumRaw}" inválido: deben ser 3 dígitos con ceros a la izquierda (ej: "152" Chile, "032" Argentina). Guardar la celda como texto.`)
@@ -323,8 +417,8 @@ export const validateRows = (rows, opts = {}) => {
     }
     // Consistencia archivo↔país: solo en el flujo por país (nombre canónico =
     // país en MAYÚSCULA/inglés). Archivos agregados (nombre no canónico) la saltan.
-    if (filenameCountry && country && isoInfo && filename && isCanonicalFilename(filename)) {
-      const expected = FILENAME_BY_ALPHA3[isoInfo.alpha3]
+    if (filenameCountry && country && isoInfo && filename && fnMatch.matched) {
+      const expected = FN_BY_A3[isoInfo.alpha3]
       if (filenameCountry !== expected) {
         fail(i, 'fila/pais-archivo', 'Country', country,
           `La fila es de ${country} pero el archivo es "${filename}": cada archivo lleva un solo país (esperado: "${expected}.xlsx").`)
@@ -457,6 +551,7 @@ export const validateRows = (rows, opts = {}) => {
   return {
     fileErrors,
     issues,
+    curaciones,
     stats: {
       rows: rows.length,
       consideredRows,
@@ -464,6 +559,7 @@ export const validateRows = (rows, opts = {}) => {
       validPct: Math.round(validPct * 100) / 100,
       errors: issues.filter((x) => x.severity === 'error').length + fileErrors.length,
       warnings: issues.filter((x) => x.severity === 'warning').length,
+      curaciones: curaciones.reduce((n, c) => n + (c.count ?? 0), 0),
       threshold,
       passed
     }

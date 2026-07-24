@@ -1,24 +1,46 @@
-# Valida los archivos de datos por país (data/source/*.xlsx) contra el esquema
-# canónico (data/schema/schema.md §7) en cada PR que los toque.
-# Verde = cumple el esquema (≥95% filas válidas, sin errores de archivo) → merge
-# habilita el rebuild de Netlify (npm run etl). Rojo = el log del paso y el
-# summary indican qué filas fallan y por qué (valor recibido y esperado).
+# Valida los archivos de datos por país (data/sources/countries/*.xlsx) contra el
+# esquema canónico (data/schema/schema.md §7) en cada push que los toque, y publica
+# un INFORME HTML en GitHub Pages con un enlace fijo.
+#
+# El informe dice, país por país, qué está correcto y qué corregir (bloqueante vs
+# aviso). El ETL del build integra solo los países que pasan, así que el mapa nunca
+# se rompe; este informe es la guía para dejar cada país en verde.
+#
+# Enlace del informe (Pages): https://<org>.github.io/<repo>/
+#
+# Setup por única vez en el repo (lo hace un admin): Settings > Pages > Source =
+# "GitHub Actions". Es obligatorio: el token del workflow no puede crear el sitio
+# Pages solo (la org lo restringe), así que hay que habilitarlo a mano una vez.
 name: validate-data
 
-# DESCONECTADO por ahora (decisión 2026-07-05): solo ejecución manual hasta que
-# llegue la base final del cliente y arranque el flujo por país. Para conectar,
-# descomentar el bloque pull_request.
 on:
-  # pull_request:
-  #   paths:
-  #     - 'data/source/**'
-  #     - 'scripts/validate_data.mjs'
-  #     - 'scripts/lib/validate.mjs'
+  push:
+    paths:
+      - 'data/sources/countries/**'
+      - 'data/schema/**'
+      - 'scripts/**'
   workflow_dispatch:
 
+# Permisos para desplegar a Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un solo despliegue a la vez.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  DATA_DIR: data/sources/countries
+
 jobs:
-  validate:
+  report:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,5 +48,32 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+
+      # Validación: alimenta el log y el resumen del run. No bloquea la publicación
+      # del informe (el informe es justamente lo que muestra qué falla).
       - name: Validar archivos de datos
-        run: npm run validate
+        continue-on-error: true
+        run: node scripts/validate_data.mjs "$DATA_DIR"
+
+      # Tabla de inversores (identidad + ownership). Guardado: solo corre si el
+      # archivo y el script están presentes (en el repo de datos puede no estarlo).
+      - name: Validar tabla de inversores
+        continue-on-error: true
+        run: |
+          if [ -f scripts/validate_investors.mjs ] && [ -f data/schema/investors_map.csv ]; then
+            node scripts/validate_investors.mjs
+          else
+            echo "tabla de inversores no presente en este repo — se omite"
+          fi
+
+      - name: Generar informe (index.html)
+        run: |
+          mkdir -p site
+          node scripts/build_validation_report.mjs "$DATA_DIR" --out site/index.html
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

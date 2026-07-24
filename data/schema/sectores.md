@@ -64,9 +64,14 @@ Actualizar **a la vez**:
 
 ## Reglas
 
-- `Area_EN` debe ser **exactamente** uno de los 8 valores `EN` (case-sensitive).
-- `Area_ES` debe ser la traducción pareada de la misma fila (`Area_EN=Mining` ⇒ `Area_ES=Minería`).
-- Ambos **obligatorios** (req). Sin sector la inversión no se puede pintar ni clasificar (color/leyenda/Sankey).
+- `Area_EN` debe ser **exactamente** uno de los 8 valores `EN` (case-sensitive). **Obligatorio** —
+  sin sector la inversión no se puede pintar ni clasificar (color/leyenda/Sankey). El frontend
+  traduce a es/en/cn keyed por `Area_EN`.
+- `Area_ES` (v1.4): **informativa, ya no se valida por formato** (el mapa no la usa para traducir).
+  El validador sólo dispara un **warning** (`fila/sector-conflicto`) cuando `Area_ES` apunta a un
+  **sector conceptualmente distinto** de `Area_EN` (ej: `Energy` + `Agroindustria`) — ahí una de las
+  dos está mal. Diferencias de sólo formato (`Agroindustria` vs `Agronegocios`, `Tic` vs `TIC`) ya
+  **no** son error: son ruido que antes reprobaba archivos sanos.
 
 ## Normalizaciones que aplica el ETL (no amplían el enum)
 

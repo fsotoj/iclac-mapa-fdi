@@ -72,11 +72,13 @@ describe('reglas de archivo', () => {
     expect(r.fileErrors.some((f) => f.rule === 'archivo/nombre')).toBe(true)
   })
 
-  it('convención vieja (español minúscula) ya no es canónica', () => {
+  it('nombre en minúscula es aceptado (case-insensitive, v1.4) con curación', () => {
     const r = validateRows([makeRow()], { filename: 'chile.xlsx' })
-    expect(r.fileErrors.some((f) => f.rule === 'archivo/nombre')).toBe(true)
-    // pero como agregado: no exige país único
-    expect(rules(errorsOf(r))).not.toContain('fila/pais-archivo')
+    expect(r.fileErrors.some((f) => f.rule === 'archivo/nombre')).toBe(false)
+    expect(r.curaciones.some((c) => c.rule === 'curacion/nombre-archivo')).toBe(true)
+    // y sigue exigiendo país único (nombre canónico match)
+    const cross = validateRows([makeRow({ Country: 'Peru', COUNTRY_ISO_NUM: '604', COUNTRY_ISO_ALPHA3: 'PER', Id_Investment: 'PER-0001' })], { filename: 'chile.xlsx' })
+    expect(rules(errorsOf(cross))).toContain('fila/pais-archivo')
   })
 
   it('convención cliente (MAYÚSCULA inglés) es canónica y exige país del archivo', () => {
@@ -104,6 +106,29 @@ describe('reglas de archivo', () => {
     const r = run([makeRow({ Location_ES: 'Santiago' })])
     expect(r.fileErrors).toEqual([])
     expect(r.issues.some((x) => x.severity === 'info' && x.rule === 'archivo/columna-extra')).toBe(true)
+  })
+})
+
+describe('normalización (v1.4, determinista sin pérdida)', () => {
+  it('apóstrofe en COUNTRY_ISO_NUM se limpia y NO es error', () => {
+    const r = run([makeRow({ COUNTRY_ISO_NUM: "'152" })])
+    expect(rules(errorsOf(r))).not.toContain('fila/iso-num')
+    expect(r.curaciones.some((c) => c.rule === 'curacion/iso-apostrofe' && c.count === 1)).toBe(true)
+  })
+
+  it('Country en MAYÚSCULAS se canoniza y NO dispara país-desconocido', () => {
+    const r = run([makeRow({ Country: 'CHILE' })])
+    expect(rules(warningsOf(r))).not.toContain('fila/pais-desconocido')
+    expect(r.curaciones.some((c) => c.rule === 'curacion/pais-canonico')).toBe(true)
+  })
+
+  it('Brasil/México (variante) se canoniza a Brazil/Mexico', () => {
+    const r = validateRows(
+      [makeRow({ Country: 'BRASIL', COUNTRY_ISO_NUM: '076', COUNTRY_ISO_ALPHA3: 'BRA', Id_Investment: 'BRA-0001' })],
+      { filename: 'BRAZIL.xlsx' }
+    )
+    expect(rules(errorsOf(r))).not.toContain('fila/pais-archivo')
+    expect(r.curaciones.some((c) => c.rule === 'curacion/pais-canonico')).toBe(true)
   })
 })
 
@@ -139,9 +164,18 @@ describe('reglas de fila (errores)', () => {
     expect(errs[3].message).toContain('Real Estate')
   })
 
-  it('Area_ES no pareada con Area_EN', () => {
+  it('Area_ES en conflicto CONCEPTUAL con Area_EN = warning (no bloquea, v1.4)', () => {
+    // Minería (→Mining) vs Area_EN Energy: sectores distintos → conflicto real
     const r = run([makeRow({ Area_ES: 'Minería' })])
-    expect(rules(errorsOf(r))).toContain('fila/sector-es')
+    expect(rules(warningsOf(r))).toContain('fila/sector-conflicto')
+    expect(rules(errorsOf(r))).not.toContain('fila/sector-es')
+  })
+
+  it('Area_ES no canónica pero MISMO concepto no dispara nada (solo formato)', () => {
+    // Agroindustria (→Agroindustry) con Area_EN Agroindustry: mismo sector, casing
+    const r = run([makeRow({ Area_EN: 'Agroindustry', Area_ES: 'Agroindustria' })])
+    expect(rules(warningsOf(r))).not.toContain('fila/sector-conflicto')
+    expect(rules(errorsOf(r))).not.toContain('fila/sector-es')
   })
 
   it('Project_Type typo con hint', () => {
@@ -227,6 +261,25 @@ describe('ids', () => {
       makeRow({ Vector: 'Vector', Path: 1, Coordinates: '-33.5, -70.7', Investment: 999 })
     ])
     expect(rules(warningsOf(r))).toContain('fila/monto-inconsistente')
+  })
+})
+
+describe('ownership (v1.4, warning en adopción)', () => {
+  it('valor del enum no dispara nada', () => {
+    const r = run([makeRow({ Ownership: 'Central SOE' })])
+    expect(rules(warningsOf(r))).not.toContain('fila/ownership')
+  })
+
+  it('SOE (no adoptó Local SOE) = warning con hint', () => {
+    const r = run([makeRow({ Ownership: 'SOE' })])
+    const w = warningsOf(r).find((x) => x.rule === 'fila/ownership')
+    expect(w?.message).toContain('Local SOE')
+    expect(rules(errorsOf(r))).not.toContain('fila/ownership') // no bota
+  })
+
+  it('SASAC (forma vieja) = warning → Central SOE', () => {
+    const r = run([makeRow({ Ownership: 'SASAC' })])
+    expect(warningsOf(r).find((x) => x.rule === 'fila/ownership')?.message).toContain('Central SOE')
   })
 })
 
