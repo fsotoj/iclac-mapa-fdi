@@ -42,6 +42,21 @@ const cleanStr = v => {
 
 const titleCase = s => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s)
 
+// Curación de casing (convención "documentar, no parchear" — casing es excepción
+// legítima): la entrega por país de Flo trae Location en MAYÚSCULAS ("SALTA").
+// Canoniza a Title Case, con conectores en español en minúscula ("Provincia de
+// Buenos Aires"). NO toca URLs (deficiencia documentada, se renderiza cruda).
+const SPANISH_MINOR = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'y', 'e', 'en', 'da', 'do'])
+const titleCaseLocation = s => {
+  if (!s) return s
+  if (/https?:\/\/|www\./i.test(s)) return s
+  return s
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w, i) => (i > 0 && SPANISH_MINOR.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(' ')
+}
+
 const parseCoordinates = s => {
   if (!s) return null
   const parts = String(s).split(',').map(p => p.trim())
@@ -81,7 +96,8 @@ const stats = {
   vectorOverlayUsed: 0,
   vectorUnresolvedDefaultedToPoint: 0,
   ownershipFromMap: 0,
-  ownershipUnknownNoMatch: 0
+  ownershipUnknownNoMatch: 0,
+  locationTitleCased: 0
 }
 
 const LEGACY_DATA_DIR = resolve(REPO_ROOT, 'legacy/data')
@@ -253,7 +269,12 @@ const cleanRow = row => {
     detail_es: cleanStr(row.Detail_ES),
     detail_en: cleanStr(row.Detail_EN),
     investment_musd: parseNumber(row.Investment),
-    location: cleanStr(row.Location),
+    location: (() => {
+      const raw = cleanStr(row.Location)
+      const cased = titleCaseLocation(raw)
+      if (raw !== null && cased !== raw) stats.locationTitleCased++
+      return cased
+    })(),
     project_type: projectType,
     is_construction: projectType === 'Construcción',
     is_joint_venture: jointVentureFlag,

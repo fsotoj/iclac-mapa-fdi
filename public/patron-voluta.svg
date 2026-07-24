@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <!-- Molinete de volutas (云纹 / yunwen, nube enrollada). Tesela 80x80 que repite
+       en los dos ejes con background-repeat: repeat.
+
+       Un brazo = cola recta desde el medio del borde derecho + espiral de 8 cuartos
+       de arco (2 vueltas), radio 18 bajando 1.875 por cuarto (7.5 por vuelta). Cada
+       cuarto el centro se corre y el radio baja lo mismo, asi la tangente no quiebra.
+       Mas 3 copias rotadas 90/180/270 sobre el centro: la simetria deja una cola en
+       el medio de cada borde, que empalma con la de la tesela vecina y forma la barra
+       recta entre molinetes.
+
+       Los conectores (las colas) van SIEMPRE puestos: con ellos el patron lee como
+       reticula continua (四方连续). Molinetes sueltos leerian como emblema aislado,
+       que es la unica condicion donde un motivo de 4 brazos se acerca al 卍.
+
+       Opacidad definida aca y no en CSS, para que el turquesa quede de fondo. -->
+  <g fill="none" stroke="#00a89c" stroke-width="3" stroke-opacity="0.2"
+     stroke-linecap="butt" stroke-linejoin="miter">
+    <path id="brazo" d="M 80 40 H 65 A 18 18 0 0 1 47 22 A 16.13 16.13 0 0 1 63.13 5.88 A 14.25 14.25 0 0 1 77.38 20.12 A 12.38 12.38 0 0 1 65 32.5 A 10.5 10.5 0 0 1 54.5 22 A 8.63 8.63 0 0 1 63.12 13.38 A 6.75 6.75 0 0 1 69.88 20.12 A 4.88 4.88 0 0 1 65 25"/>
+    <use href="#brazo" transform="rotate(90 40 40)"/>
+    <use href="#brazo" transform="rotate(180 40 40)"/>
+    <use href="#brazo" transform="rotate(270 40 40)"/>
+  </g>
+</svg>

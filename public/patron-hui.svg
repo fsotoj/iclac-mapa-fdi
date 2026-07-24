@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+  <!-- 回纹 (huiwen) recto: meandro corrido clasico, sin simetria rotacional.
+       Linea base continua + espiral cuadrada colgando de ella. Tesela 40x40 que
+       repite en los dos ejes: la base empalma horizontalmente y la separacion
+       entre la base de una fila y el techo de la siguiente es el mismo paso (8).
+       Sin brazos rotacionales => cero ambiguedad de lectura tipo esvastica.
+       Opacidad definida aca (no en CSS) para que el turquesa quede de fondo. -->
+  <g fill="none" stroke="rgb(0, 168, 156)" stroke-width="4" stroke-opacity="0.1"
+     stroke-linecap="butt" stroke-linejoin="miter">
+    <path d="M 0 36 H 40" />
+    <path d="M 4 36 V 4 H 36 V 28 H 12 V 12 H 28" />
+  </g>
+</svg>

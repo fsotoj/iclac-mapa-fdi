@@ -51,7 +51,7 @@ export default function DownloadsView() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
+    <div className="sangria-greca mx-auto max-w-3xl px-6 py-10">
       <h1 className="mb-6 text-3xl font-semibold text-[#093b4d]">
         {t('downloads.title')}
       </h1>

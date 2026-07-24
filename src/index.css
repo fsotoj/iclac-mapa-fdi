@@ -47,6 +47,68 @@ html, body, #root {
   padding: 8px 10px;
 }
 
+/* Sangria decorada con molinete de volutas (云纹). Va en las vistas EDITORIALES
+   (Metodologia, Datos, Contacto), no en las de datos (Mapa, Sankey): marca que la
+   pagina es de lectura y no una herramienta.
+
+   Las bandas cuelgan FUERA de la columna de texto (right/left: 100%), asi el ancho
+   del parrafo no cambia respecto a la version sin tesela. Van en pseudo-elementos
+   y no en background del contenedor para no quedar debajo del texto.
+   Necesitan 768 (columna) + 2 x (24 aire + 80 banda) = 976px de viewport: por eso
+   se ocultan bajo 1024px.
+   La tesela mide 80u y se renderiza a 40px, o sea a mitad de escala: la banda de
+   80px muestra 2 columnas de molinete.
+
+   background-attachment: fixed ancla el patron al viewport, asi el texto pasa por
+   delante y la greca lee como celosia fija. Efecto lateral asumido: con `fixed` el
+   background-position se mide desde el viewport y no desde la banda, o sea la
+   grilla de teselas es continua en toda la ventana y en el borde de cada banda
+   puede quedar una tesela cortada, que cambia al redimensionar. A 0.2 de opacidad
+   es imperceptible, y la continuidad con la ventana es justamente lo que hace leer
+   el efecto de celosia. iOS Safari ignora `fixed` y cae a estatico: degrada bien. */
+.sangria-greca {
+  position: relative;
+  background-color: #ffffff;
+  /* Las bandas son top:0/bottom:0 de esta caja, asi que en una vista corta (Datos,
+     Contacto) llegarian solo hasta donde llega el texto. Con min-height 100% la caja
+     ocupa como minimo todo el alto visible de <main> y la greca cubre de arriba a
+     abajo; en vistas largas sigue creciendo con el contenido. */
+  min-height: 100%;
+}
+.sangria-greca::before,
+.sangria-greca::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5rem;
+  background-image: url('/patron-voluta.svg');
+  background-repeat: repeat;
+  background-size: 2.5rem 2.5rem;
+  background-attachment: fixed;
+  pointer-events: none;
+}
+.sangria-greca::before {
+  right: 100%;
+  margin-right: 1.5rem;
+}
+.sangria-greca::after {
+  left: 100%;
+  margin-left: 1.5rem;
+}
+/* Variante 回纹 recta (sin simetria rotacional), por si se prefiere el meandro de
+   angulo recto al molinete de volutas. Se activa agregando la clase modificadora. */
+.sangria-greca--hui::before,
+.sangria-greca--hui::after {
+  background-image: url('/patron-hui.svg');
+}
+@media (max-width: 1023px) {
+  .sangria-greca::before,
+  .sangria-greca::after {
+    display: none;
+  }
+}
+
 .year-thumb {
   pointer-events: none;
 }

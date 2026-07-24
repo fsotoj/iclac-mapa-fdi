@@ -118,7 +118,11 @@ export default function Layout() {
         )}
       </header>
 
-      <main className="flex-1 min-h-0 overflow-y-auto">
+      {/* scrollbar-gutter: stable reserva el canal de la barra siempre. Sin esto las
+          vistas largas (Metodología) muestran barra y las cortas (Datos) no, la caja
+          de contenido cambia de ancho entre tabs y la columna centrada se corre unos
+          px — visible sobre todo con la greca de fondo anclada al viewport. */}
+      <main className="flex-1 min-h-0 overflow-y-auto [scrollbar-gutter:stable]">
         <Outlet />
       </main>
 

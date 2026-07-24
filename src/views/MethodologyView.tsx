@@ -21,7 +21,7 @@ export default function MethodologyView() {
   const pdf = PDF_BY_LANG[lang] ?? PDF_BY_LANG.en
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
+    <div className="sangria-greca mx-auto max-w-3xl px-6 py-10">
       <h1 className="mb-6 text-3xl font-semibold text-[#093b4d]">
         {t('methodology.title')}
       </h1>
