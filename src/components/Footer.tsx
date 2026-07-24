@@ -44,7 +44,7 @@ export default function Footer() {
         </span>
         <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
           {PARTNERS.map(l => (
-            <LogoImg key={l.src} logo={l} className="h-5 sm:h-7" />
+            <LogoImg key={l.src} logo={l} className="h-7 sm:h-9" />
           ))}
         </div>
       </div>

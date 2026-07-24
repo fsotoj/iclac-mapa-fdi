@@ -8,7 +8,7 @@ import { TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import type { EChartsOption } from 'echarts'
 import type { Investment } from '@/types/data'
-import type { ConsortiumMode, InvestorMap, SankeyMetric } from '@/lib/sankey'
+import type { InvestorMap, SankeyMetric } from '@/lib/sankey'
 import { buildSankeyData, distinctCompanies } from '@/lib/sankey'
 import { sectorColor } from '@/lib/sectors'
 import { activeFilterCount, aggregateInvestments, applyFilters, distinctSectors, distinctCountries, yearBounds } from '@/lib/filter'
@@ -28,7 +28,6 @@ const TOP_N = 20
 // Vocabulario de ownership de investors_map.csv (enum de la revisión externa,
 // v1.4). Inversores sin mapeo cuentan como UNKNOWN.
 const OWNERSHIP_VALUES = ['Central SOE', 'Local SOE', 'POE', 'MIXED', 'UNKNOWN'] as const
-const CONSORTIUM_MODES: ConsortiumMode[] = ['all', 'only', 'none']
 
 type ClickParams = { dataType?: string; name?: string }
 
@@ -245,25 +244,6 @@ export default function SankeyView() {
             onToggle={o => toggle('ownership', o)}
             label={o => t(`sankey.own_${o.toLowerCase().replace(/\s+/g, '_')}`, o)}
           />
-        </FilterDropdown>
-        <FilterDropdown
-          label={t('sankey.consortiums')}
-          badge={filters.consortium !== 'all' ? t(`sankey.cons_${filters.consortium}`) : undefined}
-        >
-          <div className="p-2">
-            {CONSORTIUM_MODES.map(m => (
-              <label key={m} className="flex cursor-pointer items-center gap-2 rounded px-1 py-1 text-sm hover:bg-gray-50">
-                <input
-                  type="radio"
-                  name="consortium-mode"
-                  checked={filters.consortium === m}
-                  onChange={() => setFilters({ consortium: m })}
-                  className="shrink-0"
-                />
-                <span className="text-gray-800">{t(`sankey.cons_${m}`)}</span>
-              </label>
-            ))}
-          </div>
         </FilterDropdown>
 
         <div className="ml-auto flex overflow-hidden rounded border border-gray-300 text-xs">

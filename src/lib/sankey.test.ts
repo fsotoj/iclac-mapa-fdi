@@ -155,7 +155,7 @@ describe('matchesCompany', () => {
 })
 
 describe('scopeInvestments', () => {
-  const all = { investors: [], ownership: [], consortium: 'all' as const }
+  const all = { investors: [], ownership: [] }
 
   it('no restrictions returns everything', () => {
     expect(scopeInvestments(CONS_ROWS, CONS_MAP, all)).toHaveLength(CONS_ROWS.length)
@@ -178,18 +178,12 @@ describe('scopeInvestments', () => {
     expect(unknown.map(i => i.investor)).toEqual(['Sin Mapear'])
   })
 
-  it('consortium only / none split the set', () => {
-    const only = scopeInvestments(CONS_ROWS, CONS_MAP, { ...all, consortium: 'only' })
-    expect(only.map(i => i.investor)).toEqual(['COFCO and Hopu Investments'])
-    const none = scopeInvestments(CONS_ROWS, CONS_MAP, { ...all, consortium: 'none' })
-    expect(none).toHaveLength(CONS_ROWS.length - 1)
-  })
-
   it('combines dimensions (AND semantics)', () => {
+    // investors keeps COFCO + the consortium it's in; ownership SASAC then drops
+    // the consortium (MIXED), leaving only COFCO.
     const out = scopeInvestments(CONS_ROWS, CONS_MAP, {
       investors: ['cofco'],
-      ownership: ['SASAC'],
-      consortium: 'none'
+      ownership: ['SASAC']
     })
     expect(out.map(i => i.investor)).toEqual(['COFCO'])
   })

@@ -25,7 +25,8 @@ export default function SectorLegend({ sectors }: Props) {
 
   return (
     <div className="absolute bottom-4 right-4 z-[800] bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-white/50 p-3 max-w-[220px]">
-      <div className="text-xs font-bold text-gray-800 mb-2">{t('filter.sectors')}</div>
+      <div className="text-xs font-bold text-gray-800">{t('filter.sectors')}</div>
+      <div className="mb-2 text-[10px] italic text-gray-500">{t('filter.sectors_hint')}</div>
       <div className="flex flex-col gap-1 max-h-[40vh] overflow-y-auto">
         {sectors.map(s => {
           const active = isActive(s)
@@ -33,7 +34,7 @@ export default function SectorLegend({ sectors }: Props) {
             <button
               key={s}
               onClick={() => toggle(s)}
-              className={`flex items-center gap-2 px-1 py-0.5 rounded text-left hover:bg-gray-100 transition-all ${
+              className={`flex cursor-pointer items-center gap-2 px-1 py-0.5 rounded text-left hover:bg-gray-100 transition-all ${
                 active ? '' : 'opacity-40 grayscale'
               }`}
             >

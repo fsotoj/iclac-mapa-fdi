@@ -10,9 +10,11 @@ import { sectorColor } from '@/lib/sectors'
 import { activeFilterCount, aggregateInvestments, applyFilters, distinctCountries, distinctSectors, yearBounds } from '@/lib/filter'
 import { distinctCompanies, type InvestorMap } from '@/lib/sankey'
 import { useFilters } from '@/hooks/useFilters'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import FilterPanel from '@/components/FilterPanel'
 import SectorLegend from '@/components/SectorLegend'
 import ProjectDocsCards from '@/components/ProjectDocsCards'
+import ProjectDocsTable from '@/components/ProjectDocsTable'
 import { buildDonutSvg, buildLegendHtml, tallyByArea, tallyMoneyByArea, type SectorTally } from '@/lib/clusterDonut'
 import type { PieMetric } from '@/lib/filter'
 import { buildInvestmentPopup, buildInvestmentTooltip } from '@/lib/popup'
@@ -290,7 +292,6 @@ export default function MapView() {
       filters.query,
       investorsKey,
       ownershipKey,
-      filters.consortium,
       filters.focusId
     ]
   )
@@ -312,8 +313,7 @@ export default function MapView() {
       filters.research,
       sectorsKey,
       filters.query,
-      ownershipKey,
-      filters.consortium
+      ownershipKey
     ]
   )
   const companies = useMemo(() => {
@@ -352,7 +352,19 @@ export default function MapView() {
     () => new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(agg.totalMusd),
     [agg.totalMusd]
   )
-  const showCards = filters.view === 'cards'
+  // 'table'/'cards' = list open (default 'table', Margareth UAT). On phones the
+  // panel is a full overlay, so it stays closed on load until the user opens it.
+  const isMobile = useIsMobile()
+  const [mobileListOpened, setMobileListOpened] = useState(false)
+  const showList = filters.view !== 'map' && (!isMobile || mobileListOpened)
+  const openList = () => {
+    setMobileListOpened(true)
+    if (filters.view === 'map') setFilters({ view: 'table' })
+  }
+  const closeList = () => {
+    setMobileListOpened(false)
+    setFilters({ view: 'map' })
+  }
 
   const mapEl = (
     <>
@@ -386,7 +398,7 @@ export default function MapView() {
             target={target}
           />
         )}
-        <InvalidateSize trigger={showCards} />
+        <InvalidateSize trigger={showList} />
       </MapContainer>
       <SectorLegend sectors={sectors} />
     </>
@@ -436,45 +448,70 @@ export default function MapView() {
                   </Link>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => setFilters({ view: showCards ? 'map' : 'cards' })}
-                aria-pressed={showCards}
-                title={t('view.cards')}
-                className={`absolute right-2 top-2 z-[800] flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm shadow-md transition sm:right-4 sm:top-4 ${
-                  showCards
-                    ? 'border-gray-900 bg-gray-900 text-white'
-                    : 'border-white/50 bg-white/95 text-gray-700 backdrop-blur-md hover:bg-white'
+              {/* Opener only — while the list is open its own header title carries
+                  the label + close, so the floating button would just duplicate it. */}
+              {!showList && (
+                <button
+                  type="button"
+                  onClick={openList}
+                  title={t('view.cards')}
+                  className="absolute right-2 top-2 z-[800] flex items-center gap-1.5 rounded-lg border border-white/50 bg-white/95 px-2.5 py-1.5 text-sm text-gray-700 shadow-md backdrop-blur-md transition hover:bg-white sm:right-4 sm:top-4"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-4 w-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 5.25h16.5M3.75 9.75h16.5M3.75 14.25h16.5M3.75 18.75h16.5" />
+                  </svg>
+                  {t('view.cards')}
+                </button>
+              )}
+            </div>
+            {showList && (
+              <aside
+                className={`absolute inset-0 z-[840] w-full shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-50 md:static md:z-auto ${
+                  filters.view === 'table' ? 'md:w-[32rem]' : 'md:w-96'
                 }`}
               >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-4 w-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 5.25h16.5M3.75 9.75h16.5M3.75 14.25h16.5M3.75 18.75h16.5" />
-                </svg>
-                {t('view.cards')}
-              </button>
-            </div>
-            {showCards && (
-              <aside className="absolute inset-0 z-[840] w-full shrink-0 overflow-y-auto border-l border-gray-200 bg-gray-50 md:static md:z-auto md:w-80">
-                <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-gray-50 px-3 py-2 md:hidden">
+                <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2">
                   <span className="text-sm font-semibold text-gray-800">{t('view.cards')}</span>
-                  <button
-                    type="button"
-                    onClick={() => setFilters({ view: 'map' })}
-                    aria-label={t('common.close')}
-                    className="flex h-8 w-8 items-center justify-center rounded text-gray-600 hover:bg-gray-200"
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {/* Fichas / Tabla format toggle (Margareth UAT: table-like view). */}
+                    <div className="flex overflow-hidden rounded border border-gray-300 text-xs">
+                      {(['cards', 'table'] as const).map((v, i) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setFilters({ view: v })}
+                          aria-pressed={filters.view === v}
+                          className={`px-2 py-1 ${i > 0 ? 'border-l border-gray-300' : ''} ${
+                            filters.view === v ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {t(v === 'cards' ? 'view.as_cards' : 'view.as_table')}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={closeList}
+                      aria-label={t('common.close')}
+                      className="flex h-8 w-8 items-center justify-center rounded text-gray-600 hover:bg-gray-200"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <ProjectDocsCards
-                  investments={filtered}
-                  lang={i18n.language}
-                  onLocate={handleLocate}
-                  onIsolate={handleIsolate}
-                  focusedId={filters.focusId}
-                />
+                {filters.view === 'table' ? (
+                  <ProjectDocsTable investments={filtered} lang={i18n.language} onLocate={handleLocate} />
+                ) : (
+                  <ProjectDocsCards
+                    investments={filtered}
+                    lang={i18n.language}
+                    onLocate={handleLocate}
+                    onIsolate={handleIsolate}
+                    focusedId={filters.focusId}
+                  />
+                )}
               </aside>
             )}
           </div>

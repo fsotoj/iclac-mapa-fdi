@@ -1,9 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { DEFAULT_FILTERS, PIE_METRICS, VIEW_MODES, type Filters, type PieMetric, type ResearchFilter, type ViewMode } from '@/lib/filter'
-import type { ConsortiumMode } from '@/lib/sankey'
-
-const CONSORTIUM_MODES: ConsortiumMode[] = ['all', 'only', 'none']
 
 const splitCsv = (s: string | null): string[] =>
   s ? s.split(',').map(p => p.trim()).filter(Boolean) : []
@@ -33,7 +30,6 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
       query: params.get('q') ?? '',
       investors: splitCsv(params.get('inv')),
       ownership: splitCsv(params.get('own')),
-      consortium: CONSORTIUM_MODES.includes(params.get('cons') as ConsortiumMode) ? (params.get('cons') as ConsortiumMode) : 'all',
       focusId: params.get('id')
     }
   }, [params])
@@ -55,7 +51,6 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
       if (merged.query) sp.set('q', merged.query)
       if (merged.investors.length) sp.set('inv', joinCsv(merged.investors))
       if (merged.ownership.length) sp.set('own', joinCsv(merged.ownership))
-      if (merged.consortium !== 'all') sp.set('cons', merged.consortium)
       if (merged.focusId !== null) sp.set('id', merged.focusId)
       setParams(sp, { replace: true })
     },

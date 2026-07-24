@@ -114,14 +114,11 @@ export const matchesCompany = (o: CompanyOption, query: string): boolean => {
   return o.memberNames?.some(m => normName(m).includes(q)) ?? false
 }
 
-export type ConsortiumMode = 'all' | 'only' | 'none'
-
 export type ScopeOpts = {
   // company_ids; empty = no investor restriction.
   investors: string[]
-  // ownership values (SASAC/SOE/POE/MIXED/UNKNOWN); empty = no restriction.
+  // ownership values (Central SOE/Local SOE/POE/MIXED/UNKNOWN); empty = no restriction.
   ownership: string[]
-  consortium: ConsortiumMode
 }
 
 // Sankey-only scoping of investments by the investor-map dimensions. Selecting
@@ -130,7 +127,7 @@ export type ScopeOpts = {
 export function scopeInvestments(
   investments: Investment[],
   map: InvestorMap,
-  { investors, ownership, consortium }: ScopeOpts
+  { investors, ownership }: ScopeOpts
 ): Investment[] {
   const invSet = new Set(investors)
   const ownSet = new Set(ownership)
@@ -138,8 +135,6 @@ export function scopeInvestments(
     const raw = inv.investor ?? ''
     const entry = map[raw]
     const isConsortium = entry?.is_consortium ?? false
-    if (consortium === 'only' && !isConsortium) return false
-    if (consortium === 'none' && isConsortium) return false
     if (ownSet.size && !ownSet.has(entry?.ownership || 'UNKNOWN')) return false
     if (invSet.size) {
       const direct = invSet.has(resolveCompanyId(raw, map))

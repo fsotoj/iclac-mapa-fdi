@@ -116,8 +116,8 @@ describe('applyFilters', () => {
       expect(applyFilters(rows, withFilters({ ownership: ['UNKNOWN'] }), MAP).map(r => r.id)).toEqual(['d'])
     })
 
-    it('consortium mode none drops consortium rows, composing with other filters', () => {
-      const out = applyFilters(rows, withFilters({ consortium: 'none', ownership: ['SASAC'] }), MAP)
+    it('ownership filter drops the consortium row (MIXED), composing with other filters', () => {
+      const out = applyFilters(rows, withFilters({ ownership: ['SASAC'] }), MAP)
       expect(out.map(r => r.id)).toEqual(['a'])
     })
   })
@@ -140,6 +140,6 @@ describe('activeFilterCount', () => {
   })
 
   it('counts investor-map dimensions', () => {
-    expect(activeFilterCount(withFilters({ investors: ['cofco'], ownership: ['POE'], consortium: 'only' }))).toBe(3)
+    expect(activeFilterCount(withFilters({ investors: ['cofco'], ownership: ['POE'] }))).toBe(2)
   })
 })

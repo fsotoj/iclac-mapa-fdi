@@ -1,11 +1,12 @@
 import type { Investment } from '@/types/data'
-import { scopeInvestments, type ConsortiumMode, type InvestorMap } from './sankey'
+import { scopeInvestments, type InvestorMap } from './sankey'
 
 export type ResearchFilter = 'all' | 'yes' | 'no'
 
-export type ViewMode = 'cards' | 'map'
+// 'map' = list closed; 'cards' / 'table' = list open in that format.
+export type ViewMode = 'cards' | 'table' | 'map'
 
-export const VIEW_MODES: ViewMode[] = ['cards', 'map']
+export const VIEW_MODES: ViewMode[] = ['cards', 'table', 'map']
 
 export type PieMetric = 'count' | 'money'
 
@@ -23,12 +24,11 @@ export type Filters = {
   pieByCountry: boolean
   pieMetric: PieMetric
   query: string
-  // Investor-map dimensions (selected company_ids, ownership values, consortium
-  // mode). Applied only when applyFilters receives the canonical map — callers
-  // without it (tests, legacy paths) keep the investment-only behavior.
+  // Investor-map dimensions (selected company_ids, ownership values). Applied
+  // only when applyFilters receives the canonical map — callers without it
+  // (tests, legacy paths) keep the investment-only behavior.
   investors: string[]
   ownership: string[]
-  consortium: ConsortiumMode
   // Isolate a single investment (card action). When set, applyFilters returns
   // every row of that id (full multi-point/line geometry) and IGNORES all other
   // filters — isolation must always show the investment.
@@ -43,15 +43,15 @@ export const DEFAULT_FILTERS: Filters = {
   includeConstruction: true,
   research: 'all',
   sectors: [],
-  // Map first; the cards ("fichas") panel opens on demand. Default 'cards' made
-  // the panel cover the map (and, on mobile, the total box) on load.
-  view: 'map',
+  // List open by default (Margareth UAT): the "Listado de inversiones" is too
+  // hidden otherwise. Opens as a table (more rows visible at once). On phones
+  // MapView still starts it closed so the panel doesn't cover the map on load.
+  view: 'table',
   pieByCountry: false,
   pieMetric: 'count',
   query: '',
   investors: [],
   ownership: [],
-  consortium: 'all',
   focusId: null
 }
 
@@ -69,7 +69,6 @@ export const activeFilterCount = (f: Filters): number =>
     f.query !== '',
     f.investors.length > 0,
     f.ownership.length > 0,
-    f.consortium !== 'all',
     f.focusId !== null
   ].filter(Boolean).length
 
@@ -125,8 +124,7 @@ export const applyFilters = (data: Investment[], f: Filters, map?: InvestorMap):
   if (!map) return base
   return scopeInvestments(base, map, {
     investors: f.investors,
-    ownership: f.ownership,
-    consortium: f.consortium
+    ownership: f.ownership
   })
 }
 

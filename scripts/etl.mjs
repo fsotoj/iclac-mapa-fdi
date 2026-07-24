@@ -75,7 +75,9 @@ const stats = {
   groupsAsLine: 0,
   maxWaypoints: 0,
   vectorOverlayUsed: 0,
-  vectorUnresolvedDefaultedToPoint: 0
+  vectorUnresolvedDefaultedToPoint: 0,
+  ownershipFromMap: 0,
+  ownershipUnknownNoMatch: 0
 }
 
 const LEGACY_DATA_DIR = resolve(REPO_ROOT, 'legacy/data')
@@ -120,6 +122,62 @@ const resolveVector = (rawVector, rawId) => {
 }
 
 const sectorMap = new Map()
+
+// --- Investor canonical map (ownership source of truth, schema §5.1) ---
+// Keyed by investor_raw AND company_canonical (client base may use either as
+// Investor). Loaded up front so cleanRow can derive ownership per investor
+// instead of trusting the raw Ownership column of the base (which lags the
+// Yifang verdicts — client base only applied SASAC→Central SOE, never Local SOE
+// nor the 30 reclassifications). See docs next_steps C10.
+const parseCsvLine = line => {
+  const cells = []
+  let cur = ''
+  let quoted = false
+  for (const ch of line) {
+    if (ch === '"') quoted = !quoted
+    else if (ch === ',' && !quoted) { cells.push(cur); cur = '' }
+    else cur += ch
+  }
+  cells.push(cur)
+  return cells
+}
+
+const investorsCsvPath = resolve(REPO_ROOT, 'data/schema/investors_map.csv')
+const loadInvestorMap = path => {
+  const csvRows = readFileSync(path, 'utf8').trim().split(/\r?\n/)
+  const header = parseCsvLine(csvRows[0])
+  const col = name => header.indexOf(name)
+  const [iRaw, iId, iCanon, iCons, iOwn, iMembers] =
+    ['investor_raw', 'company_id', 'company_canonical', 'is_consortium', 'ownership', 'members'].map(col)
+  const map = {}
+  for (const line of csvRows.slice(1)) {
+    const c = parseCsvLine(line)
+    const entry = {
+      company_id: c[iId],
+      company_canonical: c[iCanon],
+      ownership: c[iOwn],
+      is_consortium: c[iCons] === 'true'
+    }
+    const members = (c[iMembers] ?? '').split('|').map(s => s.trim()).filter(Boolean)
+    if (members.length) entry.members = members
+    map[c[iRaw]] = entry
+    // También por canónico: la base del cliente usa el nombre canónico como Investor.
+    if (c[iCanon] && !(c[iCanon] in map)) map[c[iCanon]] = entry
+  }
+  return map
+}
+const investorMap = existsSync(investorsCsvPath) ? loadInvestorMap(investorsCsvPath) : {}
+if (!Object.keys(investorMap).length) console.warn(`WARN: ${investorsCsvPath} missing — ownership will default to UNKNOWN`)
+
+// Ownership comes from the investor map, not the base row. Missing investor →
+// UNKNOWN (elegant degradation; check_investor_coverage.mjs lists the gaps for
+// the steward to classify). Tracked to catch coverage regressions.
+const ownershipFor = investor => {
+  const own = investor ? investorMap[investor]?.ownership : null
+  if (own) { stats.ownershipFromMap++; return own }
+  stats.ownershipUnknownNoMatch++
+  return 'UNKNOWN'
+}
 
 const cleanRow = row => {
   stats.totalRows++
@@ -197,7 +255,8 @@ const cleanRow = row => {
     is_joint_venture: jointVentureFlag,
     // Renombrada a Origin_Of_Seller (v1.2); fallback al nombre viejo por si llega base legada.
     origin_of_seller: cleanStr(row.Origin_Of_Seller) ?? cleanStr(row['Origin of seller']),
-    ownership: cleanStr(row.Ownership),
+    // Derivada del investor map (schema §5.1), NO de row.Ownership. Ver ownershipFor.
+    ownership: ownershipFor(investor),
     stake: parseNumber(row.Stake),
     has_research: hasResearch,
     research_cases: cases,
@@ -308,7 +367,6 @@ for (const [, rows] of candidateGroups) {
       is_construction: r.is_construction,
       is_joint_venture: r.is_joint_venture,
       origin_of_seller: r.origin_of_seller,
-    ownership: r.ownership,
       ownership: r.ownership,
       stake: r.stake,
       has_research: r.has_research,
@@ -393,45 +451,13 @@ for (const [k, v] of [...sectorMap.entries()].sort((a, b) => b[1] - a[1])) {
 console.log(`\nOutput: ${outputPath}`)
 console.log(`File size: ${(JSON.stringify(leanOutput).length / 1024).toFixed(1)} KB`)
 
-// --- Investor canonical map: data/schema/investors_map.csv -> investors_map.json ---
-// Keyed by investor_raw (the join key). Consumed by the Sankey. Regenerated here
-// so it never drifts from the CSV the client maintains.
-const investorsCsvPath = resolve(REPO_ROOT, 'data/schema/investors_map.csv')
+// --- investors_map.json: emit the map already loaded above (source of truth for
+// both the Sankey and the ownership derived into investments.json). Keyed by
+// investor_raw + company_canonical. Regenerated here so it never drifts from CSV.
 const investorsJsonPath = resolve(dirname(outputPath), 'investors_map.json')
-if (existsSync(investorsCsvPath)) {
-  const parseCsvLine = line => {
-    const cells = []
-    let cur = ''
-    let quoted = false
-    for (const ch of line) {
-      if (ch === '"') quoted = !quoted
-      else if (ch === ',' && !quoted) { cells.push(cur); cur = '' }
-      else cur += ch
-    }
-    cells.push(cur)
-    return cells
-  }
-  const csvRows = readFileSync(investorsCsvPath, 'utf8').trim().split(/\r?\n/)
-  const header = parseCsvLine(csvRows[0])
-  const col = name => header.indexOf(name)
-  const [iRaw, iId, iCanon, iCons, iOwn, iMembers] = ['investor_raw', 'company_id', 'company_canonical', 'is_consortium', 'ownership', 'members'].map(col)
-  const investorMap = {}
-  for (const line of csvRows.slice(1)) {
-    const c = parseCsvLine(line)
-    const entry = {
-      company_id: c[iId],
-      company_canonical: c[iCanon],
-      ownership: c[iOwn],
-      is_consortium: c[iCons] === 'true'
-    }
-    const members = (c[iMembers] ?? '').split('|').map(s => s.trim()).filter(Boolean)
-    if (members.length) entry.members = members
-    investorMap[c[iRaw]] = entry
-    // También por canónico: la base del cliente usa el nombre canónico como Investor.
-    if (c[iCanon] && !(c[iCanon] in investorMap)) investorMap[c[iCanon]] = entry
-  }
+if (Object.keys(investorMap).length) {
   writeFileSync(investorsJsonPath, JSON.stringify(investorMap), 'utf8')
   console.log(`Investor map: ${Object.keys(investorMap).length} entries -> ${investorsJsonPath}`)
 } else {
-  console.warn(`WARN: ${investorsCsvPath} missing — skipped investors_map.json`)
+  console.warn(`WARN: skipped investors_map.json (no CSV loaded)`)
 }

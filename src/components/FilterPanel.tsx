@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useFilters } from '@/hooks/useFilters'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import type { PieMetric, ResearchFilter } from '@/lib/filter'
-import type { CompanyOption, ConsortiumMode } from '@/lib/sankey'
+import type { CompanyOption } from '@/lib/sankey'
 import CollapsibleSection from './CollapsibleSection'
 import YearRangeSlider from './YearRangeSlider'
 import CheckList from './CheckList'
@@ -32,35 +32,21 @@ const IconDoc = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M19.5
 const IconChart = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />)
 const IconBriefcase = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.1a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25v-4.1M12 12.75h.008v.008H12v-.008ZM3.75 9.75A2.25 2.25 0 0 1 6 7.5h12a2.25 2.25 0 0 1 2.25 2.25v2.25a17.9 17.9 0 0 1-8.25 2 17.9 17.9 0 0 1-8.25-2V9.75ZM15 7.5V6a2.25 2.25 0 0 0-2.25-2.25h-1.5A2.25 2.25 0 0 0 9 6v1.5" />)
 const IconBank = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M12 3 2.25 8.25h19.5L12 3Zm-7.5 7.5V18m5-7.5V18m5-7.5V18m5-7.5V18M2.25 21h19.5" />)
-const IconGroup = icon(<path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />)
 
-// Rail entries mirror the panel sections top-to-bottom; null = group divider.
-const RAIL: ({ key: string; node: ReactNode } | null)[] = [
+// Rail entries mirror the panel sections top-to-bottom (flat, no groups — the
+// order follows Margareth's UAT list).
+const RAIL: { key: string; node: ReactNode }[] = [
   { key: 'filter.country', node: IconGlobe },
   { key: 'filter.year', node: IconCalendar },
   { key: 'filter.project_type', node: IconTag },
   { key: 'filter.construction', node: IconBuilding },
   { key: 'filter.case_studies', node: IconDoc },
-  null,
   { key: 'filter.company', node: IconBriefcase },
   { key: 'sankey.ownership', node: IconBank },
-  { key: 'sankey.consortiums', node: IconGroup },
-  null,
   { key: 'filter.map_shows', node: IconChart }
 ]
 
 const OWNERSHIP_VALUES = ['Central SOE', 'Local SOE', 'POE', 'MIXED', 'UNKNOWN'] as const
-const CONSORTIUM_MODES: ConsortiumMode[] = ['all', 'only', 'none']
-
-// Thin uppercase group separator ("Inversiones" / "Inversores" / "Visualización").
-function GroupHeader({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-2 pt-1">
-      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</span>
-      <div className="h-px flex-1 bg-gray-200" />
-    </div>
-  )
-}
 
 const PROJECT_TYPES = ['Adquisición', 'Greenfield'] as const
 
@@ -130,21 +116,17 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
           {IconChevronRight}
         </button>
         <div className="my-1 h-px w-6 bg-gray-200" />
-        {RAIL.map((r, i) =>
-          r === null ? (
-            <div key={`div-${i}`} className="my-1 h-px w-6 bg-gray-200" />
-          ) : (
-            <button
-              key={r.key}
-              onClick={() => setCollapsed(false)}
-              title={t(r.key)}
-              aria-label={t(r.key)}
-              className="flex h-9 w-9 items-center justify-center rounded text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-            >
-              {r.node}
-            </button>
-          )
-        )}
+        {RAIL.map(r => (
+          <button
+            key={r.key}
+            onClick={() => setCollapsed(false)}
+            title={t(r.key)}
+            aria-label={t(r.key)}
+            className="flex h-9 w-9 items-center justify-center rounded text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+          >
+            {r.node}
+          </button>
+        ))}
       </aside>
     )
   }
@@ -185,8 +167,6 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
         </button>
       </div>
 
-      <GroupHeader label={t('filter.group_investments')} />
-
       <CollapsibleSection
         label={t('filter.country')}
         summary={
@@ -194,6 +174,16 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
         }
       >
         <div className="rounded border border-gray-300">
+          {/* Explicit "All" row at the top (Margareth UAT). Empty selection = all
+              in the data layer; checking All clears the selection back to that. */}
+          <label className="flex items-center gap-2 border-b border-gray-200 px-2 py-1.5 font-medium">
+            <input
+              type="checkbox"
+              checked={allCountries}
+              onChange={() => setFilters({ countries: [] })}
+            />
+            <span className="text-xs">{t('common.all')}</span>
+          </label>
           <CheckList
             items={countries}
             selected={selectedCountries}
@@ -249,8 +239,6 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
         />
       </section>
 
-      <GroupHeader label={t('filter.group_investors')} />
-
       <CollapsibleSection
         label={t('filter.company')}
         summary={
@@ -290,17 +278,6 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
           ))}
         </div>
       </CollapsibleSection>
-
-      <section>
-        <label className="mb-1 block text-xs font-medium text-gray-600">{t('sankey.consortiums')}</label>
-        <Segmented
-          items={CONSORTIUM_MODES.map(m => ({ value: m, label: t(`sankey.cons_${m}`) }))}
-          isActive={m => filters.consortium === m}
-          onPick={m => setFilters({ consortium: m })}
-        />
-      </section>
-
-      <GroupHeader label={t('filter.group_display')} />
 
       <section>
         <label className="mb-1 block text-xs font-medium text-gray-600">{t('filter.map_shows')}</label>

@@ -4,6 +4,7 @@ import type { Investment } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
 import { flatList, formatMoney, groupByCountry, localizedDetail, type CardSort } from '@/lib/projectDocs'
 import { useFilters } from '@/hooks/useFilters'
+import MiniSegmented from './MiniSegmented'
 
 type Props = {
   investments: Investment[]
@@ -154,35 +155,6 @@ const SearchIcon = () => (
   </svg>
 )
 
-// Tiny joined toggle for the sort / grouping controls in the panel header.
-function MiniSegmented<T extends string>({
-  items,
-  value,
-  onPick
-}: {
-  items: { value: T; label: string }[]
-  value: T
-  onPick: (v: T) => void
-}) {
-  return (
-    <div className="flex overflow-hidden rounded border border-gray-300 text-[11px]">
-      {items.map((it, i) => (
-        <button
-          key={it.value}
-          type="button"
-          onClick={() => onPick(it.value)}
-          aria-pressed={value === it.value}
-          className={`px-2 py-0.5 ${i > 0 ? 'border-l border-gray-300' : ''} ${
-            value === it.value ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
-          }`}
-        >
-          {it.label}
-        </button>
-      ))}
-    </div>
-  )
-}
-
 export default function ProjectDocsCards({ investments, lang, onLocate, onIsolate, focusedId }: Props) {
   const { t } = useTranslation()
   const { filters, setFilters } = useFilters()
@@ -255,23 +227,29 @@ export default function ProjectDocsCards({ investments, lang, onLocate, onIsolat
             </button>
           )}
         </div>
-        <div className="mt-1.5 flex flex-wrap items-center gap-2">
-          <MiniSegmented
-            items={[
-              { value: 'year', label: t('list.sort_year') },
-              { value: 'amount', label: t('list.sort_amount') }
-            ]}
-            value={sortBy}
-            onPick={setSortBy}
-          />
-          <MiniSegmented
-            items={[
-              { value: 'grouped', label: t('list.grouped') },
-              { value: 'flat', label: t('list.flat') }
-            ]}
-            value={grouped ? 'grouped' : 'flat'}
-            onPick={v => setGrouped(v === 'grouped')}
-          />
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-medium text-gray-500">{t('list.sort_by')}</span>
+            <MiniSegmented
+              items={[
+                { value: 'year', label: t('list.sort_year') },
+                { value: 'amount', label: t('list.sort_amount') }
+              ]}
+              value={sortBy}
+              onPick={setSortBy}
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-medium text-gray-500">{t('list.view_as')}</span>
+            <MiniSegmented
+              items={[
+                { value: 'grouped', label: t('list.grouped') },
+                { value: 'flat', label: t('list.flat') }
+              ]}
+              value={grouped ? 'grouped' : 'flat'}
+              onPick={v => setGrouped(v === 'grouped')}
+            />
+          </div>
         </div>
       </div>
 
