@@ -89,6 +89,8 @@ const stats = {
   researchCitationsRescued: 0,
   researchNullDefaultedNo: 0,
   researchCasesDeduped: 0,
+  researchDoiResolved: 0,
+  researchLinkNotUrl: 0,
   groupsTotal: 0,
   groupsAsPoint: 0,
   groupsAsLine: 0,
@@ -199,6 +201,57 @@ const ownershipFor = investor => {
   return 'UNKNOWN'
 }
 
+// El 9% de los `LinkN` no son URLs. De esos, la mayoría son DOIs pelados
+// (`10.3969/j.issn.1006-2610.2017.03.027`), que resuelven de forma determinista a
+// doi.org: misma clase de curación que el trim o el Title Case, no juicio de contenido.
+// El punto final es puntuación de la cita, no parte del DOI.
+// Lo que NO se toca: códigos de accesión CNKI y las citas pegadas en la columna Link
+// (deficiencias reales de la base → van a auditoría, ver convención "documentar, no
+// parchear"). Esos quedan tal cual y el frontend simplemente no los enlaza (studyHref).
+const DOI_RE = /^(?:doi:\s*)?(10\.\d{4,9}\/\S+?)\.?$/i
+const normalizeLink = raw => {
+  if (!raw) return raw
+  const s = String(raw).trim()
+  if (/^https?:\/\//i.test(s)) return s
+  const m = s.match(DOI_RE)
+  if (m) { stats.researchDoiResolved++; return `https://doi.org/${m[1]}` }
+  stats.researchLinkNotUrl++
+  return s
+}
+
+// Clave canónica de citación para deduplicar estudios.
+//
+// La misma cita llega con variantes tipográficas entre filas de un mismo vector: la
+// coma dentro o fuera de la comilla de cierre, espacios dobles, guiones distintos. El
+// dedup comparaba el string crudo, así que esas variantes pasaban y la ficha mostraba
+// el estudio repetido (BOL-0012 listaba 10 entradas para 5 estudios; hallazgo Margaret
+// 17-07). Se compara una forma canónica: minúsculas, sin puntuación, espacios
+// colapsados. Cae dentro de las curaciones legítimas de la convención "documentar, no
+// parchear" — es normalización de forma, no corrección de contenido.
+const citationKey = s =>
+  String(s ?? '')
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+
+// Se keyea SOLO por título, nunca por link: las filas de un vector suelen repetir el
+// mismo estudio con un link autoincremental de arrastre de Excel (.../4211, .../4212),
+// así que el link distingue lo que no debería. Se conserva el primer link visto.
+const dedupCases = cases => {
+  const seen = new Set()
+  const out = []
+  for (const c of cases) {
+    const key = citationKey(c.caso)
+    // Sin título no hay con qué comparar: pasa sin deduplicar antes que perderse.
+    if (!key) { out.push(c); continue }
+    if (seen.has(key)) { stats.researchCasesDeduped++; continue }
+    seen.add(key)
+    out.push(c)
+  }
+  return out
+}
+
 const cleanRow = row => {
   stats.totalRows++
 
@@ -243,12 +296,14 @@ const cleanRow = row => {
     stats.researchNullDefaultedNo++
   }
 
-  const cases = [...inlineCitation]
+  const rawCases = [...inlineCitation]
   for (let i = 1; i <= 14; i++) {
     const caso = cleanStr(row[`Caso${i}`])
-    const link = cleanStr(row[`Link${i}`])
-    if (caso) cases.push({ caso, link })
+    const link = normalizeLink(cleanStr(row[`Link${i}`]))
+    if (caso) rawCases.push({ caso, link })
   }
+  // Dedup ya acá: una fila puede repetir el mismo estudio entre Caso1..Caso14.
+  const cases = dedupCases(rawCases)
   if (cases.length > 0) hasResearch = true
 
   const investor = cleanStr(row.Investor) ?? cleanStr(row.investor)
@@ -409,20 +464,15 @@ for (const [, rows] of candidateGroups) {
   if (rows.length > stats.maxWaypoints) stats.maxWaypoints = rows.length
 
   const first = rows[0]
-  const mergedCases = []
-  const seen = new Set()
   let mergedHasResearch = false
+  const allCases = []
   for (const r of rows) {
     if (r.has_research) mergedHasResearch = true
-    for (const c of r.research_cases) {
-      // Dedup by study title only. Vector rows often repeat the same citation
-      // per waypoint with an Excel drag-filled auto-incrementing link
-      // (e.g. .../4211, .../4212, …). Same study → one entry, keep first link.
-      const key = c.caso
-      if (!seen.has(key)) { seen.add(key); mergedCases.push(c) }
-      else stats.researchCasesDeduped++
-    }
+    allCases.push(...r.research_cases)
   }
+  // Cada waypoint del vector repite las citaciones de la inversión: acá es donde más
+  // duplicados aparecen. Misma regla que en cleanRow (ver citationKey).
+  const mergedCases = dedupCases(allCases)
 
   output.push({
     id,

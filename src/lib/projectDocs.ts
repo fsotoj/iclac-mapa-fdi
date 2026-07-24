@@ -65,3 +65,15 @@ export const localizedArea = (inv: Investment, lang: Lang): string =>
 
 export const formatMoney = (n: number | null): string =>
   n === null ? '—' : n.toLocaleString('en-US')
+
+/**
+ * URL navegable de una citación, o null si el campo `Link` no trae una.
+ *
+ * El 9% de los links de la base no son URLs: DOIs pelados (el ETL ya los resuelve a
+ * doi.org), códigos de accesión CNKI, y en 5 casos la cita de OTRO estudio pegada en
+ * la columna equivocada. Renderizarlos como href produce un enlace **relativo**: el
+ * lector hace clic y el rewrite SPA lo devuelve al mapa, sin señal de que falló.
+ * Mejor mostrar la cita como texto plano: sin link es honesto, con link roto no.
+ */
+export const studyHref = (link: string | null | undefined): string | null =>
+  link && /^https?:\/\//i.test(link) ? link : null

@@ -1,6 +1,7 @@
 import type { Investment } from '@/types/data'
 import i18n from '@/i18n'
 import { sectorColor } from './sectors'
+import { studyHref } from './projectDocs'
 
 const escape = (s: string | null | undefined): string => {
   if (s === null || s === undefined) return ''
@@ -105,8 +106,9 @@ export const buildInvestmentPopup = (inv: Investment, lang: Lang): string => {
               .map((rc, i) => {
                 const title = escape(rc.caso)
                 const inner = `<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;background:#f3f4f6;color:#374151;font-size:11px;font-weight:500">${bookIcon}<span>${i + 1}</span></span>`
-                if (rc.link) {
-                  return `<a href="${escape(rc.link)}" target="_blank" rel="noopener" title="${title}" style="text-decoration:none;color:inherit">${inner}</a>`
+                const href = studyHref(rc.link)
+                if (href) {
+                  return `<a href="${escape(href)}" target="_blank" rel="noopener" title="${title}" style="text-decoration:none;color:inherit">${inner}</a>`
                 }
                 return `<span title="${title}" style="opacity:0.7">${inner}</span>`
               })

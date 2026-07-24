@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Investment, ResearchCase } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
-import { flatList, formatMoney, groupByCountry, localizedArea, localizedDetail, type CardSort } from '@/lib/projectDocs'
+import { flatList, formatMoney, groupByCountry, localizedArea, localizedDetail, studyHref, type CardSort } from '@/lib/projectDocs'
 import MiniSegmented from './MiniSegmented'
 
 type Props = {
@@ -39,9 +39,9 @@ const StudyLinks = ({ cases, note }: { cases: ResearchCase[]; note: string }) =>
     <ul className="space-y-1">
       {cases.map((rc, i) => (
         <li key={i}>
-          {rc.link ? (
+          {studyHref(rc.link) ? (
             <a
-              href={rc.link}
+              href={studyHref(rc.link)!}
               target="_blank"
               rel="noopener noreferrer"
               className="text-teal-700 underline decoration-1 hover:text-teal-900"

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Investment } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
-import { flatList, formatMoney, groupByCountry, localizedDetail, type CardSort } from '@/lib/projectDocs'
+import { flatList, formatMoney, groupByCountry, localizedDetail, studyHref, type CardSort } from '@/lib/projectDocs'
 import { useFilters } from '@/hooks/useFilters'
 import MiniSegmented from './MiniSegmented'
 
@@ -127,9 +127,9 @@ const Card = ({
             <ul className="mt-1 space-y-1 text-xs">
               {cases.map((rc, i) => (
                 <li key={i}>
-                  {rc.link ? (
+                  {studyHref(rc.link) ? (
                     <a
-                      href={rc.link}
+                      href={studyHref(rc.link)!}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-teal-700 underline decoration-1 hover:text-teal-900"
