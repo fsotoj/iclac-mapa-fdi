@@ -87,7 +87,7 @@ export default function ContactView() {
 
   if (status === 'ok') {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-10">
+      <div className="sangria-greca mx-auto max-w-3xl px-6 py-10">
         {header}
         <div className="rounded-md border border-[#377F83]/40 bg-[#377F83]/10 p-4">
           <p className="text-sm font-medium text-[#093b4d]">{t('contact.form.ok_title')}</p>
@@ -108,7 +108,7 @@ export default function ContactView() {
   // Mejor degradar al correo directo, que es lo que hacía la vista antes.
   if (!ACCESS_KEY) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-10">
+      <div className="sangria-greca mx-auto max-w-3xl px-6 py-10">
         {header}
         <p className="mb-8 text-justify leading-relaxed text-gray-700">{t('contact.description_mailto')}</p>
         <a
@@ -122,7 +122,7 @@ export default function ContactView() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
+    <div className="sangria-greca mx-auto max-w-3xl px-6 py-10">
       {header}
 
       <p className="mb-8 text-justify leading-relaxed text-gray-700">{t('contact.description')}</p>
