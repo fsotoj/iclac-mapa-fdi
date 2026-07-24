@@ -14,7 +14,11 @@ const canonIndex = registry?.canonIndex
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(__dirname, '..')
 
-const DEFAULT_INPUT = resolve(REPO_ROOT, 'data/source/entrega1_inversiones.xlsx')
+// Base viva: entrega por país de Flo (repo cliente → data/sources/countries/).
+// Modo directorio: ingiere solo los países que PASAN validación (decisión 23-07).
+// La base legada single-file (data/source/entrega1_inversiones.xlsx) sigue
+// leyéndose si se pasa como argumento explícito.
+const DEFAULT_INPUT = resolve(REPO_ROOT, 'data/sources/countries')
 const DEFAULT_OUTPUT = resolve(REPO_ROOT, 'public/data/investments.json')
 
 const inputPath = process.argv[2] || DEFAULT_INPUT
