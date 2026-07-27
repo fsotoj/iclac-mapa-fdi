@@ -34,7 +34,7 @@ export default function SectorLegend({ sectors }: Props) {
             <button
               key={s}
               onClick={() => toggle(s)}
-              className={`flex cursor-pointer items-center gap-2 px-1 py-0.5 rounded text-left hover:bg-gray-100 transition-all ${
+              className={`flex cursor-pointer items-center gap-2 px-1 py-0.5 rounded text-left transition-all hover:bg-brand hover:text-gray-900 ${
                 active ? '' : 'opacity-40 grayscale'
               }`}
             >

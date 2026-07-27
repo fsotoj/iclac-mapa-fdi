@@ -3,7 +3,14 @@ import { activeFilterCount, aggregateInvestments, applyFilters, DEFAULT_FILTERS,
 import type { InvestorMap } from './sankey'
 import { makeInv } from './testFactory'
 
-const withFilters = (over: Partial<Filters>): Filters => ({ ...DEFAULT_FILTERS, ...over })
+// Construction is included here so each test exercises the dimension it is about:
+// with the real default ('exclude') every fixture row of type 'Construcción' would
+// vanish from unrelated assertions. The default has its own tests below.
+const withFilters = (over: Partial<Filters>): Filters => ({
+  ...DEFAULT_FILTERS,
+  construction: 'include',
+  ...over
+})
 
 describe('aggregateInvestments', () => {
   it('dedupes money + count by id, tracks amounts missing', () => {
@@ -31,8 +38,12 @@ describe('applyFilters', () => {
     makeInv({ id: 'c', country: 'Brasil', year: 2000, area_en: 'Energy', project_type: 'Construcción', has_research: false })
   ]
 
-  it('empty filters keep everything', () => {
-    expect(applyFilters(rows, DEFAULT_FILTERS)).toHaveLength(3)
+  it('default filters drop construction, keep the rest', () => {
+    expect(applyFilters(rows, DEFAULT_FILTERS).map(r => r.id)).toEqual(['a', 'b'])
+  })
+
+  it('keeps everything once construction is opted in', () => {
+    expect(applyFilters(rows, withFilters({}))).toHaveLength(3)
   })
 
   it('filters by country', () => {
@@ -43,9 +54,19 @@ describe('applyFilters', () => {
     expect(applyFilters(rows, withFilters({ yearMin: 2005, yearMax: 2021 })).map(r => r.id)).toEqual(['a', 'b'])
   })
 
-  it('excludes construction when includeConstruction is false', () => {
-    const out = applyFilters(rows, withFilters({ includeConstruction: false }))
+  it('excludes construction when set to exclude', () => {
+    const out = applyFilters(rows, withFilters({ construction: 'exclude' }))
     expect(out.map(r => r.id)).toEqual(['a', 'b'])
+  })
+
+  it('shows construction alone when set to only', () => {
+    const out = applyFilters(rows, withFilters({ construction: 'only' }))
+    expect(out.map(r => r.id)).toEqual(['c'])
+  })
+
+  it('only ignores the type filter (construction answers to its own control)', () => {
+    const out = applyFilters(rows, withFilters({ construction: 'only', types: ['Greenfield'] }))
+    expect(out.map(r => r.id)).toEqual(['c'])
   })
 
   it('type filter does not drop construction rows (governed by its own flag)', () => {
@@ -80,7 +101,7 @@ describe('applyFilters', () => {
     })
 
     it('counts as an active filter', () => {
-      expect(activeFilterCount(withFilters({ focusId: 'a' }))).toBe(1)
+      expect(activeFilterCount({ ...DEFAULT_FILTERS, focusId: 'a' })).toBe(1)
     })
   })
 
@@ -124,12 +145,15 @@ describe('applyFilters', () => {
 })
 
 describe('activeFilterCount', () => {
+  // Counted against DEFAULT_FILTERS, not the construction-on helper above.
+  const fromDefaults = (over: Partial<Filters>): Filters => ({ ...DEFAULT_FILTERS, ...over })
+
   it('is zero for the default filters', () => {
     expect(activeFilterCount(DEFAULT_FILTERS)).toBe(0)
   })
 
   it('counts each non-default dimension once, ignoring view/pie*', () => {
-    const f = withFilters({
+    const f = fromDefaults({
       countries: ['Brasil'],
       sectors: ['Energy'],
       view: 'cards',
@@ -140,6 +164,12 @@ describe('activeFilterCount', () => {
   })
 
   it('counts investor-map dimensions', () => {
-    expect(activeFilterCount(withFilters({ investors: ['cofco'], ownership: ['POE'] }))).toBe(2)
+    expect(activeFilterCount(fromDefaults({ investors: ['cofco'], ownership: ['POE'] }))).toBe(2)
+  })
+
+  it('counts asking for construction as the deviation, not excluding it', () => {
+    expect(activeFilterCount(fromDefaults({ construction: 'include' }))).toBe(1)
+    expect(activeFilterCount(fromDefaults({ construction: 'only' }))).toBe(1)
+    expect(activeFilterCount(fromDefaults({ construction: 'exclude' }))).toBe(0)
   })
 })

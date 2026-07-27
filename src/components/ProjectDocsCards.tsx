@@ -5,6 +5,7 @@ import { sectorColor } from '@/lib/sectors'
 import { flatList, formatMoney, groupByCountry, localizedDetail, studyHref, type CardSort } from '@/lib/projectDocs'
 import { useFilters } from '@/hooks/useFilters'
 import MiniSegmented from './MiniSegmented'
+import ProjectSearchBox from './ProjectSearchBox'
 
 type Props = {
   investments: Investment[]
@@ -86,7 +87,9 @@ const Card = ({
             onClick={() => onIsolate(inv)}
             aria-pressed={focused}
             title={t(focused ? 'list.isolate_off' : 'list.isolate')}
-            className={`shrink-0 rounded ${focused ? 'bg-gray-900 p-0.5 text-white' : 'text-gray-400 hover:text-gray-900'}`}
+            className={`shrink-0 rounded ${
+              focused ? 'bg-gray-900 p-0.5 text-white hover:bg-brand-dark' : 'text-gray-400 hover:text-brand-dark'
+            }`}
           >
             <TargetIcon />
           </button>
@@ -149,15 +152,9 @@ const Card = ({
   )
 }
 
-const SearchIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-4 w-4 shrink-0">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z" />
-  </svg>
-)
-
 export default function ProjectDocsCards({ investments, lang, onLocate, onIsolate, focusedId }: Props) {
   const { t } = useTranslation()
-  const { filters, setFilters } = useFilters()
+  const { filters } = useFilters()
   const query = filters.query
   const [sortBy, setSortBy] = useState<CardSort>('year')
   const [grouped, setGrouped] = useState(true)
@@ -171,16 +168,6 @@ export default function ProjectDocsCards({ investments, lang, onLocate, onIsolat
   )
   const [open, setOpen] = useState<Set<string>>(() => new Set())
 
-  // Debounced search: type into a local draft, commit to the URL filter after a pause.
-  const [draft, setDraft] = useState(query)
-  useEffect(() => setDraft(query), [query])
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (draft !== query) setFilters({ query: draft })
-    }, 250)
-    return () => clearTimeout(id)
-  }, [draft, query, setFilters])
-
   // Auto-expand matches when entering search, collapse all when clearing —
   // but leave countries collapsible while a query is active.
   const hadQuery = useRef(false)
@@ -190,11 +177,6 @@ export default function ProjectDocsCards({ investments, lang, onLocate, onIsolat
     else if (!has && hadQuery.current) setOpen(new Set())
     hadQuery.current = has
   }, [query, groups])
-
-  const clear = () => {
-    setDraft('')
-    setFilters({ query: '' })
-  }
 
   const toggle = (country: string) =>
     setOpen(s => {
@@ -207,26 +189,7 @@ export default function ProjectDocsCards({ investments, lang, onLocate, onIsolat
   return (
     <div>
       <div className="sticky top-0 z-20 border-b border-gray-200 bg-white px-3 py-2">
-        <div className="flex items-center gap-2 rounded border border-gray-300 px-2 py-1 text-gray-500 focus-within:border-teal-500">
-          <SearchIcon />
-          <input
-            type="text"
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            placeholder={t('list.search')}
-            className="min-w-0 flex-1 bg-transparent text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none"
-          />
-          {draft && (
-            <button
-              type="button"
-              onClick={clear}
-              className="shrink-0 text-gray-400 hover:text-gray-700"
-              aria-label={t('common.clear')}
-            >
-              ×
-            </button>
-          )}
-        </div>
+        <ProjectSearchBox />
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
           <div className="flex items-center gap-1.5">
             <span className="text-[11px] font-medium text-gray-500">{t('list.sort_by')}</span>

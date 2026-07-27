@@ -22,7 +22,7 @@ const NAV: { to: string; end?: boolean; key: string; dataView?: boolean }[] = [
 ]
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  isActive ? 'font-semibold text-gray-900' : 'text-gray-500 hover:text-gray-900'
+  isActive ? 'font-semibold text-gray-900' : 'text-gray-500 hover:text-brand-dark'
 
 export default function Layout() {
   const { t, i18n } = useTranslation()
@@ -38,7 +38,11 @@ export default function Layout() {
         <button
           key={l.code}
           onClick={() => i18n.changeLanguage(l.code)}
-          className={`px-2 py-1 rounded ${i18n.language === l.code ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+          className={`px-2 py-1 rounded ${
+            i18n.language === l.code
+              ? 'bg-gray-900 text-white hover:bg-brand-dark'
+              : 'text-gray-600 hover:bg-brand hover:text-gray-900'
+          }`}
         >
           {l.label}
         </button>
@@ -89,7 +93,7 @@ export default function Layout() {
             onClick={() => setMenuOpen(o => !o)}
             aria-expanded={menuOpen}
             aria-label={menuOpen ? t('common.close') : t('nav.menu')}
-            className="md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded text-gray-700 hover:bg-gray-100"
+            className="md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded text-gray-700 hover:bg-brand hover:text-gray-900"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-6 w-6">
               {menuOpen ? (
@@ -110,7 +114,9 @@ export default function Layout() {
                   to={n.dataView ? { pathname: n.to, search } : n.to}
                   end={n.end}
                   className={({ isActive }) =>
-                    `rounded px-2 py-2 ${isActive ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-600 hover:bg-gray-50'}`
+                    `rounded px-2 py-2 ${
+                      isActive ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-600 hover:bg-brand hover:text-gray-900'
+                    }`
                   }
                 >
                   {t(n.key)}

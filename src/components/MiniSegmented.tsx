@@ -19,7 +19,9 @@ export default function MiniSegmented<T extends string>({
           onClick={() => onPick(it.value)}
           aria-pressed={value === it.value}
           className={`px-2 py-0.5 ${i > 0 ? 'border-l border-gray-300' : ''} ${
-            value === it.value ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+            value === it.value
+              ? 'bg-gray-900 text-white hover:bg-brand-dark'
+              : 'bg-white text-gray-600 hover:bg-brand hover:text-gray-900'
           }`}
         >
           {it.label}

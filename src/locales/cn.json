@@ -10,9 +10,7 @@
     "methodology": "方法论",
     "downloads": "数据",
     "contact": "联系",
-    "menu": "菜单",
-    "view_in_sankey": "在桑基图中查看 →",
-    "view_in_map": "在地图中查看 →"
+    "menu": "菜单"
   },
   "downloads": {
     "title": "下载数据",
@@ -91,6 +89,7 @@
     "all": "全选",
     "clear": "清除",
     "close": "关闭",
+    "help": "更多信息",
     "loading": "加载中…"
   },
   "filter": {
@@ -99,7 +98,12 @@
     "country": "国家",
     "year": "年份",
     "project_type": "类型",
-    "construction": "建设",
+    "construction": "工程建设项目",
+    "type_off_only": "仅显示工程建设项目时，此筛选不适用。",
+    "construction_exclude": "不含",
+    "construction_include": "包含",
+    "construction_only": "仅显示",
+    "construction_help": "指中国企业承建并获得工程款、但不保留基础设施所有权的公共工程项目，所有权归属国家或私营承包方。此类项目不符合经合组织（OECD）对外国直接投资的定义，因此本数据库将其单独统计。\n故总数默认不含此类项目。选择「包含」后，上方数字为外国直接投资与工程建设项目之和；选择「仅显示」则地图只显示此类项目。",
     "case_studies": "案例研究",
     "sectors": "行业",
     "sectors_hint": "点击筛选",

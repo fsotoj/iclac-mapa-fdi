@@ -3,6 +3,13 @@ import { scopeInvestments, type InvestorMap } from './sankey'
 
 export type ResearchFilter = 'all' | 'yes' | 'no'
 
+// Construction is its own dimension, not a value of `types`: the methodology counts
+// these projects apart from FDI. Three states because two were not enough — excluding
+// and including left no way to look at the construction projects on their own.
+export type ConstructionFilter = 'exclude' | 'include' | 'only'
+
+export const CONSTRUCTION_FILTERS: ConstructionFilter[] = ['exclude', 'include', 'only']
+
 // 'map' = list closed; 'cards' / 'table' = list open in that format.
 export type ViewMode = 'cards' | 'table' | 'map'
 
@@ -17,7 +24,7 @@ export type Filters = {
   yearMin: number | null
   yearMax: number | null
   types: string[]
-  includeConstruction: boolean
+  construction: ConstructionFilter
   research: ResearchFilter
   sectors: string[]
   view: ViewMode
@@ -40,7 +47,9 @@ export const DEFAULT_FILTERS: Filters = {
   yearMin: null,
   yearMax: null,
   types: [],
-  includeConstruction: true,
+  // Excluded by default (UAT S3 point 2): construction is not FDI under the published
+  // methodology, so the headline total must leave it out unless asked otherwise.
+  construction: 'exclude',
   research: 'all',
   sectors: [],
   // List open by default (Margareth UAT): the "Listado de inversiones" is too
@@ -56,14 +65,16 @@ export const DEFAULT_FILTERS: Filters = {
 }
 
 // Counts data-filtering dimensions that differ from default — ignores view/pie*,
-// which are presentation choices, not filters. Used to decide when it's worth
-// offering a "see this in the other view" link (nothing to carry if unfiltered).
+// which are presentation choices, not filters. Used to show "clear filters" only
+// when there is something to clear.
 export const activeFilterCount = (f: Filters): number =>
   [
     f.countries.length > 0,
     f.yearMin !== null || f.yearMax !== null,
     f.types.length > 0,
-    !f.includeConstruction,
+    // Compared against the default: with construction excluded by default, it is
+    // asking for it (include / only) that counts as an active filter.
+    f.construction !== DEFAULT_FILTERS.construction,
     f.research !== 'all',
     f.sectors.length > 0,
     f.query !== '',
@@ -106,8 +117,11 @@ export const applyFilters = (data: Investment[], f: Filters, map?: InvestorMap):
     if (f.yearMax !== null && (inv.year === null || inv.year > f.yearMax)) return false
 
     if (inv.project_type === 'Construcción') {
-      if (!f.includeConstruction) return false
+      if (f.construction === 'exclude') return false
     } else {
+      // 'only' drops everything that is not construction; the type filter never
+      // governs construction rows, they answer to their own control.
+      if (f.construction === 'only') return false
       if (f.types.length > 0 && !f.types.includes(inv.project_type)) return false
     }
 

@@ -13,6 +13,7 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
   const filters = useMemo<Filters>(() => {
     const yMin = params.get('yMin')
     const yMax = params.get('yMax')
+    const construction = params.get('c')
     const research = (params.get('r') as ResearchFilter | null) ?? DEFAULT_FILTERS.research
     const view = (params.get('view') as ViewMode | null) ?? DEFAULT_FILTERS.view
     const pieMetric = (params.get('pm') as PieMetric | null) ?? DEFAULT_FILTERS.pieMetric
@@ -21,7 +22,10 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
       yearMin: yMin ? Number.parseInt(yMin, 10) : null,
       yearMax: yMax ? Number.parseInt(yMax, 10) : null,
       types: splitCsv(params.get('t')),
-      includeConstruction: params.get('c') !== '0',
+      // `c=1` includes construction, `c=only` shows nothing else; anything else
+      // (including the legacy `c=0`, from when the default was "included") means
+      // excluded, which is now simply the default.
+      construction: construction === '1' ? 'include' : construction === 'only' ? 'only' : 'exclude',
       research: ['all', 'yes', 'no'].includes(research) ? research : 'all',
       sectors: splitCsv(params.get('s')),
       view: VIEW_MODES.includes(view) ? view : DEFAULT_FILTERS.view,
@@ -42,7 +46,8 @@ export const useFilters = (): { filters: Filters; setFilters: (next: Partial<Fil
       if (merged.yearMin !== null) sp.set('yMin', String(merged.yearMin))
       if (merged.yearMax !== null) sp.set('yMax', String(merged.yearMax))
       if (merged.types.length) sp.set('t', joinCsv(merged.types))
-      if (!merged.includeConstruction) sp.set('c', '0')
+      if (merged.construction === 'include') sp.set('c', '1')
+      if (merged.construction === 'only') sp.set('c', 'only')
       if (merged.research !== 'all') sp.set('r', merged.research)
       if (merged.sectors.length) sp.set('s', joinCsv(merged.sectors))
       if (merged.view !== DEFAULT_FILTERS.view) sp.set('view', merged.view)

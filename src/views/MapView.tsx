@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MapContainer, TileLayer, GeoJSON, ZoomControl, useMap } from 'react-leaflet'
-import { Link, useLocation } from 'react-router-dom'
 import L from 'leaflet'
 import { useTranslation } from 'react-i18next'
 import type { Feature, Geometry } from 'geojson'
-import type { LatLngExpression, Layer, LeafletMouseEvent, Path, PathOptions } from 'leaflet'
+import type { Layer, LeafletMouseEvent, Path, PathOptions } from 'leaflet'
 import type { CountryFeatureCollection, CountryProperties, Investment, ResearchCase } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
-import { activeFilterCount, aggregateInvestments, applyFilters, distinctCountries, distinctSectors, yearBounds } from '@/lib/filter'
+import { aggregateInvestments, applyFilters, distinctCountries, distinctSectors, yearBounds } from '@/lib/filter'
 import { distinctCompanies, type InvestorMap } from '@/lib/sankey'
 import { useFilters } from '@/hooks/useFilters'
 import { useIsMobile } from '@/hooks/useMediaQuery'
@@ -21,8 +20,73 @@ import type { PieMetric } from '@/lib/filter'
 import { buildInvestmentPopup, buildInvestmentTooltip } from '@/lib/popup'
 import { dedupeById } from '@/lib/projectDocs'
 
-const LATAM_CENTER: LatLngExpression = [-15, -60]
-const INITIAL_ZOOM = 3
+
+// The paneable region is DERIVED from the geometry actually loaded (see regionOf),
+// not hardcoded: the country scope is data (data/schema/countries.csv → build_borders.mjs
+// → south-america.geojson), so adding Central America or the Caribbean must widen the
+// frame on its own. Hardcoding lat 15 as the north edge would leave a newly added
+// Guatemala (17.8) or Cuba (23.2) drawn but unreachable.
+//
+// The clamp is the one hand-set part, and it exists for remote islands: the Chile
+// polygon reaches lng -109.4 (Isla de Pascua), which would stretch the minimum frame
+// ~27° west and shrink the continent for a place with zero investments in the base
+// (westernmost point: -82.6). Excluded on purpose — still drawn, just not paneable to.
+// Everything else is a generous outer limit, not a boundary anyone should hit.
+const REGION_CLAMP = L.latLngBounds([-60, -95], [33, -28])
+
+// Used until the geojson lands (it is fetched, so the first render has no geometry).
+const REGION_FALLBACK = L.latLngBounds([-57, -95], [15, -32])
+
+// Geometry bounds ∩ clamp, padded so nothing sits glued to the edge.
+const regionOf = (geo: CountryFeatureCollection | null): L.LatLngBounds => {
+  if (!geo?.features.length) return REGION_FALLBACK
+  const b = L.geoJSON(geo).getBounds()
+  if (!b.isValid()) return REGION_FALLBACK
+  return L.latLngBounds(
+    [Math.max(b.getSouth(), REGION_CLAMP.getSouth()), Math.max(b.getWest(), REGION_CLAMP.getWest())],
+    [Math.min(b.getNorth(), REGION_CLAMP.getNorth()), Math.min(b.getEast(), REGION_CLAMP.getEast())]
+  )
+}
+
+// z8 ≈ a province / state in frame. Deliberately short of city-block detail: the
+// coordinates in the base are of uneven precision, so letting people zoom to street
+// level shows a exactitude the data does not have and reads as confusing.
+const MAX_ZOOM = 8
+
+// The totals box floats over the map's top-left corner and was covering Panama, the
+// northern edge of the frame. Its height is MEASURED, not assumed: it wraps to two
+// lines on narrow screens, and a hardcoded guess left Panama half under it on the
+// 1536x730 notebook viewport. Fallback only for the first paint.
+const FRAME_PADDING_TOP = 96
+const FRAME_PADDING_BOTTOM = 16 // clears the Leaflet attribution strip
+
+// Region framed in the space the floating chrome leaves free, worked out in projected
+// pixels so the offset is exact — degrees do not map linearly to pixels in Mercator,
+// and an approximation left the geometry 1px clear at 1536x730 and still covered at
+// 1536x700.
+//
+// Why not fitBounds({paddingTopLeft}): once the viewport is taller in degrees than
+// maxBounds — which happens on short screens, exactly where the problem showed up —
+// Leaflet centers the view inside maxBounds and the padding is silently dropped
+// (measured at 1536x730: geometry landed dead center, at y=75, with a 101px inset
+// requested). Shifting the center itself survives that.
+const framedView = (map: L.Map, bounds: L.LatLngBounds, top: number, bottom: number) => {
+  const zoom = map.getBoundsZoom(bounds, false, L.point(0, top + bottom))
+  const nw = map.project(bounds.getNorthWest(), zoom)
+  const se = map.project(bounds.getSouthEast(), zoom)
+  return {
+    zoom,
+    // Center pushed north by half the inset difference: that is what leaves the region
+    // centered in the free area rather than in the whole map box.
+    center: map.unproject(L.point((nw.x + se.x) / 2, (nw.y + se.y) / 2 - (top - bottom) / 2), zoom),
+    // Same offset baked into the pan limits — maxBounds is what Leaflet falls back to
+    // centering on, so an un-offset one would undo the frame.
+    limit: L.latLngBounds(
+      map.unproject(L.point(nw.x, nw.y - top), zoom),
+      map.unproject(L.point(se.x, se.y + bottom), zoom)
+    )
+  }
+}
 
 const baseCountryStyle: PathOptions = {
   fillColor: '#d4d4d8',
@@ -196,7 +260,55 @@ function InvestmentMarkers({
 
 type LocateTarget = { id: string; token: number }
 
-const LOCATE_ZOOM = 9
+// Capped by MAX_ZOOM anyway; kept equal so "locate" lands on the closest view the
+// map allows instead of silently stopping short of its own promise.
+const LOCATE_ZOOM = MAX_ZOOM
+
+// Zoom floor + pan limits, both driven by the region bounds.
+//
+// The floor is computed, not hardcoded: the limit that matters is "the whole region
+// fits", and which zoom level that is depends on the viewport — a fixed minZoom 3
+// crops the region on short screens with no way to zoom back out. Recomputed on
+// Leaflet's own resize event, which also covers invalidateSize() when the list panel
+// opens and changes the map's width.
+//
+// Bounds arrive late (geojson fetch) and can widen later if the country scope grows,
+// so limits are reapplied on every change.
+//
+// The frame is refitted on resize UNTIL the first user gesture. A one-shot fit is not
+// enough: the map is fitted before the layout settles (list panel mounting, fonts,
+// invalidateSize), and Leaflet keeps the center across a resize, so the reserved top
+// space silently shrinks — that is what left Panama under the totals box at 1536x730
+// even with padding. After the user drags or zooms, the view is theirs: no more refits.
+function RegionLimits({ bounds, topInset }: { bounds: L.LatLngBounds; topInset: () => number }) {
+  const map = useMap()
+  const touched = useRef(false)
+  useEffect(() => {
+    const container = map.getContainer()
+    const markTouched = () => {
+      touched.current = true
+    }
+    // DOM-level, not Leaflet events: our own fitBounds fires zoomstart/movestart too.
+    container.addEventListener('pointerdown', markTouched)
+    container.addEventListener('wheel', markTouched, { passive: true })
+
+    const apply = () => {
+      const { zoom, center, limit } = framedView(map, bounds, topInset(), FRAME_PADDING_BOTTOM)
+      map.setMaxBounds(limit.pad(0.15))
+      map.setMinZoom(zoom)
+      if (touched.current) return
+      map.setView(center, zoom, { animate: false })
+    }
+    apply()
+    map.on('resize', apply)
+    return () => {
+      map.off('resize', apply)
+      container.removeEventListener('pointerdown', markTouched)
+      container.removeEventListener('wheel', markTouched)
+    }
+  }, [map, bounds, topInset])
+  return null
+}
 
 function InvalidateSize({ trigger }: { trigger: unknown }) {
   const map = useMap()
@@ -219,7 +331,6 @@ export default function MapView() {
   const [error, setError] = useState<string | null>(null)
   const [target, setTarget] = useState<LocateTarget | null>(null)
   const { filters, setFilters } = useFilters()
-  const location = useLocation()
 
   const handleLocate = useCallback((inv: Investment) => {
     setTarget({ id: inv.id, token: Date.now() })
@@ -287,7 +398,7 @@ export default function MapView() {
       filters.yearMin,
       filters.yearMax,
       typesKey,
-      filters.includeConstruction,
+      filters.construction,
       filters.research,
       sectorsKey,
       filters.query,
@@ -310,7 +421,7 @@ export default function MapView() {
       filters.yearMin,
       filters.yearMax,
       typesKey,
-      filters.includeConstruction,
+      filters.construction,
       filters.research,
       sectorsKey,
       filters.query,
@@ -348,6 +459,11 @@ export default function MapView() {
     })
   }
 
+  // From the full geometry, never the country-filtered one: the paneable region is
+  // the universe the map can draw, and it must not shrink every time someone filters
+  // down to one country.
+  const region = useMemo(() => regionOf(geo), [geo])
+
   const agg = useMemo(() => aggregateInvestments(filtered), [filtered])
   const totalValue = useMemo(
     () => new Intl.NumberFormat('es-CL', { maximumFractionDigits: 0 }).format(agg.totalMusd),
@@ -367,16 +483,35 @@ export default function MapView() {
     setFilters({ view: 'map' })
   }
 
+  // Height the floating totals box takes off the top of the map, read from the DOM:
+  // it wraps to two lines on narrow screens, so assuming a number leaves the northern
+  // edge of the region (Panama) under it. Stable identity — RegionLimits calls it on
+  // every fit rather than closing over a value.
+  const totalsRef = useRef<HTMLDivElement>(null)
+  const topInset = useCallback(() => {
+    const el = totalsRef.current
+    return el ? el.offsetTop + el.offsetHeight + 12 : FRAME_PADDING_TOP
+  }, [])
+
   const mapEl = (
     <>
       <MapContainer
-        center={LATAM_CENTER}
-        zoom={INITIAL_ZOOM}
+        // Framed by bounds, not by a fixed center+zoom: with the floor computed from
+        // the same region, "fully zoomed out" and "initial view" become the same
+        // frame on every screen. A fixed zoom 3 left half the viewport on open ocean
+        // (measured: lng -180..+45) on wide screens. RegionLimits refits once the
+        // real geometry arrives; maxBounds is set there too, since it moves with it.
+        bounds={REGION_FALLBACK}
+        maxZoom={MAX_ZOOM}
+        // Viscosity 0.7 rubber-bands the drag back instead of stopping it dead
+        // against an invisible wall.
+        maxBoundsViscosity={0.7}
         scrollWheelZoom
         preferCanvas
         zoomControl={false}
         className="h-full w-full"
       >
+        <RegionLimits bounds={region} topInset={topInset} />
         <ZoomControl position="bottomleft" />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -424,7 +559,10 @@ export default function MapView() {
                   the map draws the very figures shown above it (count vs amount).
                   Display is not a filter — it never changes which investments are
                   shown — so it lives here, on the map, not in the filter panel. */}
-              <div className="absolute left-2 top-2 z-[800] max-w-[calc(100%-7.5rem)] rounded-lg border border-white/50 bg-white/95 text-xs shadow-md backdrop-blur-md sm:left-4 sm:top-4 sm:max-w-[calc(100%-9rem)] sm:text-sm">
+              <div
+                ref={totalsRef}
+                className="absolute left-2 top-2 z-[800] max-w-[calc(100%-7.5rem)] rounded-lg border border-white/50 bg-white/95 text-xs shadow-md backdrop-blur-md sm:left-4 sm:top-4 sm:max-w-[calc(100%-9rem)] sm:text-sm"
+              >
                 <div className="px-2.5 py-1.5 sm:px-3">
                   <span className="font-medium">{t('filter.investments_count', { count: agg.count })}</span>
                   <span className="mx-2">·</span>
@@ -439,19 +577,11 @@ export default function MapView() {
                       type="button"
                       onClick={() => setFilters({ focusId: null })}
                       title={t('filter.isolated_exit')}
-                      className="ml-2 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-gray-900 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-gray-700"
+                      className="ml-2 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-gray-900 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-brand-dark"
                     >
                       {t('filter.isolated')}
                       <span aria-hidden>×</span>
                     </button>
-                  )}
-                  {activeFilterCount(filters) > 0 && (
-                    <Link
-                      to={{ pathname: '/sankey', search: location.search }}
-                      className="ml-2 whitespace-nowrap font-medium text-teal-700 hover:underline"
-                    >
-                      {t('nav.view_in_sankey')}
-                    </Link>
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-1.5 border-t border-gray-200 px-2.5 py-1.5 sm:px-3">
@@ -488,7 +618,7 @@ export default function MapView() {
                   type="button"
                   onClick={openList}
                   title={t('view.cards')}
-                  className="absolute right-2 top-2 z-[800] flex items-center gap-1.5 rounded-lg border border-white/50 bg-white/95 px-2.5 py-1.5 text-sm text-gray-700 shadow-md backdrop-blur-md transition hover:bg-white sm:right-4 sm:top-4"
+                  className="absolute right-2 top-2 z-[800] flex items-center gap-1.5 rounded-lg border border-white/50 bg-white/95 px-2.5 py-1.5 text-sm text-gray-700 shadow-md backdrop-blur-md transition hover:bg-brand hover:text-gray-900 sm:right-4 sm:top-4"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-4 w-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 5.25h16.5M3.75 9.75h16.5M3.75 14.25h16.5M3.75 18.75h16.5" />
@@ -515,7 +645,9 @@ export default function MapView() {
                           onClick={() => setFilters({ view: v })}
                           aria-pressed={filters.view === v}
                           className={`px-2 py-1 ${i > 0 ? 'border-l border-gray-300' : ''} ${
-                            filters.view === v ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                            filters.view === v
+                              ? 'bg-gray-900 text-white hover:bg-brand-dark'
+                              : 'bg-white text-gray-700 hover:bg-brand hover:text-gray-900'
                           }`}
                         >
                           {t(v === 'cards' ? 'view.as_cards' : 'view.as_table')}
@@ -526,7 +658,7 @@ export default function MapView() {
                       type="button"
                       onClick={closeList}
                       aria-label={t('common.close')}
-                      className="flex h-8 w-8 items-center justify-center rounded text-gray-600 hover:bg-gray-200"
+                      className="flex h-8 w-8 items-center justify-center rounded text-gray-600 hover:bg-brand hover:text-gray-900"
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-5 w-5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />

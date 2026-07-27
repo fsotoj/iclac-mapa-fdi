@@ -79,7 +79,7 @@ export default function ContactView() {
   const mailtoLine = (
     <p className="mt-2 text-xs text-gray-500">
       {t('contact.form.or_email')}{' '}
-      <a href={`mailto:${CONTACT_EMAIL}`} className="underline hover:text-gray-700">
+      <a href={`mailto:${CONTACT_EMAIL}`} className="underline hover:text-brand-dark">
         {CONTACT_EMAIL}
       </a>
     </p>
@@ -113,7 +113,7 @@ export default function ContactView() {
         <p className="mb-8 text-justify leading-relaxed text-gray-700">{t('contact.description_mailto')}</p>
         <a
           href={`mailto:${CONTACT_EMAIL}`}
-          className="inline-flex items-center gap-2 rounded-md bg-[#093b4d] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0c4d63]"
+          className="inline-flex items-center gap-2 rounded-md bg-[#093b4d] px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark"
         >
           {CONTACT_EMAIL}
         </a>
@@ -182,7 +182,7 @@ export default function ContactView() {
           <button
             type="submit"
             disabled={status === 'sending'}
-            className="inline-flex items-center gap-2 rounded-md bg-[#093b4d] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0c4d63] disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-md bg-[#093b4d] px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-60"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -10,9 +10,7 @@
     "methodology": "Methodology",
     "downloads": "Data",
     "contact": "Contact",
-    "menu": "Menu",
-    "view_in_sankey": "View in Sankey →",
-    "view_in_map": "View on map →"
+    "menu": "Menu"
   },
   "downloads": {
     "title": "Our data",
@@ -91,6 +89,7 @@
     "all": "All",
     "clear": "Clear",
     "close": "Close",
+    "help": "More information",
     "loading": "Loading data…"
   },
   "filter": {
@@ -100,6 +99,11 @@
     "year": "Year",
     "project_type": "Type",
     "construction": "Construction",
+    "type_off_only": "Not applicable while showing construction only.",
+    "construction_exclude": "Exclude",
+    "construction_include": "Include",
+    "construction_only": "Only",
+    "construction_help": "Public-works contracts where Chinese companies develop the project and are paid for the work, but do not retain ownership of the infrastructure, which belongs to the state or a private contractor. These do not fit the OECD definition of FDI, so the Repository's methodology counts them apart.\nThat is why the total starts without them. With “Include”, the figure above becomes FDI plus construction; with “Only”, the map shows these projects alone.",
     "case_studies": "Case studies",
     "sectors": "Sectors",
     "sectors_hint": "Click to filter",

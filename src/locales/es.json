@@ -10,9 +10,7 @@
     "methodology": "Metodología",
     "downloads": "Datos",
     "contact": "Contacto",
-    "menu": "Menú",
-    "view_in_sankey": "Ver en Sankey →",
-    "view_in_map": "Ver en el mapa →"
+    "menu": "Menú"
   },
   "downloads": {
     "title": "Nuestros datos",
@@ -91,6 +89,7 @@
     "all": "Todos",
     "clear": "Limpiar",
     "close": "Cerrar",
+    "help": "Más información",
     "loading": "Cargando datos…"
   },
   "filter": {
@@ -100,6 +99,11 @@
     "year": "Año",
     "project_type": "Tipo",
     "construction": "Construcción",
+    "type_off_only": "No aplica mientras se muestre solo construcción.",
+    "construction_exclude": "Excluir",
+    "construction_include": "Incluir",
+    "construction_only": "Solo",
+    "construction_help": "Obras públicas donde empresas chinas ejecutan el proyecto y cobran por el trabajo, pero no quedan como dueñas: la infraestructura es del Estado o de un contratista privado. No calzan con la definición de IED de la OCDE, así que la metodología del Repositorio las cuenta aparte.\nPor eso el total parte excluyéndolas. Con «Incluir», la cifra de arriba pasa a ser IED más construcción; con «Solo», el mapa muestra únicamente estos proyectos.",
     "case_studies": "Estudios",
     "sectors": "Sectores",
     "sectors_hint": "Clic para filtrar",

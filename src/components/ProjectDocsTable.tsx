@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import type { Investment, ResearchCase } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
 import { flatList, formatMoney, groupByCountry, localizedArea, localizedDetail, studyHref, type CardSort } from '@/lib/projectDocs'
+import { useFilters } from '@/hooks/useFilters'
 import MiniSegmented from './MiniSegmented'
+import ProjectSearchBox from './ProjectSearchBox'
 
 type Props = {
   investments: Investment[]
@@ -84,9 +86,9 @@ function InvRow({
   const zebra = idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'
   return (
     <Fragment>
-      <tr className={`${zebra} cursor-pointer hover:bg-teal-50`} onClick={onToggle}>
+      <tr className={`${zebra} cursor-pointer hover:bg-brand/20`} onClick={onToggle}>
         <td className="px-1 py-2 align-top">
-          <button type="button" aria-label={t('list.details')} className="text-gray-500 hover:text-gray-800">
+          <button type="button" aria-label={t('list.details')} className="text-gray-500 hover:text-brand-dark">
             <Chevron open={open} />
           </button>
         </td>
@@ -182,22 +184,26 @@ function TableHead({ variant }: { variant: 'grouped' | 'flat' }) {
 
 export default function ProjectDocsTable({ investments, lang, onLocate }: Props) {
   const { t } = useTranslation()
+  const { filters } = useFilters()
+  const query = filters.query
   const [sortBy, setSortBy] = useState<CardSort>('year')
   const [grouped, setGrouped] = useState(true)
   const groups = useMemo(() => (grouped ? groupByCountry(investments, sortBy) : []), [investments, sortBy, grouped])
   const flat = useMemo(() => (grouped ? [] : flatList(investments, sortBy)), [investments, sortBy, grouped])
+  // Starts fully collapsed: the table is the default list format, and opening a
+  // country by default buried the rest of the countries below a long row block.
   const [openCountries, setOpenCountries] = useState<Set<string>>(() => new Set())
   const [openRows, setOpenRows] = useState<Set<string>>(() => new Set())
 
-  // Open the first country on first load so rows are visible immediately
-  // ("see more at once", Margareth UAT) instead of a list of collapsed bars.
-  const didInit = useRef(false)
+  // Auto-expand matches when entering search, collapse all when clearing — same
+  // behaviour as the cards, or a search would appear to return nothing.
+  const hadQuery = useRef(false)
   useEffect(() => {
-    if (!didInit.current && groups.length) {
-      didInit.current = true
-      setOpenCountries(new Set([groups[0].country]))
-    }
-  }, [groups])
+    const has = query.length > 0
+    if (has && !hadQuery.current) setOpenCountries(new Set(groups.map(g => g.country)))
+    else if (!has && hadQuery.current) setOpenCountries(new Set())
+    hadQuery.current = has
+  }, [query, groups])
 
   const toggleIn = (set: Set<string>, key: string): Set<string> => {
     const next = new Set(set)
@@ -209,28 +215,31 @@ export default function ProjectDocsTable({ investments, lang, onLocate }: Props)
 
   return (
     <div className="w-full text-sm">
-      <div className="sticky top-0 z-20 flex flex-wrap items-center gap-x-3 gap-y-1.5 border-b border-gray-200 bg-white px-3 py-2">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-medium text-gray-500">{t('list.sort_by')}</span>
-          <MiniSegmented
-            items={[
-              { value: 'year', label: t('list.sort_year') },
-              { value: 'amount', label: t('list.sort_amount') }
-            ]}
-            value={sortBy}
-            onPick={setSortBy}
-          />
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-medium text-gray-500">{t('list.view_as')}</span>
-          <MiniSegmented
-            items={[
-              { value: 'grouped', label: t('list.grouped') },
-              { value: 'flat', label: t('list.flat') }
-            ]}
-            value={grouped ? 'grouped' : 'flat'}
-            onPick={v => setGrouped(v === 'grouped')}
-          />
+      <div className="sticky top-0 z-20 border-b border-gray-200 bg-white px-3 py-2">
+        <ProjectSearchBox />
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-medium text-gray-500">{t('list.sort_by')}</span>
+            <MiniSegmented
+              items={[
+                { value: 'year', label: t('list.sort_year') },
+                { value: 'amount', label: t('list.sort_amount') }
+              ]}
+              value={sortBy}
+              onPick={setSortBy}
+            />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-medium text-gray-500">{t('list.view_as')}</span>
+            <MiniSegmented
+              items={[
+                { value: 'grouped', label: t('list.grouped') },
+                { value: 'flat', label: t('list.flat') }
+              ]}
+              value={grouped ? 'grouped' : 'flat'}
+              onPick={v => setGrouped(v === 'grouped')}
+            />
+          </div>
         </div>
       </div>
 
@@ -242,7 +251,7 @@ export default function ProjectDocsTable({ investments, lang, onLocate }: Props)
               <button
                 type="button"
                 onClick={() => setOpenCountries(s => toggleIn(s, group.country))}
-                className="flex w-full items-center gap-2 bg-gray-100 px-4 py-3 text-left font-semibold text-teal-800 hover:bg-gray-200"
+                className="flex w-full items-center gap-2 bg-gray-100 px-4 py-3 text-left font-semibold text-teal-800 hover:bg-brand hover:text-gray-900"
               >
                 <Chevron open={open} />
                 {t('list.projects_in', { country: group.country, count: group.projects.length })}

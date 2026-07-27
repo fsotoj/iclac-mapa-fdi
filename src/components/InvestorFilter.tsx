@@ -59,7 +59,7 @@ export default function InvestorFilter({ options, selected, onChange, metric }: 
           </p>
           <div className="flex shrink-0 items-center gap-2">
             {selected.length > 0 && (
-              <button onClick={() => onChange([])} className="text-[11px] text-gray-500 underline hover:text-gray-900">
+              <button onClick={() => onChange([])} className="text-[11px] text-gray-500 underline hover:text-brand-dark">
                 {t('common.clear')}
               </button>
             )}
@@ -69,7 +69,9 @@ export default function InvestorFilter({ options, selected, onChange, metric }: 
                   key={s}
                   onClick={() => setSortBy(s)}
                   className={`px-2 py-0.5 ${i > 0 ? 'border-l border-gray-300' : ''} ${
-                    sortBy === s ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                    sortBy === s
+                      ? 'bg-gray-900 text-white hover:bg-brand-dark'
+                      : 'bg-white text-gray-600 hover:bg-brand hover:text-gray-900'
                   }`}
                 >
                   {t(s === 'name' ? 'sankey.sort_name' : 'sankey.sort_value')}
@@ -84,7 +86,7 @@ export default function InvestorFilter({ options, selected, onChange, metric }: 
         {filtered.map(o => {
           const v = valueOf(o)
           return (
-            <label key={o.id} className="flex cursor-pointer flex-col gap-0.5 rounded px-1 py-1 text-sm hover:bg-gray-50">
+            <label key={o.id} className="flex cursor-pointer flex-col gap-0.5 rounded px-1 py-1 text-sm hover:bg-brand">
               <div className="flex items-center gap-2">
                 <input type="checkbox" checked={selectedSet.has(o.id)} onChange={() => toggle(o.id)} className="shrink-0" />
                 <span className="min-w-0 flex-1 truncate text-gray-800" title={o.name}>{o.name}</span>

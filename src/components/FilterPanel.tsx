@@ -2,12 +2,13 @@ import { useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useFilters } from '@/hooks/useFilters'
 import { useIsMobile } from '@/hooks/useMediaQuery'
-import type { ResearchFilter } from '@/lib/filter'
+import { CONSTRUCTION_FILTERS, type ResearchFilter } from '@/lib/filter'
 import type { CompanyOption } from '@/lib/sankey'
 import CollapsibleSection from './CollapsibleSection'
 import YearRangeSlider from './YearRangeSlider'
 import CheckList from './CheckList'
 import InvestorFilter from './InvestorFilter'
+import HelpTip from './HelpTip'
 
 type Props = {
   countries: string[]
@@ -61,22 +62,29 @@ type SegItem<T extends string> = { value: T; label: string }
 function Segmented<T extends string>({
   items,
   isActive,
-  onPick
+  onPick,
+  disabled = false
 }: {
   items: SegItem<T>[]
   isActive: (v: T) => boolean
   onPick: (v: T) => void
+  disabled?: boolean
 }) {
   return (
-    <div className="flex overflow-hidden rounded border border-gray-300 text-xs">
+    <div className={`flex overflow-hidden rounded border border-gray-300 text-xs ${disabled ? 'opacity-40' : ''}`}>
       {items.map((it, i) => (
         <button
           key={it.value}
           onClick={() => onPick(it.value)}
           aria-pressed={isActive(it.value)}
+          disabled={disabled}
+          // Hover highlight differs by state on purpose: the active button is dark
+          // with white text, so a light hover made its label vanish.
           className={`flex-1 px-2 py-1.5 ${i > 0 ? 'border-l border-gray-300' : ''} ${
-            isActive(it.value) ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
-          }`}
+            isActive(it.value)
+              ? `bg-gray-900 text-white ${disabled ? '' : 'hover:bg-brand-dark'}`
+              : `bg-white text-gray-700 ${disabled ? '' : 'hover:bg-brand hover:text-gray-900'}`
+          } ${disabled ? 'cursor-not-allowed' : ''}`}
         >
           {it.label}
         </button>
@@ -100,7 +108,7 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
           onClick={() => setCollapsed(false)}
           title={t('filter.expand')}
           aria-label={t('filter.expand')}
-          className="flex h-9 w-9 items-center justify-center rounded text-gray-700 hover:bg-gray-100"
+          className="flex h-9 w-9 items-center justify-center rounded text-gray-700 hover:bg-brand hover:text-gray-900"
         >
           {IconChevronRight}
         </button>
@@ -111,7 +119,7 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
             onClick={() => setCollapsed(false)}
             title={t(r.key)}
             aria-label={t(r.key)}
-            className="flex h-9 w-9 items-center justify-center rounded text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+            className="flex h-9 w-9 items-center justify-center rounded text-gray-500 hover:bg-brand hover:text-gray-900"
           >
             {r.node}
           </button>
@@ -142,7 +150,7 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
             onClick={() => setCollapsed(true)}
             title={t('filter.collapse')}
             aria-label={t('filter.collapse')}
-            className="-ml-1 flex h-7 w-7 items-center justify-center rounded text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+            className="-ml-1 flex h-7 w-7 items-center justify-center rounded text-gray-500 hover:bg-brand hover:text-gray-900"
           >
             {IconChevronLeft}
           </button>
@@ -150,7 +158,8 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
         </div>
         <button
           onClick={reset}
-          className="text-xs text-gray-500 hover:text-gray-900 underline"
+          // Text link: `brand` on white is 2.96:1, so links take the dark shade.
+          className="text-xs text-gray-500 underline hover:text-brand-dark"
         >
           {t('filter.clear_all')}
         </button>
@@ -194,26 +203,38 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
 
       <section>
         <label className="block text-xs font-medium text-gray-600 mb-1">{t('filter.project_type')}</label>
+        {/* Dead while construction is on 'only': acquisition and greenfield are the
+            two types being filtered out wholesale, so leaving the buttons live would
+            offer a choice that changes nothing. */}
         <Segmented
           items={PROJECT_TYPES.map(pt => ({ value: pt, label: t(`project_type.${pt}`) }))}
           isActive={pt => filters.types.length === 0 || filters.types.includes(pt)}
+          disabled={filters.construction === 'only'}
           onPick={pt => {
             const current = filters.types.length === 0 ? [...PROJECT_TYPES] : filters.types
             const next = toggleInArray(current, pt)
             setFilters({ types: next.length === PROJECT_TYPES.length ? [] : next })
           }}
         />
+        {filters.construction === 'only' && (
+          <p className="mt-1 text-[11px] leading-snug text-gray-400">{t('filter.type_off_only')}</p>
+        )}
       </section>
 
       <section>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={filters.includeConstruction}
-            onChange={e => setFilters({ includeConstruction: e.target.checked })}
-          />
-          <span className="text-xs font-medium text-gray-600">{t('filter.construction')}</span>
-        </label>
+        {/* Three states, same segmented control as Tipo / Estudios. A checkbox could
+            only exclude or include; there was no way to look at the construction
+            projects on their own. The (?) carries the methodology's reason these are
+            not FDI, which is what the three labels raise. */}
+        <div className="mb-1 flex items-center gap-1.5">
+          <label className="block text-xs font-medium text-gray-600">{t('filter.construction')}</label>
+          <HelpTip text={t('filter.construction_help')} label={t('filter.construction')} />
+        </div>
+        <Segmented
+          items={CONSTRUCTION_FILTERS.map(c => ({ value: c, label: t(`filter.construction_${c}`) }))}
+          isActive={c => filters.construction === c}
+          onPick={c => setFilters({ construction: c })}
+        />
       </section>
 
       <section>

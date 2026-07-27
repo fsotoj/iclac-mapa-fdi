@@ -81,6 +81,78 @@ es (default), en, cn. Revisor externo de chino confirmado.
 
 Inversión, año, sectores, paper. Confirmar al inicio de S2 si la nomenclatura cambió (cliente mencionó "país, año, tipo, estudios, construcción").
 
+## Estado de filtros = la URL (`useFilters`)
+
+`src/hooks/useFilters.ts` es la única fuente: `Filters` ↔ query string. Mapa y Sankey comparten
+los mismos params, por eso las pestañas del header navegan con `search` (si no, cambiar de vista
+resetea los filtros). `reset()` limpia todo el query string.
+
+| param | campo | notas |
+|---|---|---|
+| `p` `t` `s` `inv` `own` | countries, types, sectors, investors, ownership | CSV; `[]` = todos |
+| `yMin` `yMax` | yearMin, yearMax | |
+| `c` | `construction` | **enum, no booleano** (27-07): sin param = `exclude` (default), `c=1` = `include`, `c=only` = `only`. `c=0` legado cae en `exclude` |
+| `r` | research | |
+| `q` | query | buscador de la lista, debounce en `ProjectSearchBox` |
+| `view` `pie` `pm` | presentación | **no** cuentan como filtro |
+| `id` | focusId | aislar una inversión; gana sobre todo lo demás |
+
+`activeFilterCount` (en `lib/filter.ts`) decide cuándo mostrar "Limpiar filtros". Compara **contra
+`DEFAULT_FILTERS`**, no contra una dirección fija: con construcción excluida por defecto, lo que
+cuenta como filtro activo es *pedirla*.
+
+**Construcción es dimensión propia, no un valor de `types`:** la metodología la cuenta aparte
+(no es IED, ver `data/schema/sectores.md`). El filtro Tipo no gobierna esas filas, y con `only`
+queda deshabilitado porque Adquisición/Greenfield son justo lo que se está filtrando fuera.
+
+## Regla de hover (27-07)
+
+Resaltado único del proyecto: **`brand` = `#00A89C`**, con `brand-dark` = `#00776E` para lo que ya
+es oscuro. Definidos en `tailwind.config.js`. La regla existe porque el hover gris aclaraba los
+botones activos (fondo `gray-900`, texto blanco) y **el texto desaparecía**.
+
+| Elemento | Reposo | Hover |
+|---|---|---|
+| Botón/fila clara | `bg-white` / transparente | `hover:bg-brand hover:text-gray-900` |
+| Botón activo u oscuro | `bg-gray-900 text-white` | `hover:bg-brand-dark` (el texto sigue blanco) |
+| Link o ícono suelto | `text-gray-500` | `hover:text-brand-dark` |
+| Fila de tabla | zebra | `hover:bg-brand/20` |
+
+**Nunca `text-white` sobre `brand`**: da 2,96:1, bajo el mínimo AA de 4,5:1 para el texto chico del
+panel. Las combinaciones de la tabla dan 5,4:1 a 6:1, medidas en navegador.
+
+## Componentes compartidos del front
+
+Antes de escribir uno nuevo, revisar estos (todos en `src/components/`):
+
+- `Segmented` (dentro de `FilterPanel.tsx`) — botones unidos, activo en oscuro. Tipo, Estudios,
+  Construcción. Acepta `disabled`.
+- `MiniSegmented.tsx` — misma idea en chico, para las cabeceras de la lista y del mapa.
+- `ProjectSearchBox.tsx` — buscador de la lista (icono + draft con debounce + ×). Lo usan Fichas
+  **y** Tabla; escribe `filters.query`.
+- `HelpTip.tsx` — el `(?)`. Abre por **clic**, no hover (en touch no hay hover). `position: fixed`
+  calculada al abrir: el panel de filtros recorta su overflow y un popover anclado adentro sale
+  cortado. `\n` en el texto = párrafo.
+- `CollapsibleSection.tsx`, `CheckList.tsx`, `InvestorFilter.tsx`, `YearRangeSlider.tsx`.
+
+## Mapa: encuadre y límites (`MapView.tsx`)
+
+Zona sensible, con dos trampas ya pagadas:
+
+- **La región paneable se DERIVA del geojson cargado** (`regionOf`), intersecada con
+  `REGION_CLAMP`. El alcance de países es dato (`countries.csv` → `build_borders.mjs`), así que
+  sumar Centroamérica/Caribe amplía el cuadro solo. El clamp existe sólo para Isla de Pascua
+  (lng −109,4, cero inversiones): si algún día entra un dato al oeste de −95, correrlo.
+- **`fitBounds({padding})` no sirve para reservar el espacio de la caja de totales.** Si el
+  viewport es más alto en grados que `maxBounds` (pantallas bajas), Leaflet recentra dentro de
+  `maxBounds` y descarta el padding en silencio. Se resuelve desplazando el **centro** en píxeles
+  proyectados (`framedView`) y metiendo el mismo offset en `maxBounds`. El alto de la caja se mide
+  del DOM (`totalsRef`), porque envuelve a dos líneas en pantallas angostas.
+- `RegionLimits` re-encuadra en cada `resize` **hasta el primer gesto del usuario**
+  (`pointerdown`/`wheel` del contenedor, no eventos de Leaflet, que dispara nuestro propio fit).
+- `MAX_ZOOM = 8` (nivel provincia) es decisión editorial: las coordenadas de la base tienen
+  precisión despareja y el detalle de calle sugiere exactitud inexistente.
+
 ## Colores por sector (referencia código actual)
 
 ```
@@ -111,6 +183,11 @@ Finance:       rgba(173,77,14,1)
 - Estado global mínimo: solo locale + selección de país. URL primero, Zustand solo si no alcanza.
 - No usar Pinia/Redux. Zustand si hace falta.
 - Tests: vitest + react testing library. Solo lógica de filtros y validación de datos.
+- i18n: **toda** cadena visible en es/en/cn. Los textos cn los escribimos nosotros y van a la cola
+  del revisor externo; anotarlo en `next_steps.md` al agregarlos.
+- Cambios de UI visibles: verificar en navegador antes de darlos por hechos, no sólo `tsc` + tests
+  (receta en `.claude/skills/verify`). Varios bugs de esta clase (encuadre, popover recortado) sólo
+  aparecen a cierto tamaño de viewport.
 
 ## Workflow de trabajo
 

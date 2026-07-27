@@ -141,13 +141,13 @@ export default function YearRangeSlider({
       <div className="flex gap-1.5">
         <button
           onClick={togglePlay}
-          className="flex-1 rounded px-2 py-0.5 text-[11px] bg-gray-900 text-white hover:bg-gray-700"
+          className="flex-1 rounded px-2 py-0.5 text-[11px] bg-gray-900 text-white hover:bg-brand-dark"
         >
           {playing ? '⏸ Pausa' : '▶ Play'}
         </button>
         <button
           onClick={reset}
-          className="rounded px-2 py-0.5 text-[11px] border border-gray-300 hover:bg-gray-100"
+          className="rounded px-2 py-0.5 text-[11px] border border-gray-300 hover:border-brand hover:bg-brand hover:text-gray-900"
         >
           ↺ Reset
         </button>

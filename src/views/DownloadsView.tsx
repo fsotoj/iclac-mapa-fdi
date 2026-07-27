@@ -65,7 +65,7 @@ export default function DownloadsView() {
         type="button"
         onClick={handleDownload}
         disabled={busy}
-        className="inline-flex items-center gap-2 rounded-md bg-[#093b4d] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0c4d63] disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-md bg-[#093b4d] px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-dark disabled:opacity-60"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

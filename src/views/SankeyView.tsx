@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import ReactECharts from 'echarts-for-react/lib/core'
 import * as echarts from 'echarts/core'
@@ -33,8 +32,7 @@ type ClickParams = { dataType?: string; name?: string }
 
 export default function SankeyView() {
   const { t, i18n } = useTranslation()
-  const { filters, setFilters } = useFilters()
-  const location = useLocation()
+  const { filters, setFilters, reset } = useFilters()
   const [investments, setInvestments] = useState<Investment[]>([])
   const [map, setMap] = useState<InvestorMap>({})
   const [loading, setLoading] = useState(true)
@@ -246,13 +244,28 @@ export default function SankeyView() {
           />
         </FilterDropdown>
 
+        {/* Only with something to clear: the Sankey has no filter panel to host a
+            permanent reset, so an always-on button would just add a dead control
+            to the bar. Mirrors "Limpiar filtros" in the map's panel. */}
+        {activeFilterCount(filters) > 0 && (
+          <button
+            type="button"
+            onClick={reset}
+            className="whitespace-nowrap text-xs text-gray-500 underline hover:text-brand-dark"
+          >
+            {t('filter.clear_all')}
+          </button>
+        )}
+
         <div className="ml-auto flex overflow-hidden rounded border border-gray-300 text-xs">
           {(['count', 'money'] as SankeyMetric[]).map((m, i) => (
             <button
               key={m}
               onClick={() => setMetric(m)}
               className={`px-3 py-1.5 ${i > 0 ? 'border-l border-gray-300' : ''} ${
-                metric === m ? 'bg-gray-900 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                metric === m
+                  ? 'bg-gray-900 text-white hover:bg-brand-dark'
+                  : 'bg-white text-gray-700 hover:bg-brand hover:text-gray-900'
               }`}
             >
               {t(m === 'count' ? 'filter.by_project' : 'filter.by_money')}
@@ -268,14 +281,6 @@ export default function SankeyView() {
           <span className="font-medium">{t('filter.total_value', { value: totalValue })}</span>
           {agg.withoutAmount > 0 && (
             <span className="ml-2 text-gray-500">({t('filter.without_amount', { count: agg.withoutAmount })})</span>
-          )}
-          {activeFilterCount(filters) > 0 && (
-            <Link
-              to={{ pathname: '/', search: location.search }}
-              className="ml-2 whitespace-nowrap font-medium text-teal-700 hover:underline"
-            >
-              {t('nav.view_in_map')}
-            </Link>
           )}
         </div>
         <p className="text-[11px] text-gray-400">{t('sankey.click_hint')}</p>

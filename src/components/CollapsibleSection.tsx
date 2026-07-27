@@ -21,7 +21,7 @@ export default function CollapsibleSection({
         type="button"
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        className="-mx-1 flex w-[calc(100%+0.5rem)] items-center gap-2 rounded px-1 py-1.5 text-left hover:bg-gray-50"
+        className="-mx-1 flex w-[calc(100%+0.5rem)] items-center gap-2 rounded px-1 py-1.5 text-left hover:bg-brand hover:text-gray-900"
       >
         <span className="shrink-0 text-xs font-medium text-gray-600">{label}</span>
         <span className="min-w-0 flex-1 truncate text-right text-xs text-gray-400">{summary}</span>

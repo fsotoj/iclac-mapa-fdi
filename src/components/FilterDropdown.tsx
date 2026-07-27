@@ -32,7 +32,9 @@ export default function FilterDropdown({ label, count = 0, badge, children }: Pr
       <button
         onClick={() => setOpen(o => !o)}
         className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs ${
-          active ? 'border-gray-900 bg-gray-900 text-white' : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+          active
+            ? 'border-gray-900 bg-gray-900 text-white hover:border-brand-dark hover:bg-brand-dark'
+            : 'border-gray-300 bg-white text-gray-700 hover:border-brand hover:bg-brand hover:text-gray-900'
         }`}
       >
         {label}

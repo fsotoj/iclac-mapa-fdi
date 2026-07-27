@@ -20,12 +20,17 @@ export default function CheckList({
       {items.map(it => {
         const active = all || selected.includes(it)
         return (
-          <label key={it} className="flex cursor-pointer items-center gap-2 rounded px-1 py-1 text-sm hover:bg-gray-50">
+          <label
+            key={it}
+            className="group flex cursor-pointer items-center gap-2 rounded px-1 py-1 text-sm hover:bg-brand"
+          >
             <input type="checkbox" checked={active} onChange={() => onToggle(it)} className="shrink-0" />
             {color && (
               <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: color(it), opacity: active ? 1 : 0.4 }} />
             )}
-            <span className="min-w-0 flex-1 truncate text-gray-800">{label ? label(it) : it}</span>
+            <span className="min-w-0 flex-1 truncate text-gray-800 group-hover:text-gray-900">
+              {label ? label(it) : it}
+            </span>
           </label>
         )
       })}
