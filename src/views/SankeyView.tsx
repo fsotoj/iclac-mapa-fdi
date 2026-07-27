@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactECharts from 'echarts-for-react/lib/core'
 import * as echarts from 'echarts/core'
 import { SankeyChart } from 'echarts/charts'
 import { TooltipComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
+import { LabelLayout } from 'echarts/features'
 import type { EChartsOption } from 'echarts'
 import type { Investment } from '@/types/data'
 import type { InvestorMap, SankeyMetric } from '@/lib/sankey'
@@ -18,7 +19,11 @@ import YearRangeSlider from '@/components/YearRangeSlider'
 import CheckList from '@/components/CheckList'
 
 // Register only what the Sankey needs — the bundler drops the rest of echarts.
-echarts.use([SankeyChart, TooltipComponent, CanvasRenderer])
+// LabelLayout is what implements `labelLayout: { hideOverlap: true }` below. Leaving
+// it out only shows up in the production build: the dev server pre-bundles echarts
+// whole, so overlapping labels were hidden locally and stacked on top of each other
+// on the deployed site.
+echarts.use([SankeyChart, TooltipComponent, CanvasRenderer, LabelLayout])
 
 // Fallback node colors per depth: investor / country (sector uses sectorColor).
 const LEVEL_COLOR = ['#545453', '#377F83', '#0CCABC'] as const
@@ -190,6 +195,13 @@ export default function SankeyView() {
     }
   }
 
+  // Stable handler identity: echarts-for-react compares `onEvents` on every update
+  // and re-binds when it changes, and a fresh object literal changes on every render.
+  // The ref keeps the latest closure (data/filters) without touching the prop.
+  const clickRef = useRef(onNodeClick)
+  clickRef.current = onNodeClick
+  const onEvents = useMemo(() => ({ click: (p: ClickParams) => clickRef.current(p) }), [])
+
   const countryCount = filters.countries.filter(c => c !== '__none__').length
 
   if (error) return <div className="p-8 text-sm text-red-700">{error}</div>
@@ -299,7 +311,7 @@ export default function SankeyView() {
             style={{ height: '100%', width: '100%' }}
             notMerge
             lazyUpdate
-            onEvents={{ click: onNodeClick }}
+            onEvents={onEvents}
           />
         )}
       </div>

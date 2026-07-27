@@ -188,6 +188,12 @@ Finance:       rgba(173,77,14,1)
 - Cambios de UI visibles: verificar en navegador antes de darlos por hechos, no sólo `tsc` + tests
   (receta en `.claude/skills/verify`). Varios bugs de esta clase (encuadre, popover recortado) sólo
   aparecen a cierto tamaño de viewport.
+- **ECharts: registrar TODO lo que la opción usa** en el `echarts.use([...])` de `SankeyView.tsx`,
+  incluidas las *features* (`echarts/features`), no sólo charts/components/renderers. El dev server
+  pre-empaqueta echarts entero y disimula lo que falte; el build tree-shakeado no. Caso real
+  (27-07): sin `LabelLayout`, `labelLayout: { hideOverlap: true }` se ignoraba **sólo en producción**
+  y las etiquetas del Sankey se solapaban. Si se toca la opción del gráfico, probar contra
+  `npm run build && npx vite preview`, no contra `npm run dev`.
 
 ## Workflow de trabajo
 
