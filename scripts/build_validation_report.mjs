@@ -14,7 +14,7 @@ import { existsSync, readdirSync, writeFileSync, statSync } from 'node:fs'
 import { basename, resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { validateRows, SECTOR_PAIRS } from './lib/validate.mjs'
-import { loadRegistry, loadCountryBorders } from './lib/load_registry.mjs'
+import { loadRegistry, loadCountryBorders, loadInvestorMap, loadCountryBounds } from './lib/load_registry.mjs'
 
 // ES canónico → concepto EN, más variantes no canónicas pero conceptualmente
 // claras. Sirve para detectar cuando Area_ES apunta a un sector DISTINTO del de
@@ -76,6 +76,18 @@ const esc = (s) =>
 
 const registry = loadRegistry()
 const countryBorders = registry ? loadCountryBorders(registry) : null
+const countryBounds = registry ? loadCountryBounds(registry) : null
+const investorMap = loadInvestorMap()
+
+// Compuerta de publicación (`publish` en countries.csv), independiente de la
+// validación: el archivo puede estar impecable y el país no publicarse todavía.
+// Se muestra aparte para que no se lea como un fallo del archivo.
+const isPublished = (fileName) => {
+  const stem = fileName.replace(/\.xlsx$/i, '').toUpperCase()
+  const byA3 = registry?.filenameByAlpha3 ?? {}
+  const a3 = Object.keys(byA3).find((k) => byA3[k] === stem)
+  return a3 ? registry.publishByAlpha3?.[a3] !== false : true
+}
 
 const results = []
 for (const file of files) {
@@ -93,9 +105,11 @@ for (const file of files) {
     threshold: 95,
     sheetCount: wb.SheetNames.length,
     registry,
-    countryBorders
+    countryBorders,
+    countryBounds,
+    investorMap
   })
-  results.push({ name, fileErrors, issues, stats, curaciones: curaciones ?? [], rows })
+  results.push({ name, fileErrors, issues, stats, curaciones: curaciones ?? [], rows, published: isPublished(name) })
 }
 
 // Conflictos conceptuales Area_EN vs Area_ES (por inversión única), sobre la base cruda.
@@ -158,6 +172,12 @@ const RULE_HELP = {
     fix: 'No requiere acción de tu lado: la propiedad se resuelve en la tabla de inversores, no en esta base. Aviso informativo.',
     tipo: 'a-resolver-nuestro-lado'
   },
+  'fila/inversor-sin-mapear': {
+    titulo: 'Inversor nuevo, sin clasificar todavía',
+    causa: 'El nombre no está en la tabla de inversores, donde vive la identidad de la empresa y su tipo de propiedad.',
+    fix: 'No requiere acción de quien carga los datos y no bloquea nada: va a la cola del encargado de la tabla de inversores. Mientras tanto la inversión se muestra igual, con propiedad desconocida en Tendencias.',
+    tipo: 'tabla-inversores'
+  },
   'fila/project-type': {
     titulo: 'Project_Type inválido',
     causa: 'Valor en inglés o fuera del enum (Construction, Investment, Joint venture).',
@@ -171,9 +191,9 @@ const RULE_HELP = {
     tipo: 'contenido'
   },
   'fila/coordenadas-sospechosas': {
-    titulo: 'Coordenadas fuera del rango LATAM',
-    causa: 'lat/lng posiblemente invertidas.',
-    fix: 'Revisar orden: latitud primero, longitud después.',
+    titulo: 'El punto cae fuera de su país',
+    causa: 'La coordenada queda fuera de la caja del país de la fila (con 1° de margen): lat/lng invertidas, un dígito de más, o la fila pertenece a otro país.',
+    fix: 'Revisar el orden (latitud primero, longitud después) y que el punto corresponda al país del archivo.',
     tipo: 'contenido'
   },
   'fila/caso-url': {
@@ -224,7 +244,11 @@ const tipoBadge = {
   formato: { label: 'Formato', cls: 'b-formato' },
   contenido: { label: 'Contenido', cls: 'b-contenido' },
   revisar: { label: 'Revisar', cls: 'b-revisar' },
-  'a-resolver-nuestro-lado': { label: 'Lo resolvemos nosotros', cls: 'b-nuestro' }
+  'a-resolver-nuestro-lado': { label: 'Lo resolvemos nosotros', cls: 'b-nuestro' },
+  // Categoría propia: no es "nosotros" genérico, es un rol nombrado con dueño.
+  // Quien carga los datos no tiene que hacer nada; quien mantiene la tabla de
+  // inversores sí, y esto es su cola de trabajo.
+  'tabla-inversores': { label: 'Encargado de la tabla de inversores', cls: 'b-inversores' }
 }
 
 // Agrupar issues por regla dentro de cada archivo.
@@ -280,6 +304,7 @@ const onboarding = results
 const totalFiles = results.length
 const failed = results.filter((r) => r.error || !r.stats.passed).length
 const passedCount = totalFiles - failed
+const heldCount = results.filter((r) => !r.error && r.stats.passed && r.published === false).length
 const totalRows = results.reduce((s, r) => s + (r.stats?.rows ?? 0), 0)
 const totalCuraciones = results.reduce((s, r) => s + (r.stats?.curaciones ?? 0), 0)
 
@@ -323,7 +348,7 @@ const ruleCard = (rule, items) => {
 }
 
 // Conteo por tipo (Formato / Contenido / …) sobre reglas de fila + de archivo.
-const TIPO_ORDER = ['contenido', 'formato', 'revisar', 'a-resolver-nuestro-lado']
+const TIPO_ORDER = ['contenido', 'formato', 'revisar', 'a-resolver-nuestro-lado', 'tabla-inversores']
 const fileTipoCounts = (r) => {
   const rules = new Map() // rule -> nº de casos
   for (const it of r.issues) rules.set(it.rule, (rules.get(it.rule) ?? 0) + 1)
@@ -344,10 +369,13 @@ const fileSection = (r) => {
     return `<details class="file bad"><summary><span class="fname">${esc(r.name)}</span><span class="status bad">no se pudo leer</span></summary><p class="err">${esc(r.error)}</p></details>`
   }
   const s = r.stats
-  const statusCls = s.passed ? 'ok' : 'bad'
-  const statusTxt = s.passed ? 'PASA' : 'FALLA'
+  const held = s.passed && r.published === false
+  const statusCls = held ? 'hold' : s.passed ? 'ok' : 'bad'
+  const statusTxt = held ? 'PASA · RETENIDO' : s.passed ? 'PASA' : 'FALLA'
   // Motivo del rechazo, en la mecánica del validador.
-  const blockReason = s.passed
+  const blockReason = held
+    ? 'El archivo cumple el esquema. No se publica todavía: es una decisión de ICLAC, no un problema del archivo. Se publica cambiando su fila de countries.csv a publish=yes.'
+    : s.passed
     ? s.warnings > 0
       ? 'Aceptado — solo avisos, no bloquean el pipeline.'
       : 'Aceptado.'
@@ -386,7 +414,7 @@ const fileSection = (r) => {
         <span class="chips">${chips}</span>
       </summary>
       <p class="meta">${s.rows} filas · ${s.validPct}% válidas (umbral ${s.threshold}%) · ${s.errors} errores · ${s.warnings} advertencias</p>
-      <p class="reason ${s.passed ? 'ok' : 'bad'}">${esc(blockReason)}</p>
+      <p class="reason ${statusCls}">${esc(blockReason)}</p>
       ${
         r.curaciones && r.curaciones.length
           ? `<div class="curaciones"><strong>Curación aplicada de nuestro lado (automática, sin pérdida):</strong><ul>${r.curaciones
@@ -443,6 +471,8 @@ const style = `
   .stat.ok .n { color:var(--ok); }
   .stat.bad { border-left:3px solid var(--bad); }
   .stat.bad .n { color:var(--bad); }
+  .stat.hold { border-left:3px solid var(--warn); }
+  .stat.hold .n { color:var(--warn); }
   .curaciones { background:color-mix(in srgb,var(--ok) 8%,transparent); border-radius:8px;
     padding:8px 14px; margin:10px 0; font-size:13.5px; }
   .curaciones ul { margin:6px 0 0; padding-left:18px; color:var(--muted); }
@@ -469,6 +499,7 @@ const style = `
   .file { border:1px solid var(--border); border-radius:12px; margin:10px 0; overflow:hidden; }
   .file.ok { border-left:4px solid var(--ok); }
   .file.bad { border-left:4px solid var(--bad); }
+  .file.hold { border-left:4px solid var(--warn); }
   .file > summary { list-style:none; cursor:pointer; padding:14px 18px;
     display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
   .file > summary::-webkit-details-marker { display:none; }
@@ -489,6 +520,7 @@ const style = `
   .status { font-size:12px; font-weight:700; padding:2px 8px; border-radius:999px; }
   .status.ok { background:color-mix(in srgb,var(--ok) 18%,transparent); color:var(--ok); }
   .status.bad { background:color-mix(in srgb,var(--bad) 18%,transparent); color:var(--bad); }
+  .status.hold { background:color-mix(in srgb,var(--warn) 18%,transparent); color:var(--warn); }
   .meta { color:var(--muted); font-size:13px; margin:0 0 12px; }
   .file-errors { background:color-mix(in srgb,var(--bad) 8%,transparent); border-radius:8px;
     padding:8px 14px; margin:10px 0; font-size:14px; }
@@ -512,10 +544,12 @@ const style = `
   .reason { font-size:13px; margin:0 0 12px; font-weight:600; }
   .reason.bad { color:var(--bad); }
   .reason.ok { color:var(--ok); }
+  .reason.hold { color:var(--warn); }
   .b-formato { background:color-mix(in srgb,var(--accent) 15%,transparent); color:var(--accent); }
   .b-contenido { background:color-mix(in srgb,var(--bad) 12%,transparent); color:var(--bad); }
   .b-revisar { background:color-mix(in srgb,var(--warn) 15%,transparent); color:var(--warn); }
   .b-nuestro { background:color-mix(in srgb,var(--ok) 15%,transparent); color:var(--ok); }
+  .b-inversores { background:color-mix(in srgb,var(--accent) 15%,transparent); color:var(--accent); }
   .why,.fix { margin:6px 0 0; font-size:14px; }
   details { margin-top:8px; }
   summary { cursor:pointer; color:var(--accent); font-size:13px; }
@@ -536,6 +570,7 @@ const body = `
     <div class="stat"><div class="n">${totalRows.toLocaleString('es')}</div><div class="l">filas</div></div>
     <div class="stat ok"><div class="n">${passedCount}</div><div class="l">aceptados</div></div>
     <div class="stat bad"><div class="n">${failed}</div><div class="l">rechazados</div></div>
+    ${heldCount ? `<div class="stat hold"><div class="n">${heldCount}</div><div class="l">retenidos</div></div>` : ''}
     <div class="stat"><div class="n">${totalCuraciones.toLocaleString('es')}</div><div class="l">curaciones auto</div></div>
   </div>
 
@@ -546,9 +581,17 @@ const body = `
     bloqueante (umbral: 95% de filas válidas). Los <strong>avisos</strong> no botan el archivo, son
     cosas a revisar. La categoría (<span class="badge b-formato">Formato</span>,
     <span class="badge b-contenido">Contenido</span>,
-    <span class="badge b-nuestro">Lo resolvemos nosotros</span>) dice de qué tipo es el arreglo, no
-    si bloquea.
+    <span class="badge b-nuestro">Lo resolvemos nosotros</span>,
+    <span class="badge b-inversores">Encargado de la tabla de inversores</span>) dice <strong>de quién
+    es el arreglo</strong>, no si bloquea.
   </div>
+  ${heldCount ? `<div class="callout">
+    <strong>Pasar el validador y publicarse son dos cosas distintas.</strong> ${heldCount} archivo(s)
+    cumplen el esquema pero todavía no salen en el mapa, porque el país está marcado como retenido
+    en <code>data/schema/countries.csv</code> (columna <code>publish</code>). Es una decisión
+    editorial de ICLAC, no un problema del archivo: cuando quieran publicarlo, esa fila pasa a
+    <code>publish,yes</code> y el país entra en el siguiente build.
+  </div>` : ''}
   <div class="callout">
     <strong>Curación automática activa.</strong> El validador ahora arregla de nuestro lado los
     problemas de <strong>formato</strong> que son deterministas y sin pérdida: el apóstrofe en

@@ -36,6 +36,22 @@ env:
   DATA_DIR: data/sources/countries
 
 jobs:
+  # Registro de países. Job aparte, a propósito: si countries.csv se rompe, el run
+  # tiene que quedar ROJO (define qué países existen y cuáles se publican, y un
+  # archivo roto ahí no es un estado normal). Separado del informe para que el
+  # informe se publique igual y muestre qué está pasando.
+  registro:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Validar registro de países
+        run: node scripts/validate_countries.mjs
+
   report:
     runs-on: ubuntu-latest
     environment:

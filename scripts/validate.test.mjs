@@ -143,10 +143,43 @@ describe('reglas de fila (errores)', () => {
     expect(errorsOf(r).filter((x) => x.rule === 'fila/coordenadas')).toHaveLength(2)
   })
 
-  it('lat/lng invertidas = warning heurística LATAM', () => {
-    // La Paz invertida: lng -17.4 queda fuera del rango esperado (lng < -30)
+  it('lat/lng invertidas = warning, con la caja de la región como respaldo', () => {
+    // La Paz invertida: lng -16.5 queda al este del borde oriental de la región.
     const r = run([makeRow({ Coordinates: '-68.15, -16.5' })])
     expect(rules(warningsOf(r))).toContain('fila/coordenadas-sospechosas')
+  })
+
+  describe('la caja es la del PROPIO país, no una ventana regional fija', () => {
+    // Cajas reales aproximadas. La regla vieja (lat < 15) marcaba Honduras entero.
+    const bounds = { HND: [12.98, 16.51, -89.35, -83.15], CHL: [-55.98, -17.5, -75.64, -66.42] }
+
+    it('Honduras al norte de 15°N ya no es sospechoso', () => {
+      const r = run(
+        [makeRow({ Id_Investment: 'HND-0001', Country: 'Honduras', COUNTRY_ISO_NUM: '340', COUNTRY_ISO_ALPHA3: 'HND', Coordinates: '15.81, -87.95' })],
+        { filename: 'HONDURAS.xlsx', countryBounds: bounds }
+      )
+      expect(rules(warningsOf(r))).not.toContain('fila/coordenadas-sospechosas')
+    })
+
+    it('un punto dentro de la región pero fuera de su país sí avisa, y nombra el país', () => {
+      // Punto peruano en un archivo chileno.
+      const r = run([makeRow({ Coordinates: '-6.62, -76.88' })], { countryBounds: bounds })
+      const w = warningsOf(r).find((x) => x.rule === 'fila/coordenadas-sospechosas')
+      expect(w?.message).toContain('Chile')
+    })
+
+    it('el margen de 1° deja pasar un punto apenas fuera del borde', () => {
+      const r = run([makeRow({ Coordinates: '-17.0, -70.0' })], { countryBounds: bounds })
+      expect(rules(warningsOf(r))).not.toContain('fila/coordenadas-sospechosas')
+    })
+
+    it('país sin geometría cae a la caja de la región', () => {
+      const r = run(
+        [makeRow({ Id_Investment: 'BRB-0001', Country: 'Barbados', COUNTRY_ISO_NUM: '052', COUNTRY_ISO_ALPHA3: 'BRB', Coordinates: '13.19, -59.54' })],
+        { filename: 'BARBADOS.xlsx', countryBounds: bounds }
+      )
+      expect(rules(warningsOf(r))).not.toContain('fila/coordenadas-sospechosas')
+    })
   })
 
   it('Area_EN con valor ES, typo o Services, con hint', () => {
@@ -280,6 +313,39 @@ describe('ownership (v1.4, warning en adopción)', () => {
   it('SASAC (forma vieja) = warning → Central SOE', () => {
     const r = run([makeRow({ Ownership: 'SASAC' })])
     expect(warningsOf(r).find((x) => x.rule === 'fila/ownership')?.message).toContain('Central SOE')
+  })
+})
+
+describe('inversor sin mapear (aviso para el steward, nunca bloquea)', () => {
+  const map = new Set(['state grid'])
+
+  it('sin investorMap no se chequea', () => {
+    const r = run([makeRow({ Investor: 'Empresa Nueva' })])
+    expect(rules(warningsOf(r))).not.toContain('fila/inversor-sin-mapear')
+  })
+
+  it('inversor conocido no dispara nada (match case-insensitive)', () => {
+    const r = run([makeRow({ Investor: 'State Grid' })], { investorMap: map })
+    expect(rules(warningsOf(r))).not.toContain('fila/inversor-sin-mapear')
+  })
+
+  it('inversor nuevo = warning, no error, y el archivo sigue pasando', () => {
+    const r = run([makeRow({ Investor: 'Empresa Nueva' })], { investorMap: map })
+    expect(rules(warningsOf(r))).toContain('fila/inversor-sin-mapear')
+    expect(rules(errorsOf(r))).not.toContain('fila/inversor-sin-mapear')
+    expect(r.stats.passed).toBe(true)
+  })
+
+  it('un aviso por nombre distinto, con el conteo de filas', () => {
+    const rows = [
+      makeRow({ Id_Investment: 'CHL-0001', Id_Seq: 1, Investor: 'Empresa Nueva' }),
+      makeRow({ Id_Investment: 'CHL-0001', Id_Seq: 2, Investor: 'Empresa Nueva' }),
+      makeRow({ Id_Investment: 'CHL-0002', Id_Seq: 1, Investor: 'Otra Nueva' })
+    ]
+    const w = warningsOf(run(rows, { investorMap: map })).filter((x) => x.rule === 'fila/inversor-sin-mapear')
+    expect(w).toHaveLength(2)
+    expect(w.find((x) => x.value === 'Empresa Nueva')?.message).toContain('2 filas')
+    expect(w.find((x) => x.value === 'Otra Nueva')?.message).toContain('1 fila')
   })
 })
 

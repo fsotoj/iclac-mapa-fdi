@@ -1,9 +1,22 @@
 # Esquema canónico de datos — mapa_FDI
 
-**Versión:** 1.4 (2026-07-23)
+**Versión:** 1.5 (2026-07-28)
 **Estado:** contrato vigente para el flujo por país. Base del validador JS de GH Actions (2.3).
 **Fuente de verdad:** Parte II (II.1–II.7) de `docs/sprint_3/entrega_2606_validacion_esquema_04072026.html` (entregable cliente). Este .md es la versión técnica de ese contrato.
 
+> **Changelog v1.5 (2026-07-28):** una sola corrección, pero de fondo — **`Ownership` sale del
+> contrato**, junto con su columna de trabajo `Ownership_Original`.
+> - *Por qué:* v1.4 la metió al contrato y a la vez §5.1 declaraba que la fuente era
+>   `investors_map.csv`. Dos fuentes para un mismo hecho, y **divergieron**: la base del cliente
+>   quedó con 0 `Local SOE` y la tabla nuestra con 21. La propiedad es atributo de la **empresa**, no
+>   del deal, así que su lugar natural es la tabla de empresas.
+> - *Qué implica:* el archivo del país ya no la lleva. Si reaparece, el validador la trata como
+>   columna extra y la ignora; la regla de enum se mantiene como red por si vuelve con valores.
+> - Ejecuta la propuesta de handover que §5.1 ya dejaba escrita en v1.4.
+> - `Ownership_Original` era la copia pre-rename (`SASAC`/`SOE` en 11.909 de 12.532 filas): columna
+>   de trabajo de las que §1 prohíbe, que se salvaba sólo porque el patrón es `_ORIG` y ésta termina
+>   en `_Original`.
+>
 > **Changelog v1.4 (2026-07-23):** cambios para que el validador sea **resiliente** (rojo = problema
 > real, no cosmético) y para que incorporar un país no requiera tocar código.
 > - **Nombre de archivo case-insensitive.** `chile.xlsx` y `CHILE.xlsx` valen igual. La diferencia
@@ -121,7 +134,6 @@ Obligatoriedad:
 | `Path` | entero | **req** | `0` para `Punto`; `≥1` para `Vector` | Numera la línea dentro de un `Id_Investment`. Agrupa vértices `(id, Path)`. Ver §1. |
 | `Area_EN` | enum | **req** | 8 sectores canónicos (`sectores.md`) | **Match exacto** con una de las 8 claves EN; el frontend traduce a es/en/cn vía i18n keyed por `Area_EN`. Mismatch = punto **gris** + categoría duplicada en filtro, en los 3 idiomas. |
 | `Area_ES` | texto | opt | — | **v1.4: informativa, ya no se valida por formato** (el mapa traduce desde `Area_EN`). Sólo se chequea el **conflicto conceptual** con `Area_EN` (warning): si apunta a otro sector, una de las dos está mal. |
-| `Ownership` | enum | **req** ⏳ | `Central SOE` \| `Local SOE` \| `POE` \| `MIXED` \| `UNKNOWN` | Propiedad de la empresa inversora. **La manda la base del cliente** (v1.4, §5.1). Categorías de Yifang Wang/Dialogue. Valor fuera del enum = **warning** (en adopción: `SOE`→`Local SOE`, `SASAC`→`Central SOE`), no bota. La identidad canónica de empresa (para el Sankey) sigue de nuestro lado en `investors_map.csv`. |
 | `Detail_ES` | texto | opt | | Descripción en español. |
 | `Detail_EN` | texto | opt | | Descripción en inglés. |
 | `Investment` | decimal | opt | **millones de USD** (✅ confirmado por cliente, 2026-07-05) | Queda **opcional**: hay inversiones reales sin monto público. Mismo valor en todas las filas de una inversión. |
@@ -191,22 +203,27 @@ la garantiza el prefijo.
 `scripts/build_id_map.mjs`) — los 450 ids actuales mapeados al formato nuevo (id actual → id nuevo,
 con país e `Id_Seq`), verificados sin colisiones. Basta aplicar el reemplazo.
 
-### 5.1 `Ownership`: fuente = revisión experta (`investors_map.csv`), NO la base (v1.4)
+### 5.1 `Ownership` no es columna de la base (v1.5)
 
-**Fuente de verdad = `data/schema/investors_map.csv`**, curado de nuestro lado desde la revisión
-externa (Dialogue/Yifang Wang, 17-07). Enum `Central SOE / Local SOE / POE / MIXED / UNKNOWN`. El
-Sankey y el filtro leen ownership de ahí (`investors_map.json`), **no** de la columna de la base.
+**Fuente única = `data/schema/investors_map.csv`**, curado de nuestro lado desde la revisión externa
+(Dialogue/Yifang Wang, 17-07). Enum `Central SOE / Local SOE / POE / MIXED / UNKNOWN`. El Sankey y el
+filtro leen ownership de ahí (`investors_map.json`).
 
-**Por qué no la base:** la verificación del cruce (`scripts/audit_ownership_cross.mjs`, 23-07)
-mostró que la entrega del cliente **no aplicó ninguna de las 30 correcciones** de la revisión
-experta (hizo solo el rename mecánico `SASAC`→`Central SOE`). Clasificar propiedad de firmas chinas
-(central vs local vs mixta) es trabajo experto, no de data-entry. Por eso ownership + identidad de
-empresa viven en una tabla analista-owned (`investors_map.csv`), no en el flujo por país.
+**Por qué es atributo de la empresa y no del deal:** la propiedad última de una firma china no cambia
+según en qué país invierta. Ponerla por fila obliga a repetir el mismo hecho miles de veces y a
+mantenerlo sincronizado, que es justo lo que no pasó.
 
-La columna `Ownership` del archivo del cliente es **opcional / cross-check**: el validador avisa
-(warning) si un valor no está en el enum (`SOE`→`Local SOE`, `SASAC`→`Central SOE`), pero no la usa
-como fuente. **Propuesta de handover (ver `next_steps` Parte E):** sacar `Ownership` del contrato
-del cliente y mantenerla solo de nuestro lado.
+**Qué mostró el intento de tenerla en los dos lados** (v1.4 → v1.5): el cruce
+(`scripts/audit_ownership_cross.mjs`, 23-07) verificó que la entrega del cliente **no aplicó ninguna
+de las 30 correcciones** de la revisión experta — sólo el rename mecánico `SASAC`→`Central SOE`. A
+28-07 su base sigue con **0 `Local SOE`** y la tabla nuestra con 21. No es negligencia: clasificar
+propiedad de firmas chinas (central vs local vs mixta) es trabajo experto, no de data-entry, y
+pedírselo a quien carga los datos era el error de diseño.
+
+**Estado v1.5:** la columna se sacó de los archivos por país (28-07,
+`scripts/drop_base_columns.mjs`, con respaldo en `docs/sprint_5/respaldo_columnas_ownership.xlsx`).
+Si reaparece, el validador la trata como columna extra y la ignora; la regla `fila/ownership`
+se mantiene como red por si vuelve con valores fuera del enum.
 
 ### 5.2 Convención de dos lugares (24-07)
 
@@ -226,8 +243,15 @@ El manejo del inversor se reparte en **dos artefactos, con responsabilidades dis
    experto (estructura corporativa china) y **NO es tarea permanente nuestra ni del data-entry**.
    Antes del cierre, ICLAC debe designar quién la mantiene (equipo con ese conocimiento, o Diálogo).
 
-Inversor nuevo que aparece en la base y no está en la tabla → cae a `UNKNOWN` y lo lista
-`scripts/check_investor_coverage.mjs`; quien tenga la tabla a cargo lo clasifica. El mapa no se rompe.
+Inversor nuevo que aparece en la base y no está en la tabla → cae a `UNKNOWN`. El mapa no se rompe;
+el steward lo ve por dos vías:
+
+- **En cada validación** (28-07): el validador emite `fila/inversor-sin-mapear`, **warning, nunca
+  bloqueante** — un inversor sin clasificar no es un defecto del archivo de datos, es trabajo
+  pendiente en otra tabla. Un aviso por **nombre distinto**, no por fila (el consorcio de Honduras
+  son 71 filas del mismo nombre). El chequeo se salta solo si `investors_map.csv` no está presente,
+  porque el repo del cliente todavía no lo lleva.
+- **A pedido:** `scripts/check_investor_coverage.mjs`, con monto y nº de inversiones, para priorizar.
 
 ### Fuera del esquema: `Company_Id` / `previous_fdi`
 
@@ -268,7 +292,6 @@ Vector               enum   req   {Punto,Vector}
 Path                 int    req   Vector==Punto => 0 ; Vector==Vector => >=1
 Area_EN              enum   req   sectores.md::EN (match exacto, case-sensitive)
 Area_ES              text   opt   INFORMATIVA (v1.4, no se valida formato) ; sólo warning si concepto != Area_EN (fila/sector-conflicto)
-Ownership            enum   req   {Central SOE,Local SOE,POE,MIXED,UNKNOWN} (v1.4, la manda la base — §5.1)
 Detail_ES            text   opt
 Detail_EN            text   opt
 Investment           number opt   >=0 ; unit=MUSD (confirmado)
@@ -347,8 +370,8 @@ FDI** (`Area_EN = Infrastructure`, `Area_ES = Infraestructura`; ver `sectores.md
 ## 10. País como dato + geometría (v1.4)
 
 El alcance de países dejó de estar hardcodeado en el validador. Vive en el registro
-`data/schema/countries.csv` (columnas `alpha3,numeric,name,aliases,filename`), **pre-cargado por
-nosotros** con toda LATAM + Centroamérica + Caribe. **México NO está en la semilla a propósito**
+`data/schema/countries.csv` (columnas `alpha3,numeric,name,aliases,filename,publish`), **pre-cargado
+por nosotros** con toda LATAM + Centroamérica + Caribe. **México NO está en la semilla a propósito**
 (exclusión metodológica 14-07): un `mexico.xlsx` cae como "país fuera de la lista".
 
 Incorporar un país nuevo:
@@ -356,9 +379,32 @@ Incorporar un país nuevo:
    (`scripts/build_borders.mjs` → `data/sources/geo/borders.geojson`). Sin borde, el validador
    avisa `archivo/sin-borde` (no bota); el país no se dibuja hasta tenerlo.
 2. **Datos sin bloqueantes:** el archivo del país pasa el contrato (§3/§7).
-3. **Filtro en build:** el ETL ingesta **sólo los países que pasan**; `build_borders` arma el
-   `south-america.geojson` del mapa **sólo con esos**. El mapa muestra únicamente países validados
-   (validación ↔ "en vivo" atados por construcción).
+3. **Decisión de publicar:** su fila del registro dice `publish,yes`.
+
+La geometría además define la caja contra la que se chequean las coordenadas de ese país
+(`fila/coordenadas-sospechosas`, margen 1°). Un país sin borde cae a la caja de toda la región, así
+que el chequeo es más laxo hasta que se le siembre la geometría.
+
+### 10.1 Las dos compuertas: validar ≠ publicar
+
+Son preguntas distintas y las contesta gente distinta, así que viven en lugares distintos:
+
+| Compuerta | Pregunta | Quién contesta | Dónde |
+|---|---|---|---|
+| Validación | ¿el dato está bien? | el validador, mecánicamente | reglas de §3/§7 |
+| Publicación | ¿lo mostramos ya? | ICLAC, por decisión editorial | columna `publish` de `countries.csv` |
+
+Antes eran una sola: arreglar un archivo lo publicaba en el siguiente build, sin que nadie lo
+decidiera. Con `publish,no` el país se sigue validando y sale en el informe con estado propio
+(«PASA · RETENIDO»), pero el ETL no lo ingesta y `build_borders` no le arma el polígono — si no,
+quedaría un país vacío clickeable en el mapa.
+
+**Sin columna, o con la celda vacía, publica.** El default no puede ser retener: una versión vieja
+del CSV apagaría el mapa entero. Se retiene sólo lo que está escrito `no`.
+
+Para publicar un país retenido: cambiar su fila a `publish,yes` (se edita en el navegador, GitHub
+abre el CSV como texto) y correr `npm run etl` + `node scripts/build_borders.mjs data/sources/countries`.
+Para inspeccionar localmente sin cambiar el CSV: `npm run etl -- --include-unpublished`.
 
 El validador y el ETL cargan el registro vía `scripts/lib/load_registry.mjs`; el núcleo
 (`scripts/lib/validate.mjs`) lo recibe por `opts.registry` y sigue puro.

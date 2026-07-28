@@ -8,14 +8,19 @@
 //      países de la región (la tenemos nosotros).
 //
 //   2. public/data/south-america.geojson — MAPA: bordes que el frontend dibuja.
-//      Filtrado a los países cuyo archivo de datos PASA la validación (si se pasa
-//      un directorio de datos), más los territorios decorativos que el mapa ya
-//      mostraba (Guayana Francesa, Malvinas). México NO entra (exclusión).
+//      Filtrado a los países que PASAN validación (si se pasa un directorio de
+//      datos) Y que el registro marca `publish=yes`, más los territorios
+//      decorativos que el mapa ya mostraba (Guayana Francesa, Malvinas).
+//      México NO entra (exclusión).
+//
+// La compuerta de publicación va acá y no solo en el ETL: sin borde, un país
+// retenido tampoco deja un polígono vacío clickeable en el mapa.
 //
 // Uso:
 //   node scripts/build_borders.mjs [dirDatos]
-//   - sin dirDatos: el mapa incluye todos los países del registro con geometría.
-//   - con dirDatos: el mapa incluye solo los que pasan validación (filtro en build).
+//   - sin dirDatos: el mapa incluye todos los países del registro con geometría
+//     que estén marcados para publicar.
+//   - con dirDatos: además exige pasar validación (filtro en build).
 //
 // Idempotente. Fuente Natural Earth: legacy/data/america.geojson (iso_a3/iso_n3/name).
 import XLSX from 'xlsx'
@@ -112,7 +117,11 @@ const fold = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').trim().to
 const nameToA3 = new Map()
 for (const [name, info] of Object.entries(registry.countryIso)) nameToA3.set(fold(name), info.alpha3)
 
-const includeA3 = passingA3 ?? new Set(seedFeatures.map((f) => f.properties.iso_a3))
+// Compuerta de publicación (countries.csv), independiente de la validación.
+const candidateA3 = passingA3 ?? new Set(seedFeatures.map((f) => f.properties.iso_a3))
+const held = [...candidateA3].filter((a3) => registry.publishByAlpha3?.[a3] === false)
+const includeA3 = new Set([...candidateA3].filter((a3) => !held.includes(a3)))
+if (held.length) console.log(`Retenidos (publish=no en countries.csv): ${held.sort().join(', ')}`)
 const currentByA3 = new Map() // alpha3 -> feature del mapa actual (alta resolución)
 const decorative = []
 if (existsSync(CURRENT_MAP)) {

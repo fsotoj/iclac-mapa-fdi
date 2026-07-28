@@ -5,10 +5,11 @@ import { dirname, resolve, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { canonCountry } from './lib/normalize.mjs'
 import { validateRows } from './lib/validate.mjs'
-import { loadRegistry, loadCountryBorders } from './lib/load_registry.mjs'
+import { loadRegistry, loadCountryBorders, loadCountryBounds } from './lib/load_registry.mjs'
 
 const registry = loadRegistry()
 const countryBorders = registry ? loadCountryBorders(registry) : null
+const countryBounds = registry ? loadCountryBounds(registry) : null
 const canonIndex = registry?.canonIndex
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -178,7 +179,9 @@ const loadInvestorMap = path => {
       company_id: c[iId],
       company_canonical: c[iCanon],
       ownership: c[iOwn],
-      is_consortium: c[iCons] === 'true'
+      // TRUE/FALSE en mayúsculas en el CSV: sin toLowerCase el flag sale siempre
+      // false y el Sankey nunca expande el consorcio a sus miembros.
+      is_consortium: String(c[iCons] ?? '').trim().toLowerCase() === 'true'
     }
     const members = (c[iMembers] ?? '').split('|').map(s => s.trim()).filter(Boolean)
     if (members.length) entry.members = members
@@ -356,18 +359,37 @@ const readWorkbook = (file) => {
 
 let rawRows = []
 if (existsSync(inputPath) && statSync(inputPath).isDirectory()) {
-  // Flujo por país: un xlsx por país. FILTRO EN BUILD (decisión 23-07): solo
-  // ingesta los países cuyo archivo PASA la validación. Así el mapa muestra
-  // únicamente países validados; los que fallan se omiten (el informe explica).
+  // Flujo por país: un xlsx por país. DOS COMPUERTAS, deliberadamente separadas:
+  //
+  //   1. Validación (decisión 23-07): solo entra el país cuyo archivo PASA.
+  //      Responde "¿el dato está bien?" y la contesta el validador.
+  //   2. Publicación (`publish` en countries.csv): el país puede estar impecable
+  //      y el cliente aún no querer mostrarlo. Responde "¿lo publicamos?" y la
+  //      contesta ICLAC, editando el CSV. Sin esto, arreglar un archivo lo
+  //      publicaba de inmediato, sin que nadie lo decidiera.
+  //
+  // `--no-filter` salta la primera; `--include-unpublished` la segunda.
   const files = readdirSync(inputPath)
     .filter((f) => f.endsWith('.xlsx') && !f.startsWith('~$'))
     .sort()
   const noFilter = process.argv.includes('--no-filter')
-  console.log(`Reading dir: ${inputPath} (${files.length} archivos)${noFilter ? ' [sin filtro]' : ''}`)
+  const includeUnpublished = process.argv.includes('--include-unpublished')
+  // filename canónico (MAYÚSCULA, sin .xlsx) -> ¿publica?
+  const publishByFilename = {}
+  for (const [a3, fn] of Object.entries(registry?.filenameByAlpha3 ?? {})) {
+    publishByFilename[fn.toUpperCase()] = registry.publishByAlpha3?.[a3] !== false
+  }
+  const flags = [noFilter && 'sin filtro', includeUnpublished && 'incluye retenidos'].filter(Boolean)
+  console.log(`Reading dir: ${inputPath} (${files.length} archivos)${flags.length ? ` [${flags.join(', ')}]` : ''}`)
   for (const f of files) {
+    const stem = f.slice(0, -'.xlsx'.length).toUpperCase()
+    if (!includeUnpublished && publishByFilename[stem] === false) {
+      console.log(`  ${f}: RETENIDO — countries.csv lo tiene con publish=no`)
+      continue
+    }
     const { rows, sheetCount } = readWorkbook(resolve(inputPath, f))
     if (!noFilter) {
-      const { stats } = validateRows(rows, { filename: f, registry, countryBorders, sheetCount })
+      const { stats } = validateRows(rows, { filename: f, registry, countryBorders, countryBounds, sheetCount })
       if (!stats.passed) {
         console.log(`  ${f}: OMITIDO — no pasa validación (${stats.validPct}% válidas, ${stats.errors} errores)`)
         continue

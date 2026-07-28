@@ -41,7 +41,9 @@ for (const line of rows.slice(1)) {
     company_id: c[iId],
     company_canonical: c[iCanon],
     ownership: c[iOwn],
-    is_consortium: c[iCons] === 'true'
+    // El CSV escribe TRUE/FALSE en mayúsculas: comparar en minúsculas o el flag
+    // sale siempre false y el Sankey nunca expande el consorcio a sus miembros.
+    is_consortium: String(c[iCons] ?? '').trim().toLowerCase() === 'true'
   }
   const members = (c[iMembers] ?? '').split('|').map(s => s.trim()).filter(Boolean)
   if (members.length) entry.members = members

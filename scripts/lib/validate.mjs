@@ -61,6 +61,15 @@ export const COUNTRY_ISO = {
 
 export const ID_FORMAT = /^[A-Z]{3}-\d{4}$/
 
+// Margen sobre la caja del país, en grados (~111 km). Cubre puertos, plataformas
+// marinas y la precisión despareja de las coordenadas de la base. No pretende
+// atrapar un punto corrido 50 km: atrapa lat/lng invertidas y filas del país
+// equivocado, que se van por decenas de grados.
+export const COORD_MARGIN_DEG = 1
+// Respaldo cuando no hay geometría del país (islas chicas del Caribe, hoy 7 del
+// registro): la caja de toda la región cubierta. [minLat, maxLat, minLng, maxLng]
+export const REGION_BOX = [-56, 28, -95, -34]
+
 // Nombre de archivo por país: país en MAYÚSCULA, inglés, sin tildes (schema §1).
 // Convención adoptada de la primera carga del cliente al repo (09-07-2026);
 // reemplaza la "minúscula/español" de v1.2.
@@ -154,14 +163,24 @@ const conceptOfAreaEs = (es) => {
  * @param {number} [opts.sheetCount=1] nº de hojas del workbook
  * @param {object} [opts.registry] registro de países (countries.csv). Si se omite, usa el hardcodeado.
  * @param {Set<string>} [opts.countryBorders] alpha-3 con borde de país disponible (para el chequeo de geometría). null = no chequear.
+ * @param {Set<string>} [opts.investorMap] nombres conocidos de la tabla de inversores, en minúsculas (raw + canónico). null = no chequear.
+ * @param {Record<string,number[]>} [opts.countryBounds] alpha-3 → [minLat,maxLat,minLng,maxLng]. Sin esto, las coordenadas se comparan contra la caja de toda la región.
  */
 export const validateRows = (rows, opts = {}) => {
-  const { filename = null, strictIds = false, threshold = 95, sheetCount = 1, registry = null, countryBorders = null } = opts
+  const { filename = null, strictIds = false, threshold = 95, sheetCount = 1, registry = null, countryBorders = null, investorMap = null, countryBounds = null } = opts
   // Registro de países: del CSV si se pasa, o el hardcodeado como fallback (tests/legacy).
   const ISO = registry?.countryIso ?? COUNTRY_ISO
   const FN_BY_A3 = registry?.filenameByAlpha3 ?? FILENAME_BY_ALPHA3
   const CANON_FN = registry?.canonicalFilenames ?? CANONICAL_FILENAMES
   const canonIndex = registry?.canonIndex // undefined → canonCountry usa su índice por defecto
+  // alpha-3 → nombre para los mensajes. Del registro si está; si no, la primera
+  // entrada de ISO que apunte a ese alpha-3 (los alias vienen después del canónico).
+  const countryName = (a3) => {
+    if (!a3) return 'su país'
+    if (registry?.canonicalByAlpha3?.[a3]) return registry.canonicalByAlpha3[a3]
+    for (const [name, info] of Object.entries(ISO)) if (info.alpha3 === a3) return name
+    return a3
+  }
   const fileErrors = []
   const issues = []
   const curaciones = [] // { rule, kind, column, count } — arreglos deterministas de nuestro lado
@@ -270,7 +289,12 @@ export const validateRows = (rows, opts = {}) => {
   const idMeta = new Map() // id -> { country, investor, year, amount, row }
   const lineMeta = new Map() // `${id}|${path}` (Vector) -> { detail, amount, area, row }
   const coordToIds = new Map() // coordKey -> Map(id -> primera fila)
+  const investorSeen = new Map() // Investor tal cual viene -> { row, count }
   const filenameCountry = fnMatch.matched ? fnMatch.canonical.slice(0, -'.xlsx'.length) : null
+  // alpha-3 del archivo: respaldo para ubicar la fila cuando su Country no matchea.
+  const fileAlpha3 = filenameCountry
+    ? (Object.keys(FN_BY_A3).find((a3) => FN_BY_A3[a3] === filenameCountry) ?? null)
+    : null
 
   const fail = (i, rule, column, value, message) => {
     rowValid[i] = false
@@ -316,9 +340,20 @@ export const validateRows = (rows, opts = {}) => {
       if (!coords) {
         fail(i, 'fila/coordenadas', 'Coordinates', coordRaw,
           `Coordenadas "${coordRaw}" inválidas: formato esperado "lat, lng" con lat entre -90 y 90 y lng entre -180 y 180 (decimal con punto).`)
-      } else if (coords[0] >= 15 || coords[1] >= -30) {
-        push('warning', 'fila/coordenadas-sospechosas', excelRow, 'Coordinates', coordRaw,
-          `Coordenadas fuera del rango esperado para LATAM continental (lat < 15, lng < -30): revisar si lat y lng están invertidas.`)
+      } else {
+        // Se compara contra la caja del PROPIO país, no contra una ventana
+        // regional fija. La ventana vieja (lat < 15) estaba calibrada para
+        // Sudamérica y marcaba como sospechosas 35 de las 75 filas de Honduras,
+        // que están bien: el país llega hasta ~16°N (28-07, reportado por Flo).
+        const a3 = ISO[cleanStr(row.Country)]?.alpha3 ?? fileAlpha3
+        const box = (countryBounds && a3 && countryBounds[a3]) || REGION_BOX
+        const where = box === REGION_BOX ? 'la región' : countryName(a3)
+        const [lat, lng] = coords
+        const m = COORD_MARGIN_DEG
+        if (lat < box[0] - m || lat > box[1] + m || lng < box[2] - m || lng > box[3] + m) {
+          push('warning', 'fila/coordenadas-sospechosas', excelRow, 'Coordinates', coordRaw,
+            `El punto (lat ${lat}, lng ${lng}) cae fuera de ${where} (margen ${m}°): revisar si lat y lng están invertidas o si la fila corresponde a otro país.`)
+        }
       }
     }
 
@@ -375,6 +410,16 @@ export const validateRows = (rows, opts = {}) => {
       const hint = OWNERSHIP_HINTS[ownership] ? ` (¿quiso decir "${OWNERSHIP_HINTS[ownership]}"?)` : ''
       push('warning', 'fila/ownership', excelRow, 'Ownership', ownership,
         `Ownership "${ownership}" no está en el enum (${OWNERSHIP_TYPES.join(', ')})${hint}.`)
+    }
+
+    // -- Investor: se acumula acá y se revisa en el post-pass --
+    // Un nombre nuevo puede repetirse en cientos de filas (el consorcio de
+    // Honduras son 71): el aviso va una vez por nombre, no una por fila.
+    const investorRaw = cleanStr(row.Investor)
+    if (investorRaw !== null) {
+      const prev = investorSeen.get(investorRaw)
+      if (prev) prev.count += 1
+      else investorSeen.set(investorRaw, { row: excelRow, count: 1 })
     }
 
     // -- Project_Type --
@@ -539,6 +584,19 @@ export const validateRows = (rows, opts = {}) => {
     const [a, b] = key.split('|')
     push('warning', 'archivo/geometria-compartida', idMeta.get(a)?.row ?? 0, 'Coordinates', `${a} + ${b}`,
       `Las inversiones "${a}" y "${b}" comparten ${shared} coordenadas idénticas: revisar si son la misma operación registrada dos veces (ej: anuncio y cierre) o etapas legítimas del mismo proyecto.`)
+  }
+
+  // ---- Post-pass: inversores que no están en la tabla de inversores ----
+  // Nunca bloquea. La tabla no la mantiene quien carga los datos: la identidad
+  // canónica y la propiedad viven en data/schema/investors_map.csv y las decide
+  // el steward. Un inversor sin fila ahí no rompe el mapa, cae a UNKNOWN en
+  // Tendencias; este aviso es la cola de trabajo de esa persona.
+  if (investorMap) {
+    for (const [name, meta] of investorSeen) {
+      if (investorMap.has(name.toLowerCase())) continue
+      push('warning', 'fila/inversor-sin-mapear', meta.row, 'Investor', name,
+        `"${name}" no está en la tabla de inversores (${meta.count} fila${meta.count === 1 ? '' : 's'}): sin clasificar cae a propiedad desconocida en Tendencias. No bloquea la carga.`)
+    }
   }
 
   // ---- Resultado ----

@@ -14,6 +14,7 @@
     "validate": "node scripts/validate_data.mjs",
     "validate:report": "node scripts/build_validation_report.mjs",
     "validate:investors": "node scripts/validate_investors.mjs",
+    "validate:countries": "node scripts/validate_countries.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

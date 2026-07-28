@@ -1,33 +1,33 @@
-alpha3,numeric,name,aliases,filename
-ARG,032,Argentina,,ARGENTINA
-BOL,068,Bolivia,,BOLIVIA
-BRA,076,Brazil,Brasil,BRAZIL
-CHL,152,Chile,,CHILE
-COL,170,Colombia,,COLOMBIA
-ECU,218,Ecuador,,ECUADOR
-GUY,328,Guyana,,GUYANA
-PRY,600,Paraguay,,PARAGUAY
-PER,604,Peru,,PERU
-SUR,740,Suriname,Surinam,SURINAME
-URY,858,Uruguay,,URUGUAY
-VEN,862,Venezuela,,VENEZUELA
-BLZ,084,Belize,Belice,BELIZE
-CRI,188,Costa Rica,,COSTA_RICA
-SLV,222,El Salvador,,EL_SALVADOR
-GTM,320,Guatemala,,GUATEMALA
-HND,340,Honduras,,HONDURAS
-NIC,558,Nicaragua,,NICARAGUA
-PAN,591,Panama,,PANAMA
-CUB,192,Cuba,,CUBA
-DOM,214,Dominican Republic,Republica Dominicana,DOMINICAN_REPUBLIC
-HTI,332,Haiti,,HAITI
-JAM,388,Jamaica,,JAMAICA
-TTO,780,Trinidad and Tobago,Trinidad y Tobago,TRINIDAD_TOBAGO
-BHS,044,Bahamas,,BAHAMAS
-BRB,052,Barbados,,BARBADOS
-ATG,028,Antigua and Barbuda,Antigua y Barbuda,ANTIGUA_BARBUDA
-DMA,212,Dominica,,DOMINICA
-GRD,308,Grenada,Granada,GRENADA
-KNA,659,Saint Kitts and Nevis,San Cristobal y Nieves,SAINT_KITTS_NEVIS
-LCA,662,Saint Lucia,Santa Lucia,SAINT_LUCIA
-VCT,670,Saint Vincent and the Grenadines,San Vicente y las Granadinas,SAINT_VINCENT_GRENADINES
+alpha3,numeric,name,aliases,filename,publish
+ARG,032,Argentina,,ARGENTINA,yes
+BOL,068,Bolivia,,BOLIVIA,yes
+BRA,076,Brazil,Brasil,BRAZIL,yes
+CHL,152,Chile,,CHILE,yes
+COL,170,Colombia,,COLOMBIA,yes
+ECU,218,Ecuador,,ECUADOR,yes
+GUY,328,Guyana,,GUYANA,yes
+PRY,600,Paraguay,,PARAGUAY,yes
+PER,604,Peru,,PERU,yes
+SUR,740,Suriname,Surinam,SURINAME,yes
+URY,858,Uruguay,,URUGUAY,yes
+VEN,862,Venezuela,,VENEZUELA,yes
+BLZ,084,Belize,Belice,BELIZE,yes
+CRI,188,Costa Rica,,COSTA_RICA,no
+SLV,222,El Salvador,,EL_SALVADOR,yes
+GTM,320,Guatemala,,GUATEMALA,yes
+HND,340,Honduras,,HONDURAS,no
+NIC,558,Nicaragua,,NICARAGUA,no
+PAN,591,Panama,,PANAMA,yes
+CUB,192,Cuba,,CUBA,yes
+DOM,214,Dominican Republic,Republica Dominicana,DOMINICAN_REPUBLIC,yes
+HTI,332,Haiti,,HAITI,yes
+JAM,388,Jamaica,,JAMAICA,yes
+TTO,780,Trinidad and Tobago,Trinidad y Tobago,TRINIDAD_TOBAGO,no
+BHS,044,Bahamas,,BAHAMAS,yes
+BRB,052,Barbados,,BARBADOS,yes
+ATG,028,Antigua and Barbuda,Antigua y Barbuda,ANTIGUA_BARBUDA,yes
+DMA,212,Dominica,,DOMINICA,yes
+GRD,308,Grenada,Granada,GRENADA,yes
+KNA,659,Saint Kitts and Nevis,San Cristobal y Nieves,SAINT_KITTS_NEVIS,yes
+LCA,662,Saint Lucia,Santa Lucia,SAINT_LUCIA,yes
+VCT,670,Saint Vincent and the Grenadines,San Vicente y las Granadinas,SAINT_VINCENT_GRENADINES,yes

@@ -16,18 +16,21 @@
  *   filenameByAlpha3: Record<string,string>,
  *   canonicalFilenames: Set<string>,
  *   canonicalByAlpha3: Record<string,string>,
- *   list: Array<{alpha3:string,num:string,name:string,aliases:string[],filename:string}>
+ *   publishByAlpha3: Record<string,boolean>,
+ *   list: Array<{alpha3:string,num:string,name:string,aliases:string[],filename:string,publish:boolean}>
  * }}
  */
 export const parseCountriesCsv = (text) => {
   const lines = text.trim().split(/\r?\n/)
   const header = lines[0].split(',').map((h) => h.trim())
   const col = (n) => header.indexOf(n)
-  const [iA3, iNum, iName, iAlias, iFile] = ['alpha3', 'numeric', 'name', 'aliases', 'filename'].map(col)
+  const [iA3, iNum, iName, iAlias, iFile, iPub] =
+    ['alpha3', 'numeric', 'name', 'aliases', 'filename', 'publish'].map(col)
 
   const countryIso = {}
   const filenameByAlpha3 = {}
   const canonicalByAlpha3 = {}
+  const publishByAlpha3 = {}
   const list = []
 
   for (const line of lines.slice(1)) {
@@ -39,12 +42,18 @@ export const parseCountriesCsv = (text) => {
     if (!alpha3 || !name) continue
     const aliases = (c[iAlias] ?? '').split('|').map((s) => s.trim()).filter(Boolean)
     const filename = ((c[iFile] ?? '').trim() || name.toUpperCase().replace(/\s+/g, '_'))
+    // Compuerta de publicación, separada de la de validación: un archivo puede
+    // estar impecable y el cliente aún no querer publicarlo. Sin columna, o con
+    // la celda vacía, publica (el default no puede ser "retener" o una versión
+    // vieja del CSV apagaría el mapa entero).
+    const publish = !['no', 'false', '0'].includes((c[iPub] ?? '').trim().toLowerCase())
 
     countryIso[name] = { alpha3, num }
     for (const a of aliases) countryIso[a] = { alpha3, num }
     filenameByAlpha3[alpha3] = filename
     canonicalByAlpha3[alpha3] = name
-    list.push({ alpha3, num, name, aliases, filename })
+    publishByAlpha3[alpha3] = publish
+    list.push({ alpha3, num, name, aliases, filename, publish })
   }
 
   return {
@@ -52,6 +61,7 @@ export const parseCountriesCsv = (text) => {
     filenameByAlpha3,
     canonicalFilenames: new Set(Object.values(filenameByAlpha3)),
     canonicalByAlpha3,
+    publishByAlpha3,
     list
   }
 }

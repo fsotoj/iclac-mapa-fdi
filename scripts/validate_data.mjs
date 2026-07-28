@@ -14,7 +14,7 @@ import { appendFileSync, existsSync, readdirSync, statSync } from 'node:fs'
 import { basename, resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { validateRows } from './lib/validate.mjs'
-import { loadRegistry, loadCountryBorders } from './lib/load_registry.mjs'
+import { loadRegistry, loadCountryBorders, loadInvestorMap, loadCountryBounds } from './lib/load_registry.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(__dirname, '..')
@@ -57,6 +57,18 @@ let anyFailed = false
 // Registro de países (país como dato) + bordes disponibles para el chequeo de geometría.
 const registry = loadRegistry()
 const countryBorders = registry ? loadCountryBorders(registry) : null
+const countryBounds = registry ? loadCountryBounds(registry) : null
+const investorMap = loadInvestorMap()
+
+// Compuerta de publicación (columna `publish` de countries.csv), separada de la
+// validación: un archivo puede estar impecable y aun así no publicarse todavía.
+// Se informa para que quien sube el archivo no lo lea como un fallo suyo.
+const isPublished = (fileName) => {
+  const stem = fileName.replace(/\.xlsx$/i, '').toUpperCase()
+  const byA3 = registry?.filenameByAlpha3 ?? {}
+  const a3 = Object.keys(byA3).find((k) => byA3[k] === stem)
+  return a3 ? registry.publishByAlpha3?.[a3] !== false : true
+}
 if (registry) console.log(`Registro de países: ${registry.list.length} · bordes disponibles: ${countryBorders ? countryBorders.size : 'n/d'}`)
 
 for (const file of files) {
@@ -79,7 +91,9 @@ for (const file of files) {
     threshold,
     sheetCount: wb.SheetNames.length,
     registry,
-    countryBorders
+    countryBorders,
+    countryBounds,
+    investorMap
   })
 
   // -- errores de archivo --
@@ -105,11 +119,16 @@ for (const file of files) {
     if (items.length > MAX_PER_RULE) console.log(`      … y ${items.length - MAX_PER_RULE} caso(s) más de esta regla.`)
   }
 
+  const published = isPublished(name)
+  const veredicto = stats.passed ? (published ? 'PASA ✔' : 'PASA ✔ · RETENIDO, no se publica') : 'FALLA ✗'
   console.log(
-    `  ── ${stats.rows} filas · ${stats.validPct}% válidas (umbral ${stats.threshold}%) · ${stats.errors} errores · ${stats.warnings} advertencias → ${stats.passed ? 'PASA ✔' : 'FALLA ✗'}`
+    `  ── ${stats.rows} filas · ${stats.validPct}% válidas (umbral ${stats.threshold}%) · ${stats.errors} errores · ${stats.warnings} advertencias → ${veredicto}`
   )
+  if (stats.passed && !published) {
+    console.log('      El archivo cumple el esquema; no se publica porque countries.csv lo tiene con publish=no.')
+  }
   if (!stats.passed) anyFailed = true
-  summaryRows.push({ name, rows: stats.rows, validPct: stats.validPct, errors: stats.errors, warnings: stats.warnings, passed: stats.passed })
+  summaryRows.push({ name, rows: stats.rows, validPct: stats.validPct, errors: stats.errors, warnings: stats.warnings, passed: stats.passed, published })
 }
 
 // -- resumen para GitHub Actions --
@@ -119,7 +138,7 @@ if (process.env.GITHUB_STEP_SUMMARY) {
     '',
     '| Archivo | Filas | % válidas | Errores | Advertencias | Resultado |',
     '|---|---|---|---|---|---|',
-    ...summaryRows.map((r) => `| ${r.name} | ${r.rows} | ${r.validPct} | ${r.errors} | ${r.warnings} | ${r.passed ? '✅ pasa' : '❌ falla'} |`),
+    ...summaryRows.map((r) => `| ${r.name} | ${r.rows} | ${r.validPct} | ${r.errors} | ${r.warnings} | ${r.passed ? (r.published ? '✅ pasa' : '⏸️ pasa, retenido') : '❌ falla'} |`),
     '',
     anyFailed ? 'Revisar el log del paso para el detalle por fila (valor recibido y esperado).' : 'Todos los archivos cumplen el esquema.'
   ].join('\n')
