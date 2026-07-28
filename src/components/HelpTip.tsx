@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 
 // Small "(?)" that opens a short explanation. Click, not hover: hover-only tooltips
@@ -7,7 +8,9 @@ import { useTranslation } from 'react-i18next'
 const WIDTH = 240
 const MARGIN = 8
 
-export default function HelpTip({ text, label }: { text: string; label?: string }) {
+// `width` is for the long ones: the per-view "about" text runs two paragraphs, and at
+// the control width it turns into a ribbon.
+export default function HelpTip({ text, label, width = WIDTH }: { text: string; label?: string; width?: number }) {
   const { t } = useTranslation()
   // Fixed positioning, computed on open: the filter panel scrolls and clips its
   // overflow, so a popover anchored inside it gets cut off at the column edge.
@@ -15,6 +18,7 @@ export default function HelpTip({ text, label }: { text: string; label?: string 
   const open = at !== null
   const ref = useRef<HTMLSpanElement>(null)
   const btnRef = useRef<HTMLButtonElement>(null)
+  const tipRef = useRef<HTMLSpanElement>(null)
 
   const place = () => {
     const r = btnRef.current?.getBoundingClientRect()
@@ -22,14 +26,18 @@ export default function HelpTip({ text, label }: { text: string; label?: string 
     setAt({
       top: r.bottom + 6,
       // Clamped to the viewport so it never hangs off either edge.
-      left: Math.min(Math.max(MARGIN, r.left), window.innerWidth - WIDTH - MARGIN)
+      left: Math.min(Math.max(MARGIN, r.left), window.innerWidth - width - MARGIN)
     })
   }
 
   useEffect(() => {
     if (!open) return
     const onDown = (e: PointerEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setAt(null)
+      const t = e.target as Node
+      // The tip is portalled out of `ref`, so it needs its own containment check —
+      // otherwise clicking the text you are reading closes it.
+      if (ref.current?.contains(t) || tipRef.current?.contains(t)) return
+      setAt(null)
     }
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setAt(null)
     // Scrolling the panel would leave the popover floating away from its (?).
@@ -69,21 +77,29 @@ export default function HelpTip({ text, label }: { text: string; label?: string 
       >
         ?
       </button>
-      {at && (
-        <span
-          role="tooltip"
-          style={{ top: at.top, left: at.left, width: WIDTH }}
-          className="fixed z-[1200] block space-y-2 rounded-lg border border-gray-200 bg-white p-3 text-[11px] font-normal leading-relaxed text-gray-600 shadow-lg"
-        >
-          {/* Newlines are paragraph breaks: these tips run to two beats — what the
-              thing is, then what the control does with it. */}
-          {text.split('\n').filter(Boolean).map((p, i) => (
-            <span key={i} className="block">
-              {p}
-            </span>
-          ))}
-        </span>
-      )}
+      {/* Portalled to <body>: `position: fixed` is only relative to the viewport while
+          no ancestor has a transform, filter or backdrop-filter. The map's totals card
+          uses backdrop-blur, which silently made it the containing block and threw the
+          tip a few hundred px off. Coordinates are viewport-based, so the portal is
+          the fix rather than more clamping. */}
+      {at &&
+        createPortal(
+          <span
+            ref={tipRef}
+            role="tooltip"
+            style={{ top: at.top, left: at.left, width }}
+            className="fixed z-[1200] block space-y-2 rounded-lg border border-gray-200 bg-white p-3 text-[11px] font-normal leading-relaxed text-gray-600 shadow-lg"
+          >
+            {/* Newlines are paragraph breaks: these tips run to two beats — what the
+                thing is, then what the control does with it. */}
+            {text.split('\n').filter(Boolean).map((p, i) => (
+              <span key={i} className="block">
+                {p}
+              </span>
+            ))}
+          </span>,
+          document.body
+        )}
     </span>
   )
 }

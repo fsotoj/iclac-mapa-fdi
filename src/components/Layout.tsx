@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ComponentType } from 'react'
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { LocaleCode } from '@/types/data'
 import Footer from './Footer'
-import AboutPanel from './AboutPanel'
+import LandingModal, { consumeFirstVisit } from './LandingModal'
+import { MapIcon, TrendsIcon } from './icons'
 
 const LANGS: { code: LocaleCode; label: string }[] = [
   { code: 'es', label: 'ES' },
@@ -13,9 +14,17 @@ const LANGS: { code: LocaleCode; label: string }[] = [
 
 // dataView routes share filter state via the URL query string (useFilters) —
 // switching between them must preserve it, or filters silently reset to default.
-const NAV: { to: string; end?: boolean; key: string; dataView?: boolean }[] = [
-  { to: '/', end: true, key: 'nav.map', dataView: true },
-  { to: '/sankey', key: 'nav.sankey', dataView: true },
+// Only the two tools carry an icon: it is what marks them as instruments among pages,
+// and the same glyph heads each tool's explanation panel.
+const NAV: {
+  to: string
+  end?: boolean
+  key: string
+  dataView?: boolean
+  icon?: ComponentType<{ className?: string }>
+}[] = [
+  { to: '/', end: true, key: 'nav.map', dataView: true, icon: MapIcon },
+  { to: '/sankey', key: 'nav.sankey', dataView: true, icon: TrendsIcon },
   { to: '/methodology', key: 'nav.methodology' },
   { to: '/downloads', key: 'nav.downloads' },
   { to: '/contact', key: 'nav.contact' }
@@ -27,6 +36,9 @@ const navLinkClass = ({ isActive }: { isActive: boolean }) =>
 export default function Layout() {
   const { t, i18n } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
+  // Resolved at mount rather than in an effect, so nothing can close the presentation
+  // before it paints. The header button is the way back into it.
+  const [aboutOpen, setAboutOpen] = useState(consumeFirstVisit)
   const { pathname, search } = useLocation()
 
   // Close the mobile menu on navigation so it never lingers over the new view.
@@ -52,6 +64,9 @@ export default function Layout() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
+      {/* Presentación del repositorio: sola en la primera carga de la sesión, y a
+          demanda desde el botón del header. */}
+      <LandingModal open={aboutOpen} onClose={() => setAboutOpen(false)} />
       <header className="relative z-[1000] border-b border-gray-200 px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
@@ -62,11 +77,22 @@ export default function Layout() {
               <h1 className="text-[13px] font-semibold leading-tight text-gray-900 sm:text-base">{t('app.subject')}</h1>
               <p className="hidden text-xs text-gray-500 sm:block sm:truncate">{t('app.kind')}</p>
             </div>
-            {/* Contextual "About" belongs beside the title, not in the nav cluster
-                (Margaret UAT): it describes what you are looking at, not where to go.
-                Sibling of the title block, so the row's items-center centres it on the
-                header height rather than on the title's own line. */}
-            <AboutPanel />
+            {/* "Acerca de" beside the title, not in the nav cluster (Margaret UAT):
+                it says what this is, not where to go. Reopens the presentation the
+                session started with; per-view help lives inside each view now. */}
+            <button
+              type="button"
+              onClick={() => setAboutOpen(true)}
+              aria-label={t('about.label')}
+              title={t('about.label')}
+              className="flex shrink-0 items-center rounded-full text-[#377F83] transition-colors hover:text-[#093b4d]"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="h-6 w-6">
+                <circle cx="12" cy="12" r="9" />
+                <path strokeLinecap="round" d="M12 11v5" />
+                <circle cx="12" cy="7.6" r="0.7" fill="currentColor" stroke="none" />
+              </svg>
+            </button>
           </div>
 
           {/* Desktop cluster: full nav + contextual About + language switch. */}
@@ -77,8 +103,9 @@ export default function Layout() {
                   key={n.to}
                   to={n.dataView ? { pathname: n.to, search } : n.to}
                   end={n.end}
-                  className={navLinkClass}
+                  className={({ isActive }) => `flex items-center gap-1.5 ${navLinkClass({ isActive })}`}
                 >
+                  {n.icon && <n.icon className="h-4 w-4 shrink-0" />}
                   {t(n.key)}
                 </NavLink>
               ))}
@@ -114,11 +141,12 @@ export default function Layout() {
                   to={n.dataView ? { pathname: n.to, search } : n.to}
                   end={n.end}
                   className={({ isActive }) =>
-                    `rounded px-2 py-2 ${
+                    `flex items-center gap-2 rounded px-2 py-2 ${
                       isActive ? 'bg-gray-100 font-semibold text-gray-900' : 'text-gray-600 hover:bg-brand hover:text-gray-900'
                     }`
                   }
                 >
+                  {n.icon && <n.icon className="h-4 w-4 shrink-0" />}
                   {t(n.key)}
                 </NavLink>
               ))}

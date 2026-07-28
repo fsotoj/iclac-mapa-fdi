@@ -15,6 +15,8 @@ import SectorLegend from '@/components/SectorLegend'
 import ProjectDocsCards from '@/components/ProjectDocsCards'
 import ProjectDocsTable from '@/components/ProjectDocsTable'
 import MiniSegmented from '@/components/MiniSegmented'
+import ToolInfo from '@/components/ToolInfo'
+import { MapIcon } from '@/components/icons'
 import { buildDonutSvg, buildLegendHtml, tallyByArea, tallyMoneyByArea, type SectorTally } from '@/lib/clusterDonut'
 import type { PieMetric } from '@/lib/filter'
 import { buildInvestmentPopup, buildInvestmentTooltip } from '@/lib/popup'
@@ -572,6 +574,17 @@ export default function MapView() {
                       ({t('filter.without_amount', { count: agg.withoutAmount })})
                     </span>
                   )}
+                  {/* Qué es este mapa y qué significan punto / vector / libro. Vive acá,
+                      sobre el mapa que describe; el ícono del header es la presentación
+                      del repositorio, no la ayuda de la vista. */}
+                  <span className="ml-2 inline-flex align-middle">
+                    <ToolInfo
+                      icon={MapIcon}
+                      title={t('about.map.title')}
+                      text={t('about.map.body')}
+                      note={t('common.citation_text')}
+                    />
+                  </span>
                   {filters.focusId !== null && (
                     <button
                       type="button"

@@ -17,6 +17,8 @@ import InvestorFilter from '@/components/InvestorFilter'
 import FilterDropdown from '@/components/FilterDropdown'
 import YearRangeSlider from '@/components/YearRangeSlider'
 import CheckList from '@/components/CheckList'
+import ToolInfo from '@/components/ToolInfo'
+import { TrendsIcon } from '@/components/icons'
 
 // Register only what the Sankey needs — the bundler drops the rest of echarts.
 // LabelLayout is what implements `labelLayout: { hideOverlap: true }` below. Leaving
@@ -294,6 +296,16 @@ export default function SankeyView() {
           {agg.withoutAmount > 0 && (
             <span className="ml-2 text-gray-500">({t('filter.without_amount', { count: agg.withoutAmount })})</span>
           )}
+          {/* Ayuda de la vista, junto a las cifras que describe. La presentación del
+              repositorio es el ícono del header. */}
+          <span className="ml-2 inline-flex align-middle">
+            <ToolInfo
+              icon={TrendsIcon}
+              title={t('about.trends.title')}
+              text={t('about.trends.body')}
+              note={t('common.citation_text')}
+            />
+          </span>
         </div>
         <p className="text-[11px] text-gray-400">{t('sankey.click_hint')}</p>
       </div>

@@ -526,6 +526,41 @@ for (const [k, v] of [...sectorMap.entries()].sort((a, b) => b[1] - a[1])) {
 console.log(`\nOutput: ${outputPath}`)
 console.log(`File size: ${(JSON.stringify(leanOutput).length / 1024).toFixed(1)} KB`)
 
+// --- Descarga pública en XLSX. Se arma acá, en build, y no en el navegador: los datos
+// ya están unidos en memoria, el cliente se ahorra ~430 KB de SheetJS en el bundle y el
+// archivo que baja el público es exactamente el que produjo este ETL.
+// `coordinates` se abre en lat/lng porque una celda con "[-23.4,-66.7]" no sirve para
+// nada en una planilla; los estudios de caso van en su propia hoja, unidos por id.
+const xlsxPath = resolve(dirname(outputPath), 'iclac_inversiones_china_latam.xlsx')
+const sheetRows = leanOutput.map(({ coordinates, ...rest }) => ({
+  ...rest,
+  lat: Array.isArray(coordinates) ? coordinates[0] : null,
+  lng: Array.isArray(coordinates) ? coordinates[1] : null
+}))
+const caseRows = []
+for (const [id, cases] of Object.entries(researchById)) {
+  for (const c of cases) caseRows.push({ id_investment: id, case_study: c.caso ?? '', link: c.link ?? '' })
+}
+const readme = [
+  { field: 'dataset', value: 'Regional Repository of Chinese Investments in Latin America' },
+  { field: 'source', value: 'ICLAC + Inter-American Dialogue' },
+  { field: 'generated', value: new Date().toISOString().slice(0, 10) },
+  { field: 'investments', value: sheetRows.length },
+  { field: 'case_studies', value: caseRows.length },
+  {
+    field: 'citation',
+    value:
+      'Francisco Urdinez and Margaret Myers (2024) "Regional Repository of Chinese Investments in Latin America", ICLAC and Inter-American Dialogue.'
+  },
+  { field: 'note', value: 'One row per site: multi-site investments repeat the id and the full amount. Dedupe by id before summing.' }
+]
+const wb = XLSX.utils.book_new()
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(readme), 'README')
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheetRows), 'investments')
+XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(caseRows), 'case_studies')
+XLSX.writeFile(wb, xlsxPath)
+console.log(`XLSX público: ${xlsxPath} (${sheetRows.length} filas + ${caseRows.length} estudios)`)
+
 // --- investors_map.json: emit the map already loaded above (source of truth for
 // both the Sankey and the ownership derived into investments.json). Keyed by
 // investor_raw + company_canonical. Regenerated here so it never drifts from CSV.

@@ -130,10 +130,28 @@ Antes de escribir uno nuevo, revisar estos (todos en `src/components/`):
 - `MiniSegmented.tsx` — misma idea en chico, para las cabeceras de la lista y del mapa.
 - `ProjectSearchBox.tsx` — buscador de la lista (icono + draft con debounce + ×). Lo usan Fichas
   **y** Tabla; escribe `filters.query`.
-- `HelpTip.tsx` — el `(?)`. Abre por **clic**, no hover (en touch no hay hover). `position: fixed`
-  calculada al abrir: el panel de filtros recorta su overflow y un popover anclado adentro sale
-  cortado. `\n` en el texto = párrafo.
+- `HelpTip.tsx` — el `(?)` chico, para **un control**. Abre por **clic**, no hover (en touch no hay
+  hover). `position: fixed` calculada al abrir + **portal a `<body>`** (ver regla abajo). `\n` en el
+  texto = párrafo. `width` opcional para textos largos.
+- `InfoModal.tsx` — shell de los tres paneles que interrumpen la vista (backdrop, ×, Escape, foco,
+  portal). Lo usan `LandingModal` y `ToolInfo`; `panelClass` define ancho y fondo.
+- `LandingModal.tsx` — presentación del Repositorio, tres columnas es/中文/en simultáneas con el
+  trazo de `America.png`. Una vez por sesión (`sessionStorage`) + el ícono "Acerca de" del header,
+  cuyo estado vive en `Layout`. Es el **único** panel con el trazo de fondo.
+- `ToolInfo.tsx` — el `(?)` de **una herramienta**: abre pop-up con el ícono de la tab, el texto de
+  `about.map` / `about.trends` y un `note` opcional (la cita sugerida). Sin fondo decorativo.
+- `icons.tsx` — `MapIcon` y `TrendsIcon`. Sólo las dos herramientas llevan ícono: en el nav y en la
+  cabecera de su pop-up. Metodología/Datos/Contacto son páginas, no instrumentos.
+- `Citation.tsx` — cita sugerida con botón de copiar. La etiqueta «Cita sugerida» la pone el
+  componente: los strings de `about.*.citation` **no** llevan ese prefijo.
 - `CollapsibleSection.tsx`, `CheckList.tsx`, `InvestorFilter.tsx`, `YearRangeSlider.tsx`.
+
+**Todo flotante va portalizado a `<body>`.** `position: fixed` sólo es relativo al viewport si
+**ningún** ancestro tiene `transform`, `filter` o `backdrop-filter`. La caja de totales del mapa usa
+`backdrop-blur`: sin portal, el popover del `HelpTip` aterrizaba a ~300 px de su ícono y el
+`InfoModal` quedaba encerrado dentro de esa cajita (28-07, pagado dos veces). Portalizar, no
+clampear. Ojo: al portalizar, un popover que cierra por clic-afuera necesita chequear también su
+propio nodo, que ya no está dentro del ref del disparador.
 
 ## Mapa: encuadre y límites (`MapView.tsx`)
 
@@ -184,7 +202,16 @@ Finance:       rgba(173,77,14,1)
 - No usar Pinia/Redux. Zustand si hace falta.
 - Tests: vitest + react testing library. Solo lógica de filtros y validación de datos.
 - i18n: **toda** cadena visible en es/en/cn. Los textos cn los escribimos nosotros y van a la cola
-  del revisor externo; anotarlo en `next_steps.md` al agregarlos.
+  del revisor externo; anotarlo en `next_steps.md` al agregarlos. Antes de redactar uno nuevo,
+  buscarlo en `legacy/locales/*.json`: buena parte ya está traducida y revisada (`landing.*` y
+  `about.trends` salieron de ahí).
+- **Vocabulario del equipo fuera de la UI.** «Empresa canónica», «raw», «vector», «FK» son términos
+  del esquema, no del lector: en pantalla se describe lo que le pasa al dato (el Sankey dice «las
+  filiales se cuentan bajo su matriz y las variantes del mismo nombre se unifican»). En
+  `data/schema/` y en los scripts el término técnico sigue siendo el correcto.
+- **La herramienta del Sankey se llama "Tendencias"** en la UI (Trends / 趋势, nombre del legado).
+  La ruta `/sankey` y las claves `sankey.*` / `nav.sankey` **no** se renombraron: romperían enlaces
+  compartidos sin cambiar nada visible.
 - Cambios de UI visibles: verificar en navegador antes de darlos por hechos, no sólo `tsc` + tests
   (receta en `.claude/skills/verify`). Varios bugs de esta clase (encuadre, popover recortado) sólo
   aparecen a cierto tamaño de viewport.
@@ -222,7 +249,7 @@ Finance:       rgba(173,77,14,1)
 
 ## Scripts (no estándar de npm)
 
-- `npm run etl` (`scripts/etl.mjs`) — XLSX → `public/data/investments.json`. Corre en cada build Netlify. **Modo directorio (23-07):** si el input es una carpeta, lee todos los `*.xlsx` (primera hoja, flujo por país) y **filtra a los países que PASAN validación** (decisión 23-07; `--no-filter` desactiva). Modo archivo único (base legada, hoja `Total`) intacto. Canoniza Country + carga `Ownership`/`Origin_Of_Seller` vía la capa compartida.
+- `npm run etl` (`scripts/etl.mjs`) — XLSX → `public/data/investments.json`. Corre en cada build Netlify. **Modo directorio (23-07):** si el input es una carpeta, lee todos los `*.xlsx` (primera hoja, flujo por país) y **filtra a los países que PASAN validación** (decisión 23-07; `--no-filter` desactiva). Modo archivo único (base legada, hoja `Total`) intacto. Canoniza Country + carga `Ownership`/`Origin_Of_Seller` vía la capa compartida. **También emite la descarga pública** `public/data/iclac_inversiones_china_latam.xlsx` (28-07): hojas `README` / `investments` (con `coordinates` abierto en `lat`/`lng`) / `case_studies`. Es el archivo que sirve la pestaña Datos, así que si cambia la forma de las filas, cambia la descarga.
 - `npm run validate` (`scripts/validate_data.mjs` + núcleo `scripts/lib/validate.mjs`) — valida XLSX por país contra `data/schema/schema.md` §7. Corre en GH Actions (`validate-data.yml`, **reconectado** 23-07: trigger `push` en `data/sources/countries/**`; corre validación + `build_validation_report.mjs` como `index.html` y lo **publica en GitHub Pages** con link fijo `https://<org>.github.io/<repo>/`). Acepta un **directorio** (se expande a sus `*.xlsx`). Para activar en el repo cliente `nucleomilenioiclac/iclac-mapa-fdi`: desplegar el pipeline (tenemos push) + habilitar Settings>Pages>Source="GitHub Actions" (§0.a). También acepta rutas explícitas (bases agregadas). Umbral 95% e id `ALPHA3-NNNN` como warning = pendientes de confirmación cliente (`--strict-ids`). Tests en `scripts/validate.test.mjs`. **País como dato (v1.4, 23-07):** el alcance ya NO está hardcodeado — se carga de `data/schema/countries.csv` (registro semilla, toda la región, México excluido) vía `scripts/lib/load_registry.mjs`; el núcleo lo recibe por `opts.registry` (sigue puro). **Capa de normalización** `scripts/lib/normalize.mjs` (compartida con el ETL): quita apóstrofe de `COUNTRY_ISO_NUM`/`Id_Seq`, canoniza `Country`, nombre de archivo case-insensitive; las curaciones se listan (no se enmascaran). `Area_ES` salió de validación de formato → sólo `fila/sector-conflicto` (warning, conflicto conceptual EN↔ES). Chequeo `archivo/sin-borde` (compuerta blanda) contra la semilla de bordes.
 - `node scripts/build_borders.mjs [dirDatos]` (`scripts/lib/countries.mjs`) — **one-off idempotente**, NO en build chain aún. Desde `legacy/data/america.geojson` (Natural Earth) genera: (1) `data/sources/geo/borders.geojson` = semilla de bordes disponibles (todos los del registro con geometría) que el validador consulta para `archivo/sin-borde`; (2) `public/data/south-america.geojson` = mapa filtrado a países que pasan (si se da dirDatos) + decorativos, preservando la resolución de los países existentes (NE solo para nuevos), **México excluido**. `south-america.geojson` está versionado y lo usa el mapa vivo → correrlo es parte de la integración de la base nueva.
 - `node scripts/build_validation_report.mjs <dir|archivos> [--out ruta] [--fragment]` — informe HTML autocontenido de validación para el cliente (Flo): países colapsables con conteo de tipos, bloqueante vs aviso, curaciones aplicadas, checklist de incorporación de país (geometría/datos), conflicto de sector destacado. `--fragment` para publicar como Artifact.

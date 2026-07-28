@@ -6,7 +6,7 @@
   },
   "nav": {
     "map": "Mapa",
-    "sankey": "Sankey",
+    "sankey": "Tendencias",
     "methodology": "Metodología",
     "downloads": "Datos",
     "contact": "Contacto",
@@ -14,11 +14,9 @@
   },
   "downloads": {
     "title": "Nuestros datos",
-    "description": "<p>El Núcleo Milenio sobre los Impactos de China en América Latina y el Caribe (ICLAC), el Diálogo Interamericano y nuestros socios ponen a disposición de investigadores y usuarios del Repositorio los datos de inversión extranjera directa china.</p><p>El dataset completo —todas las inversiones de todos los países en un solo archivo— está disponible para descarga abajo. A medida que agreguemos nuevos países, se incorporarán al mismo conjunto de datos.</p><p>Le invitamos a enviar contribuciones o correcciones a través de la página Contacto. Agradecemos su ayuda para mantener los datos lo más precisos y actualizados posible.</p>",
+    "description": "<p>El Núcleo Milenio sobre los Impactos de China en América Latina y el Caribe (ICLAC), el Diálogo Interamericano y nuestros socios ponen a disposición de investigadores y usuarios del Repositorio los datos de inversión extranjera directa china.</p><p>El dataset completo —todas las inversiones de todos los países en un solo archivo— está disponible para descarga más arriba. A medida que agreguemos nuevos países, se incorporarán al mismo conjunto de datos.</p><p>Le invitamos a enviar contribuciones o correcciones a través de la página Contacto. Agradecemos su ayuda para mantener los datos lo más precisos y actualizados posible.</p>",
     "link": "Descargar dataset completo",
-    "preparing": "Preparando descarga…",
-    "error": "No se pudo generar la descarga. Reintenta.",
-    "format": "Formato JSON · todas las inversiones (con estudios de caso), todos los países"
+    "format": "Formato XLSX · todas las inversiones (con estudios de caso), todos los países"
   },
   "contact": {
     "title": "Contáctenos",
@@ -43,16 +41,20 @@
     "tagline": "Repositorio Regional de Inversiones Chinas en América Latina",
     "partners": "Socios"
   },
+  "landing": {
+    "title": "Repositorio Regional sobre la Inversión China en América Latina",
+    "body": "El Repositorio Regional, desarrollado en 2024 por el Núcleo Milenio sobre los Impactos de China en América Latina y el Caribe con sede en Chile, el Diálogo Interamericano, y un equipo de socios e investigadores de todo el hemisferio, intenta ofrecer un registro detallado y continuamente actualizado de la inversión extranjera directa (IED) china confirmada en América Latina y el Caribe—desde que China comenzó su política de «salir al exterior» seriamente a principios de la década de 2000. Aprovechando la experiencia inigualable de instituciones asociadas sobre el terreno, esta herramienta proporciona datos actualizados, georreferenciados y descargables sobre la IED china en países seleccionados de la región. Además de los datos de IED, el Repositorio Regional también contiene estudios de caso académicos de alta calidad y multilingües sobre proyectos individuales de IED china. El Repositorio Regional se ampliará con el tiempo para incluir datos sobre la inversión china en países adicionales de América Latina y el Caribe.",
+    "see_map": "Ver el mapa"
+  },
   "about": {
     "label": "Acerca de",
     "map": {
       "title": "Sobre el mapa",
-      "body": "Este mapa, producido por el Núcleo Milenio Impactos de China en América Latina y el Caribe (ICLAC) y el Diálogo Interamericano, y con el apoyo estratégico de instituciones asociadas a nivel regional, busca visualizar la inversión extranjera directa de China (fusiones y adquisiciones, proyectos greenfield y joint ventures) en América Latina. El mapa también incluye ejemplos de proyectos de construcción chinos, que son prominentes en determinados sectores económicos de la región. El mapa permite realizar búsquedas por año, tipo de inversión, y en función de si estos proyectos cuentan con estudios de caso asociados. Los estudios disponibles se pueden acceder en la lista de inversiones de cada país. Por el momento, este proyecto incluye un análisis en profundidad de la inversión china en Argentina, Bolivia, Brasil, Chile, Colombia, Ecuador, Guyana, Panamá, Paraguay, Perú, Surinam y Uruguay, y estimaciones de inversiones en Venezuela, pero en el futuro será ampliado para incluir proyectos en otros países de la región, en coordinación con instituciones asociadas.\nEn el mapa, los puntos son inversiones en un solo sitio (minas, plantas, oficinas) y los vectores marcan proyectos que cruzan varias ciudades (rutas, ferrocarriles, cables). El ícono de libro indica que la inversión tiene un estudio de caso académico.",
-      "citation": "Cita sugerida: Francisco Urdinez y Margaret Myers (2024) «Regional Repository of Chinese Investments in Latin America», ICLAC e Inter-American Dialogue."
+      "body": "Este mapa, producido por el Núcleo Milenio Impactos de China en América Latina y el Caribe (ICLAC) y el Diálogo Interamericano, y con el apoyo estratégico de instituciones asociadas a nivel regional, busca visualizar la inversión extranjera directa de China (fusiones y adquisiciones, proyectos greenfield y joint ventures) en América Latina. El mapa también incluye ejemplos de proyectos de construcción chinos, que son prominentes en determinados sectores económicos de la región. El mapa permite realizar búsquedas por año, tipo de inversión, y en función de si estos proyectos cuentan con estudios de caso asociados. Los estudios disponibles se pueden acceder en la lista de inversiones de cada país. Por el momento, este proyecto incluye un análisis en profundidad de la inversión china en Argentina, Bolivia, Brasil, Chile, Colombia, Ecuador, Guyana, Panamá, Paraguay, Perú, Surinam y Uruguay, y estimaciones de inversiones en Venezuela, pero en el futuro será ampliado para incluir proyectos en otros países de la región, en coordinación con instituciones asociadas.\nEn el mapa, los puntos son inversiones en un solo sitio (minas, plantas, oficinas) y los vectores marcan proyectos que cruzan varias ciudades (rutas, ferrocarriles, cables). El ícono de libro indica que la inversión tiene un estudio de caso académico."
     },
-    "sankey": {
-      "title": "Sobre el diagrama",
-      "body": "El diagrama muestra el flujo Inversor → País → Sector de la IED china, sobre los mismos datos del mapa.\nEl grosor de cada flujo refleja la métrica elegida: número de inversiones o monto (US$ MM). Los inversores se agrupan por empresa canónica (top 20; el resto se junta en «Otros»). Un clic en cualquier nodo filtra por él. Los filtros de país, sector y año se comparten con el mapa."
+    "trends": {
+      "title": "Tendencias regionales",
+      "body": "En el diagrama mostramos las inversiones chinas por empresa, país y sector. La figura puede utilizarse para detectar tendencias regionales o identificar tendencias específicas por país. El ancho de las líneas representa la métrica elegida arriba: número de proyectos o monto en US$ MM. Las líneas más gruesas corresponden a aquellas empresas chinas que han invertido en la mayor cantidad de proyectos en los países representados y a aquellos sectores que tienen el mayor porcentaje de proyectos asociados.\nCada empresa aparece una sola vez: las filiales se cuentan bajo su matriz y las variantes del mismo nombre se unifican. Se muestran las 20 mayores; el resto se junta en «Otros». Un clic en cualquier nodo filtra por él, y los filtros de país, sector y año se comparten con el mapa."
     }
   },
   "sankey": {
@@ -90,7 +92,11 @@
     "clear": "Limpiar",
     "close": "Cerrar",
     "help": "Más información",
-    "loading": "Cargando datos…"
+    "citation": "Cita sugerida",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "loading": "Cargando datos…",
+    "citation_text": "Francisco Urdinez y Margaret Myers (2024) «Regional Repository of Chinese Investments in Latin America», ICLAC e Inter-American Dialogue."
   },
   "filter": {
     "title": "Filtros",

@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import Citation from '@/components/Citation'
 
 // PENDIENTE VALIDACIÓN CLIENTE (texto migrado del legado, sin editar):
 //  1. Rango de años: el texto dice "2003–2025" pero investments.json llega hasta 1997.
@@ -22,9 +23,15 @@ export default function MethodologyView() {
 
   return (
     <div className="sangria-greca mx-auto max-w-3xl px-6 py-10">
-      <h1 className="mb-6 text-3xl font-semibold text-[#093b4d]">
+      <h1 className="mb-4 text-3xl font-semibold text-[#093b4d]">
         {t('methodology.title')}
       </h1>
+
+      {/* Orden pedido en las dos páginas de contenido: título, cita, descarga, cuerpo.
+          Quien viene a citar o a bajarse el archivo no tiene que atravesar el texto. */}
+      <div className="mb-6">
+        <Citation text={t('common.citation_text')} />
+      </div>
 
       <a
         href={pdf}
