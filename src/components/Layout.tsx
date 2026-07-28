@@ -3,7 +3,8 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { LocaleCode } from '@/types/data'
 import Footer from './Footer'
-import LandingModal, { consumeFirstVisit } from './LandingModal'
+import LandingModal from './LandingModal'
+import { consumeFirstVisit } from '@/lib/firstVisit'
 import { MapIcon, TrendsIcon } from './icons'
 
 const LANGS: { code: LocaleCode; label: string }[] = [

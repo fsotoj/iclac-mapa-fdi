@@ -136,8 +136,10 @@ Antes de escribir uno nuevo, revisar estos (todos en `src/components/`):
 - `InfoModal.tsx` — shell de los tres paneles que interrumpen la vista (backdrop, ×, Escape, foco,
   portal). Lo usan `LandingModal` y `ToolInfo`; `panelClass` define ancho y fondo.
 - `LandingModal.tsx` — presentación del Repositorio, tres columnas es/中文/en simultáneas con el
-  trazo de `America.png`. Una vez por sesión (`sessionStorage`) + el ícono "Acerca de" del header,
-  cuyo estado vive en `Layout`. Es el **único** panel con el trazo de fondo.
+  trazo de `America.png`. Una vez por sesión + el ícono "Acerca de" del header, cuyo estado vive en
+  `Layout`. Es el **único** panel con el trazo de fondo. El «una vez por sesión» está en
+  `lib/firstVisit.ts`: un archivo de componente que además exporta un helper rompe Fast Refresh y
+  `npm run lint` (que corre con `--max-warnings 0` en CI) lo falla.
 - `ToolInfo.tsx` — el `(?)` de **una herramienta**: abre pop-up con el ícono de la tab, el texto de
   `about.map` / `about.trends` y un `note` opcional (la cita sugerida). Sin fondo decorativo.
 - `icons.tsx` — `MapIcon` y `TrendsIcon`. Sólo las dos herramientas llevan ícono: en el nav y en la
@@ -212,6 +214,10 @@ Finance:       rgba(173,77,14,1)
 - **La herramienta del Sankey se llama "Tendencias"** en la UI (Trends / 趋势, nombre del legado).
   La ruta `/sankey` y las claves `sankey.*` / `nav.sankey` **no** se renombraron: romperían enlaces
   compartidos sin cambiar nada visible.
+- **Correr `npm run lint` antes de dar por cerrado**, no sólo `tsc` + tests: CI lo corre con
+  `--max-warnings 0`, así que un warning rompe el build. El que ya mordió (28-07):
+  `react-refresh/only-export-components` cuando un archivo de componente exporta además una
+  constante o función → mover el helper a `lib/`.
 - Cambios de UI visibles: verificar en navegador antes de darlos por hechos, no sólo `tsc` + tests
   (receta en `.claude/skills/verify`). Varios bugs de esta clase (encuadre, popover recortado) sólo
   aparecen a cierto tamaño de viewport.

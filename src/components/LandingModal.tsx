@@ -15,27 +15,8 @@ const COLUMNS: { code: LocaleCode; rule: string }[] = [
   { code: 'en', rule: '#00A89C' }
 ]
 
-// Once per visit, not once per browser: the text is a presentation of the repository, and
-// a returning reader in the same session already saw it. Reopening it is the header's
-// "Acerca de" button, which owns the state — hence this is exported.
-const SEEN_KEY = 'iclac.landing.seen'
-
-// Memoised per page load, outside React: StrictMode double-invokes state initialisers in
-// dev, so an un-memoised read+write would burn the flag on the first pass and answer
-// "already seen" on the second — the modal would never open.
-let firstVisit: boolean | null = null
-export const consumeFirstVisit = () => {
-  if (firstVisit === null) {
-    try {
-      firstVisit = !sessionStorage.getItem(SEEN_KEY)
-      if (firstVisit) sessionStorage.setItem(SEEN_KEY, '1')
-    } catch {
-      firstVisit = false // storage blocked (private mode): never auto-open
-    }
-  }
-  return firstVisit
-}
-
+// Cuándo se abre sola: `lib/firstVisit.ts`. El estado lo tiene `Layout`, que también
+// es dueño del botón "Acerca de" del header.
 export default function LandingModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
