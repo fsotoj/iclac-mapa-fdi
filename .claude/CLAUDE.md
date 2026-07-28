@@ -153,6 +153,17 @@ Antes de escribir uno nuevo, revisar estos (todos en `src/components/`):
   y `SectorLegendChip` (chip + `BottomSheet`, `md:hidden`). Las filas son el mismo control interno.
 - `CollapsibleSection.tsx`, `CheckList.tsx`, `InvestorFilter.tsx`, `YearRangeSlider.tsx`.
 
+**Valores de la base que se muestran traducidos** viven en `lib/`, no en cada componente:
+`lib/sectors.ts` + `sector.*`, `lib/countries.ts` + `country.*`. La clave es el **valor exacto en
+inglés** que trae la base y el respaldo es ese mismo valor, así un sector o país nuevo se dibuja
+igual, sólo que sin traducir. El **inversor no se traduce**: es nombre propio.
+
+**`cn` no es un tag BCP-47.** Es nuestra etiqueta interna; `Intl` conoce `zh`. Y no falla ruidosamente:
+`localeCompare(a, b, 'cn')` cae a orden de codepoint, que no es ni pinyin ni trazos (la lista de
+países salía 乌拉圭 antes que 阿根廷). Para cualquier `Intl` — `Collator`, `NumberFormat`,
+`DateTimeFormat` — pasar `intlLocale(lang)` de `lib/countries.ts`. Y **ordenar por el nombre
+mostrado**, no por el crudo: ordenar por el inglés deja la lista arbitraria en las otras dos lenguas.
+
 **Todo flotante va portalizado a `<body>`.** `position: fixed` sólo es relativo al viewport si
 **ningún** ancestro tiene `transform`, `filter` o `backdrop-filter`. La caja de totales del mapa usa
 `backdrop-blur`: sin portal, el popover del `HelpTip` aterrizaba a ~300 px de su ícono y el
@@ -237,7 +248,7 @@ Finance:       rgba(173,77,14,1)
 - No usar Pinia/Redux. Zustand si hace falta.
 - Tests: vitest + react testing library. Solo lógica de filtros y validación de datos.
 - i18n: **toda** cadena visible en es/en/cn. Los textos cn los escribimos nosotros y van a la cola
-  del revisor externo; anotarlo en `next_steps.md` al agregarlos. Antes de redactar uno nuevo,
+  del revisor externo; anotarlo en `next_steps.md` §2.2 al agregarlos. Antes de redactar uno nuevo,
   buscarlo en `legacy/locales/*.json`: buena parte ya está traducida y revisada (`landing.*` y
   `about.trends` salieron de ahí).
 - **Vocabulario del equipo fuera de la UI.** «Empresa canónica», «raw», «vector», «FK» son términos
@@ -278,7 +289,18 @@ Finance:       rgba(173,77,14,1)
 
 `docs/` está organizado por sprint; ver `docs/README.md` como índice.
 
-- `docs/generales/next_steps.md` — lista de tareas pendientes (bloqueadas en cliente + accionables). Documento vivo.
+Tres documentos vivos con contenidos que **no se mezclan** (separados el 28-07; antes todo vivía en
+`next_steps.md`, que llegó a 584 líneas con la mitad de bitácora adentro). El criterio de ruteo es
+*¿esta línea cambia lo que hago después?*:
+
+- `docs/generales/next_steps.md` — **sólo lo que falta**. Al cerrar un ítem se **borra** de ahí y se
+  registra en el devlog; no se marca ✅.
+- `docs/generales/devlog.md` — **qué pasó**: procedencia, mediciones, trampas pagadas. Reverso
+  cronológico. Acá va el "por qué salió así", no en next_steps.
+- `docs/generales/correcciones_cliente.md` — **cola de correcciones de datos para el cliente**
+  (C1–C11 + puntos abiertos). Borrador del próximo correo a Flo.
+
+El cuarto destino es este archivo: las reglas de código que no caducan.
 - `docs/sprint_2/auditoria_datos.html` — entregable consolidado para cliente (Entrega 1 + México), reemplaza `sprint_2/raw/auditoria_xlsx_entrega1.md` + `auditoria_mexico.md` como vista canónica.
 - `docs/sprint_3/validacion_entrega_datos_24062026.html` — validación de la base corregida del cliente (`AUDITADO_COMPLETO.xlsx`) + propuesta de flujo de datos por país.
 - `docs/generales/pipeline_datos.md` — flujo XLSX → ETL → JSON → mapa.
@@ -298,7 +320,7 @@ Finance:       rgba(173,77,14,1)
 - `node scripts/build_id_map.mjs` — **one-off**, genera `docs/sprint_3/equivalencia_ids.xlsx`: equivalencia Id_Investment legado → formato propuesto `ALPHA3-NNNN` (entregable 26/06 §II.4). Re-correr regenera la tabla desde la última base del cliente.
 - `node scripts/build_fdi_share.mjs` — **one-off**, análisis métricas FDI: share chino del stock total (vs UNCTAD) + brecha vs posición oficial bilateral (vs FMI CDIS). `investments.json` + `data/external/{unctad_fdi_stock,imf_cdis_china}.csv` → `docs/sprint_4/analisis_fdi_share.xlsx` (5 hojas). Sin UI (decisión 04-07: datos primero, tab después). Re-correr tras integrar base nueva o refresh anual de fuentes.
 - `node scripts/build_fdi_share_report.mjs` — **one-off**, genera `docs/sprint_4/informe_fdi_share.html` (informe cliente-ready, 4 figuras SVG inline) desde el xlsx anterior. Corre después de `build_fdi_share.mjs`. Aplica corrección de presentación Zijin/Surinam (3.600→360, marcada con asterisco) sin tocar datos fuente.
-- `node scripts/audit_base.mjs` — **one-off**, auditoría de datos: cruza el archivo RA de Fran (`transformation_loading/Datos-de-descarga(revisado por Max, Allison y Claude).xlsx`, fuente de verdad para montos) contra `docs/sprint_3/AUDITADO_COMPLETO_26_06.xlsx` + detector de geometría duplicada entre ids → `docs/sprint_4/auditoria_base.xlsx` (5 hojas). Re-correr tras cada entrega nueva del cliente. Análisis en `docs/sprint_4/auditoria_base.md`; cola de correcciones en `next_steps.md` §0.b.
+- `node scripts/audit_base.mjs` — **one-off**, auditoría de datos: cruza el archivo RA de Fran (`transformation_loading/Datos-de-descarga(revisado por Max, Allison y Claude).xlsx`, fuente de verdad para montos) contra `docs/sprint_3/AUDITADO_COMPLETO_26_06.xlsx` + detector de geometría duplicada entre ids → `docs/sprint_4/auditoria_base.xlsx` (5 hojas). Re-correr tras cada entrega nueva del cliente. Análisis en `docs/sprint_4/auditoria_base.md`; cola de correcciones en `docs/generales/correcciones_cliente.md`.
 - `npm run validate:investors` (`scripts/validate_investors.mjs` + núcleo `scripts/lib/validate_investors.mjs`) — valida la **tabla de inversores** `data/schema/investors_map.csv`: enum de ownership, `investor_raw` único, `company_id ↔ company_canonical` 1:1, ownership consistente por `company_id`. Convención de 2 lugares (schema §5.2): base=raw, tabla=identidad+ownership. Tests en `scripts/validate_investors.test.mjs` (incluye test del CSV real). Paso guardado en el workflow. Halló colisión real de `company_id` entre 2 consorcios (24-07).
 - `node scripts/restore_investor_raw.mjs <dirEntrada> <dirSalida>` — **one-off** (opción 1, 24-07): restaura el nombre RAW del inversor en la base (la entrega lo había normalizado a canónico y `Investor_Original` llegó roto). Join por `Id_Investment_Original` (numérico) contra la base **pre-Flo inmediatamente anterior** (`docs/sprint_3/AUDITADO_COMPLETO_26_06.xlsx`, con `AUDITADO_COMPLETO` y `entrega1` como relleno); edición in-place. **Recupera 100% (12.446 filas, 0 sin raw).** Ojo: joinear solo contra `entrega1` daba 4 falsas "nuevas" (entraron en una entrega intermedia). Cobertura Sankey con raw: 100%.
 - `node scripts/audit_ownership_cross.mjs <dirBaseXlsx>` — **one-off** (E.1), verifica que la base del cliente haya aplicado los veredictos de ownership de la revisión externa (`docs/sprint_5/ownership_review_ywedits.xlsx`). Cruza base ↔ raw_mapping ↔ veredicto Yifang por empresa → `docs/sprint_5/auditoria_ownership_cross.xlsx`. **Hallazgo 23-07: la base NO aplicó las 30 correcciones (solo el rename SASAC→Central SOE)** → next_steps C10.

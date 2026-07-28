@@ -13,6 +13,7 @@ import { buildSankeyData, distinctCompanies } from '@/lib/sankey'
 import { sectorColor } from '@/lib/sectors'
 import { activeFilterCount, aggregateInvestments, applyFilters, distinctSectors, distinctCountries, yearBounds } from '@/lib/filter'
 import { useFilters } from '@/hooks/useFilters'
+import { byLocalizedCountry, intlLocale, localizedCountry } from '@/lib/countries'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import InvestorFilter from '@/components/InvestorFilter'
 import FilterDropdown from '@/components/FilterDropdown'
@@ -107,11 +108,16 @@ export default function SankeyView() {
     [scoped, map, metric, topN, t]
   )
 
-  // Node identity stays area_en (stable for click→filter); only the DISPLAY label
-  // is localized. Non-sector nodes show their raw name.
+  // Node identity stays the raw name (stable for click→filter); only the DISPLAY
+  // label is localized. Sector y país tienen diccionario (`sector.*` / `country.*`,
+  // keyed por el valor de la base, en inglés); el inversor va tal cual — es un
+  // nombre propio y no hay tabla de nombres comerciales en chino.
   const labelOf = useMemo(() => {
     const m = new Map<string, string>()
-    for (const n of data.nodes) m.set(n.name, n.depth === 2 ? t(`sector.${n.name}`, n.name) : n.name)
+    for (const n of data.nodes) {
+      const key = n.depth === 2 ? `sector.${n.name}` : n.depth === 1 ? `country.${n.name}` : null
+      m.set(n.name, key ? t(key, n.name) : n.name)
+    }
     return m
   }, [data, t])
 
@@ -120,7 +126,7 @@ export default function SankeyView() {
   const agg = useMemo(() => aggregateInvestments(scoped), [scoped])
 
   const fmt = useMemo(
-    () => new Intl.NumberFormat(i18n.language === 'cn' ? 'zh' : i18n.language, { maximumFractionDigits: 0 }),
+    () => new Intl.NumberFormat(intlLocale(i18n.language), { maximumFractionDigits: 0 }),
     [i18n.language]
   )
   const totalValue = useMemo(() => fmt.format(agg.totalMusd), [agg.totalMusd, fmt])
@@ -223,6 +229,10 @@ export default function SankeyView() {
   if (error) return <div className="p-8 text-sm text-red-700">{error}</div>
   if (loading) return <div className="p-8 text-sm text-gray-600">{t('sankey.loading')}</div>
 
+  // Mismo diccionario y mismo orden que el panel del mapa.
+  const countryLabel = (c: string) => localizedCountry(c, i18n.language)
+  const sortedCountries = [...countries].sort(byLocalizedCountry(i18n.language))
+
   // Un solo lugar define los cinco filtros; cambia el envase, no el contenido:
   // popover por filtro en escritorio, hoja inferior con acordeones en móvil, donde
   // los cinco botones ocupaban 130 px de los 446 que tiene el alto útil.
@@ -244,7 +254,14 @@ export default function SankeyView() {
       key: 'country',
       label: t('filter.country'),
       count: countryCount,
-      node: <CheckList items={countries} selected={filters.countries} onToggle={c => toggle('countries', c)} />
+      node: (
+        <CheckList
+          items={sortedCountries}
+          selected={filters.countries}
+          onToggle={c => toggle('countries', c)}
+          label={countryLabel}
+        />
+      )
     },
     {
       key: 'sectors',

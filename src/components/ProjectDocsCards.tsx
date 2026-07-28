@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { Investment } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
 import { flatList, formatMoney, groupByCountry, localizedDetail, studyHref, type CardSort } from '@/lib/projectDocs'
+import { byLocalizedCountry, localizedCountry } from '@/lib/countries'
 import { useFilters } from '@/hooks/useFilters'
 import MiniSegmented from './MiniSegmented'
 import ProjectSearchBox from './ProjectSearchBox'
@@ -158,10 +159,13 @@ export default function ProjectDocsCards({ investments, lang, onLocate, onIsolat
   const query = filters.query
   const [sortBy, setSortBy] = useState<CardSort>('year')
   const [grouped, setGrouped] = useState(true)
-  const groups = useMemo(
-    () => (grouped ? groupByCountry(investments, sortBy) : []),
-    [investments, sortBy, grouped]
-  )
+  // `groupByCountry` ordena por el nombre crudo (inglés). Se reordena por el nombre
+  // mostrado, si no la lista en chino queda en orden alfabético inglés.
+  const groups = useMemo(() => {
+    if (!grouped) return []
+    const cmp = byLocalizedCountry(lang)
+    return groupByCountry(investments, sortBy).sort((a, b) => cmp(a.country, b.country))
+  }, [investments, sortBy, grouped, lang])
   const flat = useMemo(
     () => (grouped ? [] : flatList(investments, sortBy)),
     [investments, sortBy, grouped]
@@ -245,7 +249,10 @@ export default function ProjectDocsCards({ investments, lang, onLocate, onIsolat
               className="sticky top-[75px] z-10 flex w-full items-center gap-2 border-b border-gray-200 bg-gray-50 px-3 py-2 text-left text-sm font-semibold text-teal-800 shadow-sm"
             >
               <Chevron open={isOpen} />
-              {t('list.projects_in', { country: group.country, count: group.projects.length })}
+              {t('list.projects_in', {
+                country: localizedCountry(group.country, lang),
+                count: group.projects.length
+              })}
             </button>
             {isOpen && (
               <div className="space-y-2 px-3 py-3">

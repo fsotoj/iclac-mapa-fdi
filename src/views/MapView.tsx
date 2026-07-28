@@ -6,6 +6,7 @@ import type { Feature, Geometry } from 'geojson'
 import type { Layer, LeafletMouseEvent, Path, PathOptions } from 'leaflet'
 import type { CountryFeatureCollection, CountryProperties, Investment, ResearchCase } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
+import { intlLocale, localizedCountry } from '@/lib/countries'
 import { aggregateInvestments, applyFilters, distinctCountries, distinctSectors, yearBounds } from '@/lib/filter'
 import { distinctCompanies, type InvestorMap } from '@/lib/sankey'
 import { useFilters } from '@/hooks/useFilters'
@@ -127,11 +128,11 @@ const fmtMusd = (n: number): string => `US$ ${musdFormatter.format(n)} MM`
 
 // Compact center label for money mode. investment_musd is in millions USD →
 // multiply to real USD and let Intl format per locale (es "billón" ≠ en "billion",
-// zh uses 亿). Avoids hardcoding an ambiguous "B".
-const INTL_LOCALE: Record<string, string> = { es: 'es', en: 'en', cn: 'zh' }
+// zh uses 亿). Avoids hardcoding an ambiguous "B". `intlLocale` traduce nuestra
+// etiqueta `cn` al tag BCP-47 `zh`, que es el que Intl conoce.
 const compactCache = new Map<string, Intl.NumberFormat>()
 const compactUsd = (mm: number, lang: string): string => {
-  const loc = INTL_LOCALE[lang] ?? 'en'
+  const loc = intlLocale(lang)
   let fmt = compactCache.get(loc)
   if (!fmt) {
     fmt = new Intl.NumberFormat(loc, { notation: 'compact', maximumFractionDigits: 1 })
@@ -194,8 +195,11 @@ function InvestmentMarkers({
           })
         })
         const donutBig = buildDonutSvg(tallies, total, { size: 140, innerRatio: 0.6, showLabel: false })
-        const legend = buildLegendHtml(tallies, total, pieMetric === 'money' ? fmtMusd : undefined)
-        const html = `<div style="display:flex;align-items:center;gap:10px">${donutBig}<div><div style="font-weight:700;margin-bottom:4px;font-size:13px">${country}</div>${legend}</div></div>`
+        const legend = buildLegendHtml(tallies, total, lang, pieMetric === 'money' ? fmtMusd : undefined)
+        // El título del tooltip es el país traducido; la clave del grupo sigue
+        // siendo el valor crudo de la base.
+        const countryLabel = localizedCountry(country, lang)
+        const html = `<div style="display:flex;align-items:center;gap:10px">${donutBig}<div><div style="font-weight:700;margin-bottom:4px;font-size:13px">${countryLabel}</div>${legend}</div></div>`
         marker.bindTooltip(html, {
           direction: 'top',
           opacity: 1,

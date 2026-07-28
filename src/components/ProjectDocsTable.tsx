@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { Investment, ResearchCase } from '@/types/data'
 import { sectorColor } from '@/lib/sectors'
 import { flatList, formatMoney, groupByCountry, localizedArea, localizedDetail, studyHref, type CardSort } from '@/lib/projectDocs'
+import { byLocalizedCountry, localizedCountry } from '@/lib/countries'
 import { useFilters } from '@/hooks/useFilters'
 import MiniSegmented from './MiniSegmented'
 import ProjectSearchBox from './ProjectSearchBox'
@@ -94,7 +95,9 @@ function InvRow({
         </td>
         {variant === 'flat' && (
           <td className="px-2 py-2 align-top text-gray-700">
-            <span className="block truncate">{inv.country ?? '—'}</span>
+            <span className="block truncate">
+              {inv.country ? localizedCountry(inv.country, lang) : '—'}
+            </span>
           </td>
         )}
         <td className="px-2 py-2 align-top font-medium text-gray-900">{inv.investor ?? '—'}</td>
@@ -188,7 +191,13 @@ export default function ProjectDocsTable({ investments, lang, onLocate }: Props)
   const query = filters.query
   const [sortBy, setSortBy] = useState<CardSort>('year')
   const [grouped, setGrouped] = useState(true)
-  const groups = useMemo(() => (grouped ? groupByCountry(investments, sortBy) : []), [investments, sortBy, grouped])
+  // Reordenados por el nombre mostrado, igual que en Fichas: `groupByCountry`
+  // ordena por el crudo (inglés).
+  const groups = useMemo(() => {
+    if (!grouped) return []
+    const cmp = byLocalizedCountry(lang)
+    return groupByCountry(investments, sortBy).sort((a, b) => cmp(a.country, b.country))
+  }, [investments, sortBy, grouped, lang])
   const flat = useMemo(() => (grouped ? [] : flatList(investments, sortBy)), [investments, sortBy, grouped])
   // Starts fully collapsed: the table is the default list format, and opening a
   // country by default buried the rest of the countries below a long row block.
@@ -254,7 +263,10 @@ export default function ProjectDocsTable({ investments, lang, onLocate }: Props)
                 className="flex w-full items-center gap-2 bg-gray-100 px-4 py-3 text-left font-semibold text-teal-800 hover:bg-brand hover:text-gray-900"
               >
                 <Chevron open={open} />
-                {t('list.projects_in', { country: group.country, count: group.projects.length })}
+                {t('list.projects_in', {
+                  country: localizedCountry(group.country, lang),
+                  count: group.projects.length
+                })}
               </button>
               {open && (
                 <table className="w-full table-fixed border-collapse">

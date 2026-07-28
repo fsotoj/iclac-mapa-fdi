@@ -1,3 +1,4 @@
+import i18n from '@/i18n'
 import { sectorColor } from './sectors'
 
 export type SectorTally = {
@@ -74,9 +75,14 @@ export const buildDonutSvg = (
   </svg>`
 }
 
+// `lang` no es opcional a propósito: esta leyenda venía con el sector en inglés
+// (`area` es el valor crudo de la base) y con «inversiones» escrito a mano, o sea
+// en español aun leyendo el sitio en inglés o en chino. Las dos claves ya existían
+// en los tres locales.
 export const buildLegendHtml = (
   tallies: SectorTally[],
   totalCount: number,
+  lang: string,
   fmtValue: (n: number) => string = n => String(n)
 ): string => {
   const total = tallies.reduce((a, b) => a + b.count, 0) || 1
@@ -85,15 +91,17 @@ export const buildLegendHtml = (
     .sort((a, b) => b.count - a.count)
     .map(t => {
       const pct = ((t.count / total) * 100).toFixed(0)
+      const area = i18n.t(`sector.${t.area}`, { lng: lang, defaultValue: t.area })
       return `<div style="display:flex;align-items:center;gap:6px;font-size:11px;line-height:1.4">
         <span style="display:inline-block;width:10px;height:10px;background:${sectorColor(t.area)};border-radius:2px"></span>
-        <span style="flex:1">${t.area}</span>
+        <span style="flex:1">${area}</span>
         <span style="color:#666">${fmtValue(t.count)} · ${pct}%</span>
       </div>`
     })
     .join('')
+  const header = i18n.t('filter.investments_count', { lng: lang, count: totalCount })
   return `<div style="min-width:200px">
-    <div style="font-weight:600;margin-bottom:4px;font-size:12px">${totalCount} inversiones</div>
+    <div style="font-weight:600;margin-bottom:4px;font-size:12px">${header}</div>
     ${rows}
   </div>`
 }

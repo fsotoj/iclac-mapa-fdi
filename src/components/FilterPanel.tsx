@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useFilters } from '@/hooks/useFilters'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import { CONSTRUCTION_FILTERS, type ResearchFilter } from '@/lib/filter'
+import { byLocalizedCountry, localizedCountry } from '@/lib/countries'
 import type { CompanyOption } from '@/lib/sankey'
 import CollapsibleSection from './CollapsibleSection'
 import YearRangeSlider from './YearRangeSlider'
@@ -94,7 +95,7 @@ function Segmented<T extends string>({
 }
 
 export default function FilterPanel({ countries, yearMin, yearMax, companies }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { filters, setFilters, reset } = useFilters()
   const isMobile = useIsMobile()
   // Collapsed by default on phones so the map gets the full width; the thin rail
@@ -127,6 +128,9 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
       </aside>
     )
   }
+
+  const countryLabel = (c: string) => localizedCountry(c, i18n.language)
+  const sortedCountries = [...countries].sort(byLocalizedCountry(i18n.language))
 
   const yMin = filters.yearMin ?? yearMin
   const yMax = filters.yearMax ?? yearMax
@@ -183,9 +187,10 @@ export default function FilterPanel({ countries, yearMin, yearMax, companies }: 
             <span className="text-xs">{t('common.all')}</span>
           </label>
           <CheckList
-            items={countries}
+            items={sortedCountries}
             selected={selectedCountries}
             onToggle={c => setFilters({ countries: toggleInArray(selectedCountries, c) })}
+            label={countryLabel}
           />
         </div>
       </CollapsibleSection>
