@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactECharts from 'echarts-for-react/lib/core'
 import * as echarts from 'echarts/core'
@@ -13,8 +13,11 @@ import { buildSankeyData, distinctCompanies } from '@/lib/sankey'
 import { sectorColor } from '@/lib/sectors'
 import { activeFilterCount, aggregateInvestments, applyFilters, distinctSectors, distinctCountries, yearBounds } from '@/lib/filter'
 import { useFilters } from '@/hooks/useFilters'
+import { useIsMobile } from '@/hooks/useMediaQuery'
 import InvestorFilter from '@/components/InvestorFilter'
 import FilterDropdown from '@/components/FilterDropdown'
+import BottomSheet from '@/components/BottomSheet'
+import CollapsibleSection from '@/components/CollapsibleSection'
 import YearRangeSlider from '@/components/YearRangeSlider'
 import CheckList from '@/components/CheckList'
 import ToolInfo from '@/components/ToolInfo'
@@ -45,6 +48,8 @@ export default function SankeyView() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [metric, setMetric] = useState<SankeyMetric>('money')
+  const isMobile = useIsMobile()
+  const [filterSheet, setFilterSheet] = useState(false)
 
   useEffect(() => {
     Promise.all([
@@ -141,6 +146,12 @@ export default function SankeyView() {
         {
           type: 'sankey',
           draggable: false,
+          // El margen derecho por defecto de ECharts (20%) es donde se dibujan las
+          // etiquetas de la última columna. En un teléfono eso son ~70 px y los
+          // nombres de sector salían cortados ("Manufactura…", "Infraestructu…").
+          // En móvil se recupera ese margen y las etiquetas de sector se dibujan
+          // hacia adentro (ver `position` por nodo más abajo).
+          ...(isMobile ? { left: '2%', right: '3%', top: '2%', bottom: '2%' } : {}),
           // nodeGap 0 so every column ends at the same height: gaps don't stack.
           // Columns carry the same total (216.819 MM) but have different node counts
           // (21 investors vs 8 sectors); any positive gap makes the investor column
@@ -154,12 +165,15 @@ export default function SankeyView() {
               color: n.depth === 2 ? sectorColor(n.name) : LEVEL_COLOR[n.depth],
               borderColor: '#fff',
               borderWidth: 1
-            }
+            },
+            // Sólo la última columna, y sólo en móvil: su etiqueta pasa al lado
+            // interno del nodo. Las otras dos ya se dibujan sobre los flujos.
+            ...(isMobile && n.depth === 2 ? { label: { position: 'left' as const } } : {})
           })),
           links: data.links,
           lineStyle: { color: 'gradient', opacity: 0.25, curveness: 0.5 },
           label: {
-            fontSize: 11,
+            fontSize: isMobile ? 10 : 11,
             color: '#111',
             formatter: (p: unknown) => {
               const name = (p as { name?: string }).name
@@ -174,7 +188,7 @@ export default function SankeyView() {
         }
       ]
     }),
-    [data, labelOf, fmtVal]
+    [data, labelOf, fmtVal, isMobile]
   )
 
   // Click a node to toggle its filter: investor (by company_id), country, sector.
@@ -209,6 +223,75 @@ export default function SankeyView() {
   if (error) return <div className="p-8 text-sm text-red-700">{error}</div>
   if (loading) return <div className="p-8 text-sm text-gray-600">{t('sankey.loading')}</div>
 
+  // Un solo lugar define los cinco filtros; cambia el envase, no el contenido:
+  // popover por filtro en escritorio, hoja inferior con acordeones en móvil, donde
+  // los cinco botones ocupaban 130 px de los 446 que tiene el alto útil.
+  const filterSections: { key: string; label: string; count?: number; badge?: string; node: ReactNode }[] = [
+    {
+      key: 'investors',
+      label: t('sankey.investors'),
+      count: filters.investors.length,
+      node: (
+        <InvestorFilter
+          options={companies}
+          selected={filters.investors}
+          onChange={ids => setFilters({ investors: ids })}
+          metric={metric}
+        />
+      )
+    },
+    {
+      key: 'country',
+      label: t('filter.country'),
+      count: countryCount,
+      node: <CheckList items={countries} selected={filters.countries} onToggle={c => toggle('countries', c)} />
+    },
+    {
+      key: 'sectors',
+      label: t('filter.sectors'),
+      count: filters.sectors.length,
+      node: (
+        <CheckList
+          items={sectors}
+          selected={filters.sectors}
+          onToggle={s => toggle('sectors', s)}
+          color={sectorColor}
+          label={s => t(`sector.${s}`, s)}
+        />
+      )
+    },
+    {
+      key: 'year',
+      label: t('filter.year'),
+      badge: yearActive ? `${yMin}–${yMax}` : undefined,
+      node: (
+        <div className="p-3">
+          <YearRangeSlider
+            min={yearMin}
+            max={yearMax}
+            valueMin={yMin}
+            valueMax={yMax}
+            onChange={(vMin, vMax) => setFilters({ yearMin: vMin, yearMax: vMax })}
+          />
+        </div>
+      )
+    },
+    {
+      key: 'ownership',
+      label: t('sankey.ownership'),
+      count: filters.ownership.length,
+      node: (
+        <CheckList
+          items={[...OWNERSHIP_VALUES]}
+          selected={filters.ownership}
+          onToggle={o => toggle('ownership', o)}
+          label={o => t(`sankey.own_${o.toLowerCase().replace(/\s+/g, '_')}`, o)}
+        />
+      )
+    }
+  ]
+
+  const activeCount = activeFilterCount(filters)
   const empty = data.links.length === 0
   // Money metric with only amount-less rows in range (e.g. the lone 1997 project)
   // yields all-zero links -> ECharts sankey collapses. Show a hint instead.
@@ -218,50 +301,49 @@ export default function SankeyView() {
     <div className="flex h-full w-full flex-col p-3 sm:p-6">
       {/* Filter bar: investor / country / sector as dropdowns, metric on the right. */}
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <FilterDropdown label={t('sankey.investors')} count={filters.investors.length}>
-          <InvestorFilter
-            options={companies}
-            selected={filters.investors}
-            onChange={ids => setFilters({ investors: ids })}
-            metric={metric}
-          />
-        </FilterDropdown>
-        <FilterDropdown label={t('filter.country')} count={countryCount}>
-          <CheckList items={countries} selected={filters.countries} onToggle={c => toggle('countries', c)} />
-        </FilterDropdown>
-        <FilterDropdown label={t('filter.sectors')} count={filters.sectors.length}>
-          <CheckList
-            items={sectors}
-            selected={filters.sectors}
-            onToggle={s => toggle('sectors', s)}
-            color={sectorColor}
-            label={s => t(`sector.${s}`, s)}
-          />
-        </FilterDropdown>
-        <FilterDropdown label={t('filter.year')} badge={yearActive ? `${yMin}–${yMax}` : undefined}>
-          <div className="p-3">
-            <YearRangeSlider
-              min={yearMin}
-              max={yearMax}
-              valueMin={yMin}
-              valueMax={yMax}
-              onChange={(vMin, vMax) => setFilters({ yearMin: vMin, yearMax: vMax })}
-            />
-          </div>
-        </FilterDropdown>
-        <FilterDropdown label={t('sankey.ownership')} count={filters.ownership.length}>
-          <CheckList
-            items={[...OWNERSHIP_VALUES]}
-            selected={filters.ownership}
-            onToggle={o => toggle('ownership', o)}
-            label={o => t(`sankey.own_${o.toLowerCase().replace(/\s+/g, '_')}`, o)}
-          />
-        </FilterDropdown>
+        {isMobile ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setFilterSheet(true)}
+              className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs ${
+                activeCount > 0
+                  ? 'border-gray-900 bg-gray-900 text-white'
+                  : 'border-gray-300 bg-white text-gray-700'
+              }`}
+            >
+              {t('filter.title')}
+              {activeCount > 0 && (
+                <span className="rounded-full bg-white/25 px-1.5 leading-tight">{activeCount}</span>
+              )}
+              <span aria-hidden className="text-[9px] opacity-70">▲</span>
+            </button>
+            <BottomSheet open={filterSheet} onClose={() => setFilterSheet(false)} title={t('filter.title')}>
+              <div className="space-y-4 p-4 text-sm">
+                {filterSections.map(f => (
+                  <CollapsibleSection
+                    key={f.key}
+                    label={f.label}
+                    summary={f.badge ?? (f.count ? t('filter.n_selected', { count: f.count }) : t('common.all'))}
+                  >
+                    <div className="rounded border border-gray-300">{f.node}</div>
+                  </CollapsibleSection>
+                ))}
+              </div>
+            </BottomSheet>
+          </>
+        ) : (
+          filterSections.map(f => (
+            <FilterDropdown key={f.key} label={f.label} count={f.count} badge={f.badge}>
+              {f.node}
+            </FilterDropdown>
+          ))
+        )}
 
         {/* Only with something to clear: the Sankey has no filter panel to host a
             permanent reset, so an always-on button would just add a dead control
             to the bar. Mirrors "Limpiar filtros" in the map's panel. */}
-        {activeFilterCount(filters) > 0 && (
+        {activeCount > 0 && (
           <button
             type="button"
             onClick={reset}

@@ -11,7 +11,7 @@ import { distinctCompanies, type InvestorMap } from '@/lib/sankey'
 import { useFilters } from '@/hooks/useFilters'
 import { useIsMobile } from '@/hooks/useMediaQuery'
 import FilterPanel from '@/components/FilterPanel'
-import SectorLegend from '@/components/SectorLegend'
+import SectorLegend, { SectorLegendChip } from '@/components/SectorLegend'
 import ProjectDocsCards from '@/components/ProjectDocsCards'
 import ProjectDocsTable from '@/components/ProjectDocsTable'
 import MiniSegmented from '@/components/MiniSegmented'
@@ -536,9 +536,43 @@ export default function MapView() {
             target={target}
           />
         )}
-        <InvalidateSize trigger={showList} />
+        {/* La barra de acciones de móvil pasa de una a dos filas al entrar en modo
+            agregado, y eso cambia el alto de la caja del mapa: Leaflet necesita saberlo. */}
+        <InvalidateSize trigger={`${showList}-${filters.pieByCountry}`} />
       </MapContainer>
       <SectorLegend sectors={sectors} />
+    </>
+  )
+
+  // Puntos / Datos agregados y su segundo nivel. Mismo control en la caja de totales
+  // (escritorio) y en la barra de acciones (móvil); una sola definición para que no
+  // se separen.
+  const displayControls = (
+    <>
+      <MiniSegmented
+        items={[
+          { value: 'points', label: t('filter.points') },
+          { value: 'aggregate', label: t('filter.aggregate') }
+        ]}
+        value={filters.pieByCountry ? 'aggregate' : 'points'}
+        onPick={v => setFilters({ pieByCountry: v === 'aggregate' })}
+      />
+      {/* Second level only in the aggregate state — no reserved space,
+          so the cluster stays one row while showing points. The chevron
+          marks it as a drill-down of "aggregate", not a peer control. */}
+      {filters.pieByCountry && (
+        <>
+          <span aria-hidden className="select-none px-0.5 text-gray-400">›</span>
+          <MiniSegmented
+            items={[
+              { value: 'count', label: t('filter.by_project') },
+              { value: 'money', label: t('filter.by_money') }
+            ]}
+            value={filters.pieMetric}
+            onPick={v => setFilters({ pieMetric: v })}
+          />
+        </>
+      )}
     </>
   )
 
@@ -555,15 +589,22 @@ export default function MapView() {
           <div className="relative flex h-full flex-1">
             {/* isolate traps Leaflet's control z-indexes (z~1000) inside the map
                 box so the fichas overlay (sibling) can sit above them on mobile. */}
-            <div className="relative isolate flex-1">
+            <div className="relative isolate flex flex-1 flex-col">
+              {/* Mapa + su cromo flotante. En móvil la barra de acciones va DEBAJO,
+                  como hermana y no encima: el mapa se achica solo, sin reservarle
+                  espacio en el encuadre ni pelear con la atribución de Leaflet. */}
+              <div className="relative min-h-0 flex-1">
               {mapEl}
               {/* Totals + display control as ONE cluster: the toggle switches how
                   the map draws the very figures shown above it (count vs amount).
                   Display is not a filter — it never changes which investments are
-                  shown — so it lives here, on the map, not in the filter panel. */}
+                  shown — so it lives here, on the map, not in the filter panel.
+                  En móvil la caja toma el ancho completo y el conmutador baja a la
+                  barra: el botón del listado (180 px) pisaba 76 px de esta caja y
+                  se comía el monto, en los tres tamaños de teléfono medidos. */}
               <div
                 ref={totalsRef}
-                className="absolute left-2 top-2 z-[800] max-w-[calc(100%-7.5rem)] rounded-lg border border-white/50 bg-white/95 text-xs shadow-md backdrop-blur-md sm:left-4 sm:top-4 sm:max-w-[calc(100%-9rem)] sm:text-sm"
+                className="absolute left-2 right-2 top-2 z-[800] rounded-lg border border-white/50 bg-white/95 text-[11px] shadow-md backdrop-blur-md md:left-4 md:right-auto md:top-4 md:max-w-[calc(100%-9rem)] md:text-sm"
               >
                 <div className="px-2.5 py-1.5 sm:px-3">
                   <span className="font-medium">{t('filter.investments_count', { count: agg.count })}</span>
@@ -597,41 +638,19 @@ export default function MapView() {
                     </button>
                   )}
                 </div>
-                <div className="flex flex-wrap items-center gap-1.5 border-t border-gray-200 px-2.5 py-1.5 sm:px-3">
-                  <MiniSegmented
-                    items={[
-                      { value: 'points', label: t('filter.points') },
-                      { value: 'aggregate', label: t('filter.aggregate') }
-                    ]}
-                    value={filters.pieByCountry ? 'aggregate' : 'points'}
-                    onPick={v => setFilters({ pieByCountry: v === 'aggregate' })}
-                  />
-                  {/* Second level only in the aggregate state — no reserved space,
-                      so the cluster stays one row while showing points. The chevron
-                      marks it as a drill-down of "aggregate", not a peer control. */}
-                  {filters.pieByCountry && (
-                    <>
-                      <span aria-hidden className="select-none px-0.5 text-gray-400">›</span>
-                      <MiniSegmented
-                        items={[
-                          { value: 'count', label: t('filter.by_project') },
-                          { value: 'money', label: t('filter.by_money') }
-                        ]}
-                        value={filters.pieMetric}
-                        onPick={v => setFilters({ pieMetric: v })}
-                      />
-                    </>
-                  )}
+                <div className="hidden flex-wrap items-center gap-1.5 border-t border-gray-200 px-2.5 py-1.5 sm:px-3 md:flex">
+                  {displayControls}
                 </div>
               </div>
               {/* Opener only — while the list is open its own header title carries
-                  the label + close, so the floating button would just duplicate it. */}
+                  the label + close, so the floating button would just duplicate it.
+                  En móvil vive en la barra de acciones, no flotando sobre el mapa. */}
               {!showList && (
                 <button
                   type="button"
                   onClick={openList}
                   title={t('view.cards')}
-                  className="absolute right-2 top-2 z-[800] flex items-center gap-1.5 rounded-lg border border-white/50 bg-white/95 px-2.5 py-1.5 text-sm text-gray-700 shadow-md backdrop-blur-md transition hover:bg-brand hover:text-gray-900 sm:right-4 sm:top-4"
+                  className="absolute right-4 top-4 z-[800] hidden items-center gap-1.5 rounded-lg border border-white/50 bg-white/95 px-2.5 py-1.5 text-sm text-gray-700 shadow-md backdrop-blur-md transition hover:bg-brand hover:text-gray-900 md:flex"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-4 w-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 5.25h16.5M3.75 9.75h16.5M3.75 14.25h16.5M3.75 18.75h16.5" />
@@ -639,6 +658,25 @@ export default function MapView() {
                   {t('view.cards')}
                 </button>
               )}
+              </div>
+
+              {/* Barra de acciones de móvil: leyenda, modo de dibujo y listado. Los
+                  tres eran cajas flotantes que se tapaban entre sí sobre 312 px de
+                  ancho útil. Acá no flotan: el mapa termina donde empieza la barra. */}
+              <div className="flex flex-wrap items-center gap-1 border-t border-gray-200 bg-white px-1.5 py-1.5 md:hidden">
+                <SectorLegendChip sectors={sectors} />
+                {displayControls}
+                <button
+                  type="button"
+                  onClick={openList}
+                  className="flex shrink-0 items-center gap-1.5 rounded border border-gray-300 bg-white px-2 py-1 text-[11px] text-gray-700"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} className="h-4 w-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 5.25h16.5M3.75 9.75h16.5M3.75 14.25h16.5M3.75 18.75h16.5" />
+                  </svg>
+                  {t('view.list')}
+                </button>
+              </div>
             </div>
             {showList && (
               <aside

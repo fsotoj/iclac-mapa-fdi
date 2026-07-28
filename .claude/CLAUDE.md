@@ -146,6 +146,11 @@ Antes de escribir uno nuevo, revisar estos (todos en `src/components/`):
   cabecera de su pop-up. Metodología/Datos/Contacto son páginas, no instrumentos.
 - `Citation.tsx` — cita sugerida con botón de copiar. La etiqueta «Cita sugerida» la pone el
   componente: los strings de `about.*.citation` **no** llevan ese prefijo.
+- `BottomSheet.tsx` — hoja que sube desde abajo, para lo que en escritorio es caja flotante o
+  popover: leyenda de sectores y filtros de Tendencias. Backdrop, ×, Escape, foco, **portal a
+  `<body>`**. `max-h-[70vh]` y scroll propio.
+- `SectorLegend.tsx` — exporta **dos** componentes: `SectorLegend` (caja flotante, `hidden md:block`)
+  y `SectorLegendChip` (chip + `BottomSheet`, `md:hidden`). Las filas son el mismo control interno.
 - `CollapsibleSection.tsx`, `CheckList.tsx`, `InvestorFilter.tsx`, `YearRangeSlider.tsx`.
 
 **Todo flotante va portalizado a `<body>`.** `position: fixed` sólo es relativo al viewport si
@@ -154,6 +159,34 @@ Antes de escribir uno nuevo, revisar estos (todos en `src/components/`):
 `InfoModal` quedaba encerrado dentro de esa cajita (28-07, pagado dos veces). Portalizar, no
 clampear. Ojo: al portalizar, un popover que cierra por clic-afuera necesita chequear también su
 propio nodo, que ya no está dentro del ref del disparador.
+
+## Móvil: nada flota sobre el mapa (28-07)
+
+El corte es `md` (767 px, `useIsMobile`), el mismo del panel de filtros y del menú del header.
+
+**Regla: en teléfono el cromo del mapa no flota, se apoya.** La caja de totales, el botón del
+listado y la leyenda eran tres cajas flotantes sobre 312 px de ancho útil; el botón del listado
+(180 px) pisaba 76 px de la caja de totales y se comía el monto **en los tres tamaños medidos**
+(360/390/414). Ahora:
+
+- La caja de totales toma el ancho completo y sólo lleva las cifras.
+- El conmutador Puntos/Datos agregados, la leyenda y el listado bajan a una **barra de acciones que
+  es hermana del mapa, no una capa encima**: el mapa se achica solo, sin reservarle espacio en el
+  encuadre ni pelear con la atribución de Leaflet. `displayControls` se define una vez y se
+  renderiza en los dos sitios (caja en escritorio, barra en móvil).
+- La barra entra en una fila a 360 px con `gap-1` y `px-1.5`: los tres controles suman 294 px sobre
+  296 disponibles. Con `gap-1.5` se pasaba por 2 px y «Lista» caía a una segunda fila.
+- La barra pasa a dos filas en modo agregado (aparece el segundo nivel) → el alto del mapa cambia,
+  por eso el `trigger` de `InvalidateSize` incluye `filters.pieByCountry`.
+
+El footer de socios (133 px, 21% de una pantalla de 640) arranca colapsado a una línea en móvil.
+En Tendencias los cinco dropdowns pasan a una hoja con acordeones; el diagrama sube de 265 a 420 px.
+
+**Etiquetas del Sankey en móvil:** el margen derecho por defecto de ECharts (`right: '20%'`) es donde
+se dibujan las etiquetas de la última columna: en un teléfono son ~70 px y los nombres salían
+cortados («Manufactura…»). En móvil se recupera ese margen (`right: '3%'`) y los nodos de `depth === 2`
+llevan `label: { position: 'left' }`, o sea hacia adentro. Las otras dos columnas ya se dibujaban
+sobre los flujos.
 
 ## Mapa: encuadre y límites (`MapView.tsx`)
 
